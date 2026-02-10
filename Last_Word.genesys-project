@@ -1,0 +1,5 @@
+{
+  "defaultScene": "./assets/default.genesys-scene",
+  "defaultEditorScene": "./assets/default.genesys-scene",
+  "engineVersion": "5.0.6"
+}

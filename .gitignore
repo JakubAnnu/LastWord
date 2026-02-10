@@ -1,0 +1,11 @@
+**/.dist/**
+**/node_modules/**
+**/.engine/**
+**/**dist/**
+**/**editor/**
+**/.DS_Store
+**/*.tgz
+**/*.mcp-port
+**/.placeholder
+**/.genesys/**
+**/logs/**

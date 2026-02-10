@@ -1,0 +1,46 @@
+{
+  "name": "Last_Word",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "pnpm run generate-property-metadata && tsc",
+    "generate-property-metadata": "pnpm exec tsx node_modules/@gnsx/genesys.js/scripts/generate-property-metadata.ts src/game-data.ts",
+    "build-project": "pnpm exec tsx ./scripts/genesys/build-project.ts",
+    "postinstall": "pnpm exec tsx ./scripts/genesys/post-install.ts",
+    "lint": "eslint . --fix --ext .ts,.tsx",
+    "remove-engine-comments": "pnpm exec tsx ./scripts/genesys/remove-engine-comments.ts",
+    "dev": "pnpm exec tsx ./scripts/genesys/dev/generate-manifest.ts && vite",
+    "validate-prefabs": "pnpm exec tsx ./scripts/genesys/validate-prefabs.ts",
+    "migrate-scenes-and-prefabs": "pnpm exec tsx ./scripts/genesys/migrate-scenes-and-prefabs.ts"
+  },
+  "keywords": [],
+  "type": "module",
+  "dependencies": {
+    "@gnsx/genesys.js": "5.0.6",
+    "three": "0.182.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.182.0",
+    "nanoid": "5.1.6",
+    "ajv": "8.17.1",
+    "esbuild": "0.25.12",
+    "canvas": "3.1.0",
+    "get-port": "7.1.0",
+    "zod-to-json-schema": "3.25.1",
+    "ws": "8.18.2",
+    "@types/node": "22.15.21",
+    "@types/jsdom": "21.1.7",
+    "@modelcontextprotocol/sdk": "1.22.0",
+    "tsx": "4.20.3",
+    "zod": "3.25.76",
+    "jsdom": "26.1.0",
+    "typescript": "5.8.3",
+    "vite": "7.1.7",
+    "vite-plugin-mkcert": "1.17.8",
+    "vite-plugin-node-polyfills": "0.24.0",
+    "@typescript-eslint/parser": "8.29.1",
+    "@typescript-eslint/utils": "8.38.0",
+    "eslint": "9.24.0",
+    "@types/ws": "8.18.1",
+    "ts-morph": "26.0.0"
+  }
+}
