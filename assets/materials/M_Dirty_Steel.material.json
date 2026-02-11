@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Dirty_Steel",
+    "userData": {},
+    "color": {
+      "_": [
+        0.65,
+        0.65,
+        0.65
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.35,
+    "metalness": 0.95,
+    "envMapIntensity": 1.3,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

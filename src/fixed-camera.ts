@@ -19,6 +19,8 @@ export interface FixedCameraOptions extends ENGINE.ActorOptions {
   minFOV?: number;
   /** Maximum FOV for zoom (maximum zoom out) */
   maxFOV?: number;
+  /** Enable camera rotation control (arrow keys) - default true */
+  enableRotationControl?: boolean;
 }
 
 /**
@@ -46,6 +48,9 @@ export class FixedCamera extends ENGINE.Actor {
   private maxFOV: number = 70; // 20mm equivalent (zoomed out)
   private currentFOV: number = 70;
   private readonly ZOOM_SPEED = 30; // FOV change per second
+
+  // Rotation control
+  private enableRotationControl: boolean = true;
 
   constructor() {
     super();
@@ -89,6 +94,9 @@ export class FixedCamera extends ENGINE.Actor {
       this.currentFOV = options.maxFOV; // Start with max FOV (zoomed out)
       this.cameraComponent.setFOV(this.maxFOV);
     }
+
+    // Store rotation control setting
+    this.enableRotationControl = options?.enableRotationControl ?? true;
   }
 
   /**
@@ -177,7 +185,7 @@ export class FixedCamera extends ENGINE.Actor {
    * Handles keyboard input for camera rotation
    */
   private handleCameraRotation(deltaTime: number): void {
-    if (!this.isActive()) return;
+    if (!this.enableRotationControl || !this.isActive()) return;
 
     const world = this.getWorld();
     if (!world) return;
@@ -249,8 +257,8 @@ export class FixedCamera extends ENGINE.Actor {
     }
   }
 
-  public override beginPlay(): void {
-    super.beginPlay();
+  public override doBeginPlay(): void {
+    super.doBeginPlay();
     // Activate camera if shouldStartActive is true
     if (this.shouldStartActive) {
       this.setActive(true);

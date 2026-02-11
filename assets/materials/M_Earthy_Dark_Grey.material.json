@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Earthy_Dark_Grey",
+    "userData": {},
+    "color": {
+      "_": [
+        0.15,
+        0.15,
+        0.15
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.95,
+    "metalness": 0.0,
+    "envMapIntensity": 0.2,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

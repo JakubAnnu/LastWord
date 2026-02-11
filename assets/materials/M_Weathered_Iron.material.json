@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Weathered_Iron",
+    "userData": {},
+    "color": {
+      "_": [
+        0.45,
+        0.45,
+        0.45
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.65,
+    "metalness": 0.88,
+    "envMapIntensity": 0.9,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

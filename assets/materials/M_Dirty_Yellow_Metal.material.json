@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Dirty_Yellow_Metal",
+    "userData": {},
+    "color": {
+      "_": [
+        1.0,
+        0.95,
+        0.3
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.4,
+    "metalness": 0.92,
+    "envMapIntensity": 1.2,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

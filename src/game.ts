@@ -4,6 +4,7 @@ import * as THREE from 'three';
 
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
+import { WalkingMannequinActor } from './walking-mannequin-actor.js';
 import './auto-imports.js';
 
 class MyGame extends ENGINE.BaseGameLoop {
@@ -13,8 +14,9 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera2: FixedCamera | null = null;
   private camera3: FixedCamera | null = null;
   private camera4: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 = 1;
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number } = { '1': 0, '2': 0, '3': 0, '4': 0 };
+  private camera5: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 = 1;
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
 
   protected override createLoadingScreen(): ENGINE.ILoadingScreen | null {
@@ -59,11 +61,91 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera4.setTarget(camera4Target);
     
+    // Create fifth camera at position (x:1.5, y:4.51, z:-9.01)
+    // Fixed camera (no rotation control), 20mm focal length (70° FOV)
+    // Pointing forward in -Z direction
+    const camera5Position = new THREE.Vector3(1.5, 4.51, -9.01);
+    const camera5Target = new THREE.Vector3(1.5, 4.51, -10.01); // Looking forward (deeper into -Z)
+    this.camera5 = FixedCamera.create({ 
+      position: camera5Position, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: false // Immobile camera
+    });
+    this.camera5.setTarget(camera5Target);
+    
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5);
+    
+    // Create and add walking mannequin
+    const mannequin = WalkingMannequinActor.create({
+      name: 'WalkingMannequin',
+    });
+    this.world.addActor(mannequin);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
+    
+    // === PRZYKŁADY JAK DODAĆ MATERIAŁ NA OBIEKT Z LEVELU ===
+    
+    // PRZYKŁAD 1: Zastosuj materiał na konkretny obiekt po nazwie
+    // Odkomentuj i zmień 'NazwaObiektu' na nazwę Twojego obiektu ze sceny
+    /*
+    const myObject = this.findActorByName('NazwaObiektu');
+    if (myObject) {
+      const metalMaterial = new DirtyYellowMetalMaterial();
+      
+      // Znajdź mesh component
+      const meshComponent = myObject.findComponentByClass(ENGINE.MeshComponent);
+      if (meshComponent) {
+        const mesh = meshComponent.getMesh();
+        if (mesh) {
+          metalMaterial.applyToMesh(mesh);
+          console.log('Materiał zastosowany na:', myObject.name);
+        }
+      }
+    }
+    */
+    
+    // PRZYKŁAD 2: Zastosuj na wszystkie meshe w aktorze
+    /*
+    const myObject = this.findActorByName('NazwaObiektu');
+    if (myObject) {
+      const metalMaterial = new DirtyYellowMetalMaterial();
+      
+      // Znajdź wszystkie mesh componenty
+      const meshComponents = myObject.findComponentsByClass(ENGINE.MeshComponent);
+      for (const meshComponent of meshComponents) {
+        const mesh = meshComponent.getMesh();
+        if (mesh) {
+          metalMaterial.applyToMesh(mesh);
+        }
+      }
+      
+      // Opcjonalne dostosowanie
+      metalMaterial.setColor(0xFFD700);  // złoty
+      metalMaterial.setRoughness(0.5);
+      metalMaterial.setTextureRepeat(3, 3);
+    }
+    */
+    
+    // PRZYKŁAD 3: Zastosuj na wszystkie obiekty o określonym prefiksie nazwy
+    /*
+    const allActors = this.world.getActors();
+    const metalMaterial = new DirtyYellowMetalMaterial();
+    
+    for (const actor of allActors) {
+      if (actor.name.startsWith('Metal_')) { // Wszystkie aktory zaczynające się od "Metal_"
+        const meshComponents = actor.findComponentsByClass(ENGINE.MeshComponent);
+        for (const meshComponent of meshComponents) {
+          const mesh = meshComponent.getMesh();
+          if (mesh) {
+            metalMaterial.applyToMesh(mesh);
+          }
+        }
+      }
+    }
+    */
     
     // Try to find Stan actor for camera 1
     let stanActor = this.findActorByName('Stan');
@@ -88,7 +170,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Handle camera switching based on keyboard input (keys 1, 2, and 3)
+   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, and 5)
    */
   private handleCameraSwitching(): void {
     const inputManager = this.world.inputManager;
@@ -125,17 +207,26 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.lastKeyPressTime['4'] = currentTime;
       }
     }
+
+    // Check for key '5' press
+    if (inputManager.isKeyDown('5') && this.activeCamera !== 5) {
+      if (currentTime - this.lastKeyPressTime['5'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(5);
+        this.lastKeyPressTime['5'] = currentTime;
+      }
+    }
   }
 
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
     if (this.camera3) this.camera3.setActive(false);
     if (this.camera4) this.camera4.setActive(false);
+    if (this.camera5) this.camera5.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -154,6 +245,10 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera4.setActive(true);
       this.activeCamera = 4;
       console.log('Switched to Camera 4');
+    } else if (cameraNumber === 5 && this.camera5) {
+      this.camera5.setActive(true);
+      this.activeCamera = 5;
+      console.log('Switched to Camera 5');
     }
   }
 
