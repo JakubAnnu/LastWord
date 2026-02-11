@@ -11,6 +11,14 @@ export interface FixedCameraOptions extends ENGINE.ActorOptions {
   fov?: number;
   /** Whether this camera should start as active */
   startActive?: boolean;
+  /** Roll rotation in degrees (rotation around the camera's forward axis) */
+  rollDegrees?: number;
+  /** Enable zoom functionality (W/S keys) */
+  enableZoom?: boolean;
+  /** Minimum FOV for zoom (maximum zoom in) */
+  minFOV?: number;
+  /** Maximum FOV for zoom (maximum zoom out) */
+  maxFOV?: number;
 }
 
 /**
@@ -22,6 +30,22 @@ export class FixedCamera extends ENGINE.Actor {
   private cameraComponent: ENGINE.CameraComponent;
   private target: THREE.Vector3 | ENGINE.Actor | null = null;
   private shouldStartActive: boolean = false;
+  private rollDegrees: number = 0;
+  
+  // Camera rotation control
+  private baseRotation: THREE.Quaternion = new THREE.Quaternion();
+  private currentYaw: number = 0; // Current yaw offset in degrees
+  private currentPitch: number = 0; // Current pitch offset in degrees
+  private readonly MAX_YAW = 70; // Maximum yaw rotation in degrees
+  private readonly MAX_PITCH = 70; // Maximum pitch rotation in degrees
+  private readonly ROTATION_SPEED = 60; // Degrees per second
+
+  // Zoom control
+  private enableZoom: boolean = false;
+  private minFOV: number = 40; // 60mm equivalent (zoomed in)
+  private maxFOV: number = 70; // 20mm equivalent (zoomed out)
+  private currentFOV: number = 70;
+  private readonly ZOOM_SPEED = 30; // FOV change per second
 
   constructor() {
     super();
@@ -41,6 +65,7 @@ export class FixedCamera extends ENGINE.Actor {
     super.initialize(options);
     
     if (options?.fov !== undefined) {
+      this.currentFOV = options.fov;
       this.cameraComponent.setFOV(options.fov);
     }
     
@@ -50,6 +75,20 @@ export class FixedCamera extends ENGINE.Actor {
 
     // Store startActive flag for use in beginPlay
     this.shouldStartActive = options?.startActive ?? false;
+    
+    // Store roll rotation
+    this.rollDegrees = options?.rollDegrees ?? 0;
+
+    // Store zoom settings
+    this.enableZoom = options?.enableZoom ?? false;
+    if (options?.minFOV !== undefined) {
+      this.minFOV = options.minFOV;
+    }
+    if (options?.maxFOV !== undefined) {
+      this.maxFOV = options.maxFOV;
+      this.currentFOV = options.maxFOV; // Start with max FOV (zoomed out)
+      this.cameraComponent.setFOV(this.maxFOV);
+    }
   }
 
   /**
@@ -100,8 +139,114 @@ export class FixedCamera extends ENGINE.Actor {
     const quaternion = new THREE.Quaternion();
     quaternion.setFromRotationMatrix(matrix);
     
+    // Apply roll rotation if specified
+    if (this.rollDegrees !== 0) {
+      const rollRadians = THREE.MathUtils.degToRad(this.rollDegrees);
+      const rollQuaternion = new THREE.Quaternion();
+      rollQuaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), rollRadians);
+      quaternion.multiply(rollQuaternion);
+    }
+    
+    // Store this as the base rotation (convert to Euler for easier manipulation)
+    this.baseRotation.copy(quaternion);
+    
+    // Apply current yaw and pitch offsets
+    this.applyCameraRotation();
+  }
+
+  /**
+   * Applies the current yaw and pitch offsets to the camera rotation
+   */
+  private applyCameraRotation(): void {
+    // Convert base rotation to Euler angles
+    const baseEuler = new THREE.Euler().setFromQuaternion(this.baseRotation, 'YXZ');
+    
+    // Add yaw and pitch offsets
+    const finalEuler = new THREE.Euler(
+      baseEuler.x + THREE.MathUtils.degToRad(this.currentPitch),
+      baseEuler.y + THREE.MathUtils.degToRad(this.currentYaw),
+      baseEuler.z,
+      'YXZ'
+    );
+    
     // Apply rotation to the camera component
-    this.cameraComponent.setWorldRotation(new THREE.Euler().setFromQuaternion(quaternion));
+    this.cameraComponent.setWorldRotation(finalEuler);
+  }
+
+  /**
+   * Handles keyboard input for camera rotation
+   */
+  private handleCameraRotation(deltaTime: number): void {
+    if (!this.isActive()) return;
+
+    const world = this.getWorld();
+    if (!world) return;
+
+    const inputManager = world.inputManager;
+    const rotationAmount = this.ROTATION_SPEED * deltaTime;
+    
+    let rotationChanged = false;
+
+    // Arrow Left - rotate left (negative yaw)
+    if (inputManager.isKeyDown('ArrowLeft')) {
+      this.currentYaw = Math.max(this.currentYaw - rotationAmount, -this.MAX_YAW);
+      rotationChanged = true;
+    }
+
+    // Arrow Right - rotate right (positive yaw)
+    if (inputManager.isKeyDown('ArrowRight')) {
+      this.currentYaw = Math.min(this.currentYaw + rotationAmount, this.MAX_YAW);
+      rotationChanged = true;
+    }
+
+    // Arrow Up - rotate up (negative pitch)
+    if (inputManager.isKeyDown('ArrowUp')) {
+      this.currentPitch = Math.max(this.currentPitch - rotationAmount, -this.MAX_PITCH);
+      rotationChanged = true;
+    }
+
+    // Arrow Down - rotate down (positive pitch)
+    if (inputManager.isKeyDown('ArrowDown')) {
+      this.currentPitch = Math.min(this.currentPitch + rotationAmount, this.MAX_PITCH);
+      rotationChanged = true;
+    }
+
+    // Apply rotation if changed
+    if (rotationChanged) {
+      this.applyCameraRotation();
+    }
+  }
+
+  /**
+   * Handles keyboard input for camera zoom (W/S keys)
+   */
+  private handleCameraZoom(deltaTime: number): void {
+    if (!this.enableZoom || !this.isActive()) return;
+
+    const world = this.getWorld();
+    if (!world) return;
+
+    const inputManager = world.inputManager;
+    const zoomAmount = this.ZOOM_SPEED * deltaTime;
+    
+    let zoomChanged = false;
+
+    // W key - zoom in (decrease FOV)
+    if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
+      this.currentFOV = Math.max(this.currentFOV - zoomAmount, this.minFOV);
+      zoomChanged = true;
+    }
+
+    // S key - zoom out (increase FOV)
+    if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
+      this.currentFOV = Math.min(this.currentFOV + zoomAmount, this.maxFOV);
+      zoomChanged = true;
+    }
+
+    // Apply zoom if changed
+    if (zoomChanged) {
+      this.cameraComponent.setFOV(this.currentFOV);
+    }
   }
 
   public override beginPlay(): void {
@@ -116,6 +261,13 @@ export class FixedCamera extends ENGINE.Actor {
 
   public override tickPrePhysics(deltaTime: number): void {
     super.tickPrePhysics(deltaTime);
+    
+    // Handle camera rotation input
+    this.handleCameraRotation(deltaTime);
+    
+    // Handle camera zoom input
+    this.handleCameraZoom(deltaTime);
+    
     // Continuously update if target is an actor (in case it moves)
     if (this.target instanceof ENGINE.Actor) {
       this.updateCameraDirection();

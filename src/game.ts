@@ -11,8 +11,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   private controller: ENGINE.PlayerController | null = null;
   private camera1: FixedCamera | null = null;
   private camera2: FixedCamera | null = null;
-  private activeCamera: 1 | 2 = 1;
-  private lastKeyPressTime: { '1': number; '2': number } = { '1': 0, '2': 0 };
+  private camera3: FixedCamera | null = null;
+  private camera4: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 = 1;
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number } = { '1': 0, '2': 0, '3': 0, '4': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
 
   protected override createLoadingScreen(): ENGINE.ILoadingScreen | null {
@@ -21,22 +23,44 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   protected override async preStart(): Promise<void> {
-    // Create first camera at position (x:4.25, y:2.81, z:-4.21)
+    // Create first camera at position (x:-3.45, y:4.75, z:-5.88)
     // pointing at Stan model at (x:1.43, y:2.15, z:-3.97)
-    const camera1Position = new THREE.Vector3(4.25, 2.81, -4.21);
+    const camera1Position = new THREE.Vector3(-3.45, 4.75, -5.88);
     const stanPosition = new THREE.Vector3(1.43, 2.15, -3.97);
     this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true });
     
-    // Create second camera at position (x:-3.58, y:3.57, z:-5.99)
+    // Create second camera at position (x:0.44, y:13.76, z:-3.62)
     // pointing at position (x:-0.14, y:2.21, z:-3.98)
     // with 20mm focal length (approximately 70° FOV)
-    const camera2Position = new THREE.Vector3(-3.58, 3.57, -5.99);
+    const camera2Position = new THREE.Vector3(0.44, 13.76, -3.62);
     const camera2Target = new THREE.Vector3(-0.14, 2.21, -3.98);
     this.camera2 = FixedCamera.create({ position: camera2Position, startActive: false, fov: 70 });
     this.camera2.setTarget(camera2Target);
     
-    // Add both cameras to the world
-    this.world.addActors(this.camera1, this.camera2);
+    // Create third camera at position (x:0.71, y:4.76, z:-8.82)
+    // pointing at position (x:0.74, y:3.93, z:-8.82)
+    // with 15mm focal length (approximately 94° FOV) and 90° roll rotation
+    const camera3Position = new THREE.Vector3(0.71, 4.76, -8.82);
+    const camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
+    this.camera3 = FixedCamera.create({ position: camera3Position, startActive: false, fov: 94, rollDegrees: 90 });
+    this.camera3.setTarget(camera3Target);
+    
+    // Create fourth camera at position (x:-45.78, y:5.28, z:-7.77)
+    // pointing at position (x:-4.86, y:5.28, z:-7.77)
+    // with zoom functionality: 20mm (70° FOV) to 120mm (20° FOV)
+    const camera4Position = new THREE.Vector3(-45.78, 5.28, -7.77);
+    const camera4Target = new THREE.Vector3(-4.86, 5.28, -7.77);
+    this.camera4 = FixedCamera.create({ 
+      position: camera4Position, 
+      startActive: false,
+      enableZoom: true,
+      minFOV: 20, // 120mm (zoomed in)
+      maxFOV: 70  // 20mm (zoomed out)
+    });
+    this.camera4.setTarget(camera4Target);
+    
+    // Add all cameras to the world
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
@@ -64,7 +88,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Handle camera switching based on keyboard input (keys 1 and 2)
+   * Handle camera switching based on keyboard input (keys 1, 2, and 3)
    */
   private handleCameraSwitching(): void {
     const inputManager = this.world.inputManager;
@@ -85,26 +109,51 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.lastKeyPressTime['2'] = currentTime;
       }
     }
+
+    // Check for key '3' press
+    if (inputManager.isKeyDown('3') && this.activeCamera !== 3) {
+      if (currentTime - this.lastKeyPressTime['3'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(3);
+        this.lastKeyPressTime['3'] = currentTime;
+      }
+    }
+
+    // Check for key '4' press
+    if (inputManager.isKeyDown('4') && this.activeCamera !== 4) {
+      if (currentTime - this.lastKeyPressTime['4'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(4);
+        this.lastKeyPressTime['4'] = currentTime;
+      }
+    }
   }
 
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4): void {
+    // Deactivate all cameras first
+    if (this.camera1) this.camera1.setActive(false);
+    if (this.camera2) this.camera2.setActive(false);
+    if (this.camera3) this.camera3.setActive(false);
+    if (this.camera4) this.camera4.setActive(false);
+
+    // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
       this.camera1.setActive(true);
-      if (this.camera2) {
-        this.camera2.setActive(false);
-      }
       this.activeCamera = 1;
       console.log('Switched to Camera 1');
     } else if (cameraNumber === 2 && this.camera2) {
       this.camera2.setActive(true);
-      if (this.camera1) {
-        this.camera1.setActive(false);
-      }
       this.activeCamera = 2;
       console.log('Switched to Camera 2');
+    } else if (cameraNumber === 3 && this.camera3) {
+      this.camera3.setActive(true);
+      this.activeCamera = 3;
+      console.log('Switched to Camera 3');
+    } else if (cameraNumber === 4 && this.camera4) {
+      this.camera4.setActive(true);
+      this.activeCamera = 4;
+      console.log('Switched to Camera 4');
     }
   }
 
