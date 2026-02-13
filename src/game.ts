@@ -18,9 +18,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera6b: FixedCamera | null = null;
   private camera6c: FixedCamera | null = null;
   private camera7: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 = 1;
+  private camera8: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; 'ArrowLeft': number; 'ArrowRight': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, 'ArrowLeft': 0, 'ArrowRight': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   
   // Camera 7 animation
@@ -143,8 +144,21 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera7.setTarget(this.camera7Target);
     
+    // Camera 8 - rotatable camera with arrow keys
+    // Position: (x:-1.95, y:4.82, z:2.1)
+    // Initially points at: (x:-0.39, y:4.78, z:1.27)
+    const camera8Position = new THREE.Vector3(-1.95, 4.82, 2.1);
+    const camera8Target = new THREE.Vector3(-0.39, 4.78, 1.27);
+    this.camera8 = FixedCamera.create({ 
+      position: camera8Position, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: true // Enable arrow key rotation
+    });
+    this.camera8.setTarget(camera8Target);
+    
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
@@ -296,6 +310,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
+    // Check for key '8' press
+    if (inputManager.isKeyDown('8') && this.activeCamera !== 8) {
+      if (currentTime - this.lastKeyPressTime['8'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(8);
+        this.lastKeyPressTime['8'] = currentTime;
+      }
+    }
+
     // Handle arrow left/right for camera 6 sub-camera switching
     if (this.activeCamera === 6) {
       // Arrow Left - switch to previous camera (c -> b -> a)
@@ -319,7 +341,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
@@ -330,6 +352,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.camera6b) this.camera6b.setActive(false);
     if (this.camera6c) this.camera6c.setActive(false);
     if (this.camera7) this.camera7.setActive(false);
+    if (this.camera8) this.camera8.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -368,6 +391,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera7.setWorldPosition(this.camera7StartPos.clone());
       this.camera7.setTarget(this.camera7Target);
       console.log('Switched to Camera 7 - Animation started');
+    } else if (cameraNumber === 8 && this.camera8) {
+      // Activate camera 8 - rotatable camera
+      this.camera8.setActive(true);
+      this.activeCamera = 8;
+      console.log('Switched to Camera 8 - Use arrows to rotate');
     }
   }
 
