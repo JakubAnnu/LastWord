@@ -22,11 +22,11 @@ export class StorageProvider implements ENGINE.IStorageProvider {
     let rootPath = undefined;
 
     if (filePath.startsWith(ENGINE.PROJECT_PATH_PREFIX)) {
-      filePath = filePath.slice(ENGINE.PROJECT_PATH_PREFIX.length);
+      filePath = AssetPath.stripPrefix(filePath, ENGINE.PROJECT_PATH_PREFIX);
       rootPath = getProjectRoot();
     }
     else if (filePath.startsWith(ENGINE.ENGINE_PATH_PREFIX)) {
-      filePath = filePath.slice(ENGINE.ENGINE_PATH_PREFIX.length);
+      filePath = AssetPath.stripPrefix(filePath, ENGINE.ENGINE_PATH_PREFIX);
       rootPath = path.join(getProjectRoot(), 'node_modules', 'genesys.js');
     }
 

@@ -15,8 +15,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera3: FixedCamera | null = null;
   private camera4: FixedCamera | null = null;
   private camera5: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 = 1;
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0 };
+  private camera6a: FixedCamera | null = null;
+  private camera6b: FixedCamera | null = null;
+  private camera6c: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 = 1;
+  private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; 'ArrowLeft': number; 'ArrowRight': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, 'ArrowLeft': 0, 'ArrowRight': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
 
   protected override createLoadingScreen(): ENGINE.ILoadingScreen | null {
@@ -74,8 +78,45 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera5.setTarget(camera5Target);
     
+    // Create sixth camera set (6a, 6b, 6c) - all immobile cameras
+    // Camera 6a at position (x:9.05, y:3.04, z:-14.35)
+    // pointing at (x:11.08, y:2.29, z:-14.91)
+    const camera6aPosition = new THREE.Vector3(9.05, 3.04, -14.35);
+    const camera6aTarget = new THREE.Vector3(11.08, 2.29, -14.91);
+    this.camera6a = FixedCamera.create({ 
+      position: camera6aPosition, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: false // Immobile camera
+    });
+    this.camera6a.setTarget(camera6aTarget);
+    
+    // Camera 6b at position (x:9.07, y:3.14, z:-8.48)
+    // pointing at (x:10.85, y:2.3, z:-8.48)
+    const camera6bPosition = new THREE.Vector3(9.07, 3.14, -8.48);
+    const camera6bTarget = new THREE.Vector3(10.85, 2.3, -8.48);
+    this.camera6b = FixedCamera.create({ 
+      position: camera6bPosition, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: false // Immobile camera
+    });
+    this.camera6b.setTarget(camera6bTarget);
+    
+    // Camera 6c at position (x:9.12, y:3.13, z:-20.79)
+    // pointing at (x:11.14, y:1.98, z:-20.79)
+    const camera6cPosition = new THREE.Vector3(9.12, 3.13, -20.79);
+    const camera6cTarget = new THREE.Vector3(11.14, 1.98, -20.79);
+    this.camera6c = FixedCamera.create({ 
+      position: camera6cPosition, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: false // Immobile camera
+    });
+    this.camera6c.setTarget(camera6cTarget);
+    
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c);
     
     // Create and add walking mannequin
     const mannequin = WalkingMannequinActor.create({
@@ -170,7 +211,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, and 5)
+   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, 5, and 6)
    */
   private handleCameraSwitching(): void {
     const inputManager = this.world.inputManager;
@@ -215,18 +256,48 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.lastKeyPressTime['5'] = currentTime;
       }
     }
+
+    // Check for key '6' press
+    if (inputManager.isKeyDown('6') && this.activeCamera !== 6) {
+      if (currentTime - this.lastKeyPressTime['6'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(6);
+        this.lastKeyPressTime['6'] = currentTime;
+      }
+    }
+
+    // Handle arrow left/right for camera 6 sub-camera switching
+    if (this.activeCamera === 6) {
+      // Arrow Left - switch to previous camera (c -> b -> a)
+      if (inputManager.isKeyDown('ArrowLeft')) {
+        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera6Sub('left');
+          this.lastKeyPressTime['ArrowLeft'] = currentTime;
+        }
+      }
+
+      // Arrow Right - switch to next camera (a -> b -> c)
+      if (inputManager.isKeyDown('ArrowRight')) {
+        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera6Sub('right');
+          this.lastKeyPressTime['ArrowRight'] = currentTime;
+        }
+      }
+    }
   }
 
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
     if (this.camera3) this.camera3.setActive(false);
     if (this.camera4) this.camera4.setActive(false);
     if (this.camera5) this.camera5.setActive(false);
+    if (this.camera6a) this.camera6a.setActive(false);
+    if (this.camera6b) this.camera6b.setActive(false);
+    if (this.camera6c) this.camera6c.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -249,6 +320,55 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera5.setActive(true);
       this.activeCamera = 5;
       console.log('Switched to Camera 5');
+    } else if (cameraNumber === 6) {
+      // Activate camera 6 - which sub-camera depends on activeCamera6Sub
+      this.activeCamera = 6;
+      this.activateCamera6Sub(this.activeCamera6Sub);
+    }
+  }
+
+  /**
+   * Switch between camera 6 sub-cameras (a, b, c) using arrow keys
+   */
+  private switchCamera6Sub(direction: 'left' | 'right'): void {
+    const subCameras: Array<'a' | 'b' | 'c'> = ['a', 'b', 'c'];
+    const currentIndex = subCameras.indexOf(this.activeCamera6Sub);
+
+    let newIndex: number;
+    if (direction === 'left') {
+      // Go to previous camera (wrap around: a -> c)
+      newIndex = currentIndex - 1;
+      if (newIndex < 0) newIndex = subCameras.length - 1;
+    } else {
+      // Go to next camera (wrap around: c -> a)
+      newIndex = currentIndex + 1;
+      if (newIndex >= subCameras.length) newIndex = 0;
+    }
+
+    const newSubCamera = subCameras[newIndex];
+    this.activeCamera6Sub = newSubCamera;
+    this.activateCamera6Sub(newSubCamera);
+  }
+
+  /**
+   * Activate the specified camera 6 sub-camera
+   */
+  private activateCamera6Sub(subCamera: 'a' | 'b' | 'c'): void {
+    // Deactivate all camera 6 sub-cameras
+    if (this.camera6a) this.camera6a.setActive(false);
+    if (this.camera6b) this.camera6b.setActive(false);
+    if (this.camera6c) this.camera6c.setActive(false);
+
+    // Activate the selected sub-camera
+    if (subCamera === 'a' && this.camera6a) {
+      this.camera6a.setActive(true);
+      console.log('Switched to Camera 6a');
+    } else if (subCamera === 'b' && this.camera6b) {
+      this.camera6b.setActive(true);
+      console.log('Switched to Camera 6b');
+    } else if (subCamera === 'c' && this.camera6c) {
+      this.camera6c.setActive(true);
+      console.log('Switched to Camera 6c');
     }
   }
 

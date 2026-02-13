@@ -17,7 +17,8 @@ async function main() {
 
   const foldersToCopy: string[] = [
     'games/examples',
-    'src'
+    'src',
+    'migrations'
   ];
   for (const folder of foldersToCopy) {
     const engineFolderPath = path.join(engineInstallFolder, folder);
