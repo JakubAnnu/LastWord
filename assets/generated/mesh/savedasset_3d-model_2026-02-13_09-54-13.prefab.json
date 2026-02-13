@@ -1,0 +1,12 @@
+{
+  "$version": 2,
+  "$root": {
+    "rootComponent": {
+      "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-13_09-54-13.glb",
+      "modelMaterial": "@project/assets/materials/M_Earthy_Grey.material.json",
+      "name": "GLTFMeshComponent",
+      "$bc": "ENGINE.GLTFMeshComponent"
+    },
+    "$bc": "ENGINE.GLTFMeshActor"
+  }
+}

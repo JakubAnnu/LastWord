@@ -4,7 +4,6 @@ import * as THREE from 'three';
 
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
-import { WalkingMannequinActor } from './walking-mannequin-actor.js';
 import './auto-imports.js';
 
 class MyGame extends ENGINE.BaseGameLoop {
@@ -18,10 +17,26 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera6a: FixedCamera | null = null;
   private camera6b: FixedCamera | null = null;
   private camera6c: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 = 1;
+  private camera7: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; 'ArrowLeft': number; 'ArrowRight': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, 'ArrowLeft': 0, 'ArrowRight': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; 'ArrowLeft': number; 'ArrowRight': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, 'ArrowLeft': 0, 'ArrowRight': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
+  
+  // Camera 7 animation
+  private camera7StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
+  private camera7EndPos = new THREE.Vector3(-2.46, 20.83, 7.05); // Lowered by 2 units
+  private camera7Target = new THREE.Vector3(-2.46, 6.22, -1.71);
+  private camera7IsAnimating = false;
+  private camera7AnimationProgress = 0; // 0 = start, 1 = end
+  private readonly CAMERA7_ANIMATION_SPEED = 0.5; // Speed of movement (0.5 = 2 seconds)
+  private camera7SideOffset = 0; // Left/right offset in units
+  private readonly CAMERA7_SIDE_SPEED = 2; // Units per second for side movement
+  private readonly CAMERA7_MAX_SIDE_OFFSET = 3; // Maximum offset in units
+  // Drone-like hovering oscillation
+  private camera7HoverTime = 0; // Time counter for hover oscillation
+  private readonly CAMERA7_HOVER_AMPLITUDE = 0.3; // How much to move up/down
+  private readonly CAMERA7_HOVER_SPEED = 1.5; // Speed of oscillation
 
   protected override createLoadingScreen(): ENGINE.ILoadingScreen | null {
     // enable the default loading screen
@@ -115,14 +130,21 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera6c.setTarget(camera6cTarget);
     
-    // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c);
-    
-    // Create and add walking mannequin
-    const mannequin = WalkingMannequinActor.create({
-      name: 'WalkingMannequin',
+    // Camera 7 - animated camera that moves from start to end position with drone-like hover
+    // Starts at (x:-2.46, y:6.38, z:-1.73)
+    // Ends at (x:-2.46, y:20.83, z:7.05) - lowered by 2 units
+    // Always points at (x:-2.46, y:6.22, z:-1.71)
+    // Has hovering oscillation when at end position to simulate drone movement
+    this.camera7 = FixedCamera.create({ 
+      position: this.camera7StartPos.clone(), 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: false // Will handle movement manually
     });
-    this.world.addActor(mannequin);
+    this.camera7.setTarget(this.camera7Target);
+    
+    // Add all cameras to the world
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
@@ -208,10 +230,11 @@ class MyGame extends ENGINE.BaseGameLoop {
   protected override tick(tickTime: ENGINE.TickTime): void {
     super.tick(tickTime);
     this.handleCameraSwitching();
+    this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
   }
 
   /**
-   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, 5, and 6)
+   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, 5, 6, and 7)
    */
   private handleCameraSwitching(): void {
     const inputManager = this.world.inputManager;
@@ -265,6 +288,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
+    // Check for key '7' press
+    if (inputManager.isKeyDown('7') && this.activeCamera !== 7) {
+      if (currentTime - this.lastKeyPressTime['7'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(7);
+        this.lastKeyPressTime['7'] = currentTime;
+      }
+    }
+
     // Handle arrow left/right for camera 6 sub-camera switching
     if (this.activeCamera === 6) {
       // Arrow Left - switch to previous camera (c -> b -> a)
@@ -288,7 +319,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
@@ -298,6 +329,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.camera6a) this.camera6a.setActive(false);
     if (this.camera6b) this.camera6b.setActive(false);
     if (this.camera6c) this.camera6c.setActive(false);
+    if (this.camera7) this.camera7.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -324,6 +356,18 @@ class MyGame extends ENGINE.BaseGameLoop {
       // Activate camera 6 - which sub-camera depends on activeCamera6Sub
       this.activeCamera = 6;
       this.activateCamera6Sub(this.activeCamera6Sub);
+    } else if (cameraNumber === 7 && this.camera7) {
+      // Activate camera 7 and start animation
+      this.camera7.setActive(true);
+      this.activeCamera = 7;
+      this.camera7IsAnimating = true;
+      this.camera7AnimationProgress = 0;
+      this.camera7SideOffset = 0;
+      this.camera7HoverTime = 0; // Reset hover time
+      // Reset to start position
+      this.camera7.setWorldPosition(this.camera7StartPos.clone());
+      this.camera7.setTarget(this.camera7Target);
+      console.log('Switched to Camera 7 - Animation started');
     }
   }
 
@@ -408,6 +452,72 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
 
     return closestActor;
+  }
+
+  /**
+   * Handle camera 7 animation and side movement with drone-like hovering
+   */
+  private handleCamera7Animation(deltaTime: number): void {
+    if (this.activeCamera !== 7 || !this.camera7) return;
+
+    const inputManager = this.world.inputManager;
+
+    // Handle initial animation from start to end position
+    if (this.camera7IsAnimating) {
+      this.camera7AnimationProgress += this.CAMERA7_ANIMATION_SPEED * deltaTime;
+      
+      if (this.camera7AnimationProgress >= 1.0) {
+        this.camera7AnimationProgress = 1.0;
+        this.camera7IsAnimating = false;
+        console.log('Camera 7 reached end position - hovering mode activated');
+      }
+
+      // Interpolate between start and end positions
+      const basePosition = new THREE.Vector3().lerpVectors(
+        this.camera7StartPos,
+        this.camera7EndPos,
+        this.camera7AnimationProgress
+      );
+
+      // Apply side offset
+      basePosition.x += this.camera7SideOffset;
+
+      this.camera7.setWorldPosition(basePosition);
+      this.camera7.setTarget(this.camera7Target);
+    } else {
+      // After animation is complete, handle side movement and hovering
+      
+      // Update hover time
+      this.camera7HoverTime += deltaTime;
+      
+      // Calculate hover offset (sine wave for smooth up/down motion)
+      const hoverOffset = Math.sin(this.camera7HoverTime * this.CAMERA7_HOVER_SPEED) * this.CAMERA7_HOVER_AMPLITUDE;
+      
+      // Handle side movement with arrow keys
+      let sideMovement = 0;
+
+      if (inputManager.isKeyDown('ArrowLeft')) {
+        sideMovement = -this.CAMERA7_SIDE_SPEED * deltaTime;
+      }
+      if (inputManager.isKeyDown('ArrowRight')) {
+        sideMovement = this.CAMERA7_SIDE_SPEED * deltaTime;
+      }
+
+      // Update side offset with clamping
+      this.camera7SideOffset = THREE.MathUtils.clamp(
+        this.camera7SideOffset + sideMovement,
+        -this.CAMERA7_MAX_SIDE_OFFSET,
+        this.CAMERA7_MAX_SIDE_OFFSET
+      );
+
+      // Apply side offset and hover offset to current position
+      const currentPos = this.camera7EndPos.clone();
+      currentPos.x += this.camera7SideOffset;
+      currentPos.y += hoverOffset; // Add hovering motion
+      
+      this.camera7.setWorldPosition(currentPos);
+      this.camera7.setTarget(this.camera7Target);
+    }
   }
 }
 
