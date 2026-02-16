@@ -59,10 +59,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera2 = FixedCamera.create({ position: camera2Position, startActive: false, fov: 70 });
     this.camera2.setTarget(camera2Target);
     
-    // Create third camera at position (x:0.71, y:4.76, z:-8.82)
+    // Create third camera at position (x:0.71, y:4.21, z:-8.82) - lowered by 0.55 units total
     // pointing at position (x:0.74, y:3.93, z:-8.82)
     // with 15mm focal length (approximately 94° FOV) and 90° roll rotation
-    const camera3Position = new THREE.Vector3(0.71, 4.76, -8.82);
+    const camera3Position = new THREE.Vector3(0.71, 4.21, -8.82);
     const camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
     this.camera3 = FixedCamera.create({ position: camera3Position, startActive: false, fov: 94, rollDegrees: 90 });
     this.camera3.setTarget(camera3Target);
