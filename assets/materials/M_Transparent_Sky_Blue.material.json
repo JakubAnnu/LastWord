@@ -1,0 +1,21 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Transparent_Sky_Blue",
+    "userData": {},
+    "color": {
+      "_": [
+        0.5,
+        0.8,
+        1.0
+      ],
+      "$bc": "c"
+    },
+    "transparent": true,
+    "opacity": 0.4,
+    "roughness": 0.15,
+    "metalness": 0.2,
+    "envMapIntensity": 1.6,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

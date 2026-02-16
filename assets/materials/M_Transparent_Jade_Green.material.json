@@ -1,0 +1,21 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Transparent_Jade_Green",
+    "userData": {},
+    "color": {
+      "_": [
+        0.4,
+        1.0,
+        0.6
+      ],
+      "$bc": "c"
+    },
+    "transparent": true,
+    "opacity": 0.35,
+    "roughness": 0.1,
+    "metalness": 0.1,
+    "envMapIntensity": 1.8,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

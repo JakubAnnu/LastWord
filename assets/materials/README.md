@@ -84,6 +84,67 @@ Materiały znajdują się w: `assets/materials/`
    - Roughness: 0.88
    - **Bez tekstur** - jednolita powierzchnia
 
+### Zielone metale:
+
+### 10. **M_Green_Metal** 🟢
+   - Plik: `M_Green_Metal.material.json`
+   - Opis: Jasny zielony metal, matowy, nieodblaskowy
+   - Kolor: RGB(0.1, 0.85, 0.2) - jasna, czysta zieleń
+   - Metalness: 0.92
+   - Roughness: 0.85 (matowy)
+   - envMapIntensity: 0.3 (minimalne odbicia)
+   - **Bez tekstur** - gładka, jednolita powierzchnia
+
+### 11. **M_Emerald_Green**
+   - Plik: `M_Emerald_Green.material.json`
+   - Opis: Szmaragdowa zieleń, matowa
+   - Kolor: RGB(0.0, 0.72, 0.4) - głęboka szmaragdowa
+   - Metalness: 0.95
+   - Roughness: 0.8 (matowy)
+   - envMapIntensity: 0.35 (minimalne odbicia)
+   - **Bez tekstur** - gładka, jednolita powierzchnia
+
+### 12. **M_Olive_Green**
+   - Plik: `M_Olive_Green.material.json`
+   - Opis: Oliwkowa zieleń, bardzo matowa
+   - Kolor: RGB(0.45, 0.6, 0.2) - oliwkowa zieleń
+   - Metalness: 0.88
+   - Roughness: 0.88 (bardzo matowy)
+   - envMapIntensity: 0.25 (minimalne odbicia)
+   - **Bez tekstur** - gładka, jednolita powierzchnia
+
+### Półprzezroczyste niebieskie:
+
+### 13. **M_Transparent_Light_Blue** 💧
+   - Plik: `M_Transparent_Light_Blue.material.json`
+   - Opis: Jasny niebieski, półprzezroczysty
+   - Kolor: RGB(0.3, 0.7, 1.0) - jasny niebieski
+   - Transparent: true
+   - Opacity: 0.5 (50% przezroczystość)
+   - Metalness: 0.3
+   - Roughness: 0.2 (lekko błyszczący)
+   - **Bez tekstur** - gładka, przezroczysta powierzchnia
+
+### 14. **M_Transparent_Sky_Blue**
+   - Plik: `M_Transparent_Sky_Blue.material.json`
+   - Opis: Niebieski nieba, bardziej przezroczysty
+   - Kolor: RGB(0.5, 0.8, 1.0) - jasny niebiesko-błękitny
+   - Transparent: true
+   - Opacity: 0.4 (60% przezroczystość)
+   - Metalness: 0.2
+   - Roughness: 0.15 (błyszczący)
+   - **Bez tekstur** - gładka, przezroczysta powierzchnia
+
+### 15. **M_Transparent_Ice_Blue**
+   - Plik: `M_Transparent_Ice_Blue.material.json`
+   - Opis: Lodowy niebieski, bardzo przezroczysty
+   - Kolor: RGB(0.6, 0.9, 1.0) - bardzo jasny błękitny
+   - Transparent: true
+   - Opacity: 0.35 (65% przezroczystość)
+   - Metalness: 0.1
+   - Roughness: 0.1 (bardzo błyszczący, szklisty)
+   - **Bez tekstur** - gładka, przezroczysta powierzchnia
+
 ## 🎯 Jak użyć w edytorze sceny
 
 ### Sposób 1: Przez edytor (GUI)
@@ -141,6 +202,24 @@ W pliku `.prefab.json`, w sekcji MeshComponent:
 - **Metalness**: 0.0 (niemetaliczny - ziemia/kamień)
 - **Roughness**: 0.88-0.95 (bardzo matowy)
 - **Kolor**: Ciemne odcienie szarości (0.15-0.30) - efekt ziemisty
+
+### Zielone metale:
+- **Bez tekstur** - gładka, jednolita powierzchnia
+- **Type**: `THREE.MeshStandardMaterial` - pełny PBR workflow
+- **Metalness**: 0.88-0.95 (wysoka wartość metaliczna)
+- **Roughness**: 0.8-0.88 (matowy, nieodblaskowy)
+- **envMapIntensity**: 0.25-0.35 (minimalne odbicia światła)
+- **Kolor**: Różne odcienie zieleni (od jasnej do szmaragdowej)
+
+### Półprzezroczyste niebieskie:
+- **Bez tekstur** - gładka, przezroczysta powierzchnia
+- **Type**: `THREE.MeshStandardMaterial` - pełny PBR workflow
+- **Transparent**: true (włączona przezroczystość)
+- **Opacity**: 0.35-0.5 (35-50% widoczności)
+- **Metalness**: 0.1-0.3 (niska wartość - bardziej szklany efekt)
+- **Roughness**: 0.1-0.2 (błyszczący, szklisty)
+- **envMapIntensity**: 1.5-1.8 (silne odbicia dla efektu szkła)
+- **Kolor**: Jasne odcienie niebieskiego (0.3-0.6, 0.7-0.9, 1.0)
 
 ## 🔧 Dostosowywanie
 

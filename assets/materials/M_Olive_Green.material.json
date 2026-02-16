@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Olive_Green",
+    "userData": {},
+    "color": {
+      "_": [
+        0.45,
+        0.6,
+        0.2
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.88,
+    "metalness": 0.88,
+    "envMapIntensity": 0.25,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

@@ -19,10 +19,18 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera6c: FixedCamera | null = null;
   private camera7: FixedCamera | null = null;
   private camera8: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 1;
+  private camera9: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
+  
+  // Camera 3 dolly (forward/backward movement)
+  private camera3BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
+  private camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
+  private camera3DollyOffset = 0; // Forward/backward offset
+  private readonly CAMERA3_DOLLY_SPEED = 2; // Units per second
+  private readonly CAMERA3_MAX_DOLLY = 2; // Maximum dolly distance (reduced for closer range)
   
   // Camera 7 animation
   private camera7StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
@@ -59,12 +67,19 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera2 = FixedCamera.create({ position: camera2Position, startActive: false, fov: 70 });
     this.camera2.setTarget(camera2Target);
     
-    // Create third camera at position (x:0.71, y:4.21, z:-8.82) - lowered by 0.55 units total
+    // Create third camera at position (x:0.71, y:4.71, z:-8.82) - raised back by 0.05 from previous
     // pointing at position (x:0.74, y:3.93, z:-8.82)
     // with 15mm focal length (approximately 94° FOV) and 90° roll rotation
-    const camera3Position = new THREE.Vector3(0.71, 4.21, -8.82);
+    // Arrow keys: rotate camera, W/S keys: dolly in/out (limited range)
+    const camera3Position = new THREE.Vector3(0.71, 4.71, -8.82);
     const camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
-    this.camera3 = FixedCamera.create({ position: camera3Position, startActive: false, fov: 94, rollDegrees: 90 });
+    this.camera3 = FixedCamera.create({ 
+      position: camera3Position, 
+      startActive: false, 
+      fov: 94, 
+      rollDegrees: 90,
+      enableRotationControl: true // Enable arrow key rotation
+    });
     this.camera3.setTarget(camera3Target);
     
     // Create fourth camera at position (x:-45.78, y:5.28, z:-7.77)
@@ -157,8 +172,21 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera8.setTarget(camera8Target);
     
+    // Camera 9 - fixed camera
+    // Position: (x:-1.08, y:4.68, z:-6.58)
+    // Points at: (x:0.59, y:4.21, z:-8.82)
+    const camera9Position = new THREE.Vector3(-1.08, 4.68, -6.58);
+    const camera9Target = new THREE.Vector3(0.59, 4.21, -8.82);
+    this.camera9 = FixedCamera.create({ 
+      position: camera9Position, 
+      startActive: false,
+      fov: 70, // 20mm
+      enableRotationControl: true // Enable arrow key rotation
+    });
+    this.camera9.setTarget(camera9Target);
+    
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8, this.camera9);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
@@ -245,6 +273,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     super.tick(tickTime);
     this.handleCameraSwitching();
     this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
+    this.handleCamera3Dolly(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -318,6 +347,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
+    // Check for key '9' press
+    if (inputManager.isKeyDown('9') && this.activeCamera !== 9) {
+      if (currentTime - this.lastKeyPressTime['9'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(9);
+        this.lastKeyPressTime['9'] = currentTime;
+      }
+    }
+
     // Handle arrow left/right for camera 6 sub-camera switching
     if (this.activeCamera === 6) {
       // Arrow Left - switch to previous camera (c -> b -> a)
@@ -341,7 +378,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
@@ -353,6 +390,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.camera6c) this.camera6c.setActive(false);
     if (this.camera7) this.camera7.setActive(false);
     if (this.camera8) this.camera8.setActive(false);
+    if (this.camera9) this.camera9.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -366,7 +404,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     } else if (cameraNumber === 3 && this.camera3) {
       this.camera3.setActive(true);
       this.activeCamera = 3;
-      console.log('Switched to Camera 3');
+      this.camera3DollyOffset = 0; // Reset dolly position
+      this.camera3.setWorldPosition(this.camera3BasePosition.clone());
+      this.camera3.setTarget(this.camera3Target);
+      console.log('Switched to Camera 3 - Use W/S to dolly in/out');
     } else if (cameraNumber === 4 && this.camera4) {
       this.camera4.setActive(true);
       this.activeCamera = 4;
@@ -396,6 +437,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera8.setActive(true);
       this.activeCamera = 8;
       console.log('Switched to Camera 8 - Use arrows to rotate');
+    } else if (cameraNumber === 9 && this.camera9) {
+      // Activate camera 9 - rotatable camera
+      this.camera9.setActive(true);
+      this.activeCamera = 9;
+      console.log('Switched to Camera 9 - Use arrows to rotate');
     }
   }
 
@@ -545,6 +591,47 @@ class MyGame extends ENGINE.BaseGameLoop {
       
       this.camera7.setWorldPosition(currentPos);
       this.camera7.setTarget(this.camera7Target);
+    }
+  }
+
+  /**
+   * Handle camera 3 dolly movement (forward/backward with W/S keys)
+   */
+  private handleCamera3Dolly(deltaTime: number): void {
+    if (this.activeCamera !== 3 || !this.camera3) return;
+
+    const inputManager = this.world.inputManager;
+    let dollyMovement = 0;
+
+    // W key - move forward (toward target)
+    if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
+      dollyMovement = this.CAMERA3_DOLLY_SPEED * deltaTime;
+    }
+
+    // S key - move backward (away from target)
+    if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
+      dollyMovement = -this.CAMERA3_DOLLY_SPEED * deltaTime;
+    }
+
+    if (dollyMovement !== 0) {
+      // Update dolly offset with clamping
+      this.camera3DollyOffset = THREE.MathUtils.clamp(
+        this.camera3DollyOffset + dollyMovement,
+        -this.CAMERA3_MAX_DOLLY,
+        this.CAMERA3_MAX_DOLLY
+      );
+
+      // Calculate direction from camera to target
+      const direction = new THREE.Vector3()
+        .subVectors(this.camera3Target, this.camera3BasePosition)
+        .normalize();
+
+      // Apply dolly offset along the direction
+      const newPosition = this.camera3BasePosition.clone();
+      newPosition.addScaledVector(direction, this.camera3DollyOffset);
+
+      this.camera3.setWorldPosition(newPosition);
+      this.camera3.setTarget(this.camera3Target);
     }
   }
 }

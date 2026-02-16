@@ -1,0 +1,21 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Transparent_Emerald",
+    "userData": {},
+    "color": {
+      "_": [
+        0.2,
+        0.9,
+        0.5
+      ],
+      "$bc": "c"
+    },
+    "transparent": true,
+    "opacity": 0.4,
+    "roughness": 0.15,
+    "metalness": 0.2,
+    "envMapIntensity": 1.6,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

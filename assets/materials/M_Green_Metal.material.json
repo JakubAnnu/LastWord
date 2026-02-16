@@ -1,0 +1,19 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Green_Metal",
+    "userData": {},
+    "color": {
+      "_": [
+        0.1,
+        0.85,
+        0.2
+      ],
+      "$bc": "c"
+    },
+    "roughness": 0.85,
+    "metalness": 0.92,
+    "envMapIntensity": 0.3,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}
