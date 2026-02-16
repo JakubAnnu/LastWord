@@ -38,8 +38,8 @@ export class FixedCamera extends ENGINE.Actor {
   private baseRotation: THREE.Quaternion = new THREE.Quaternion();
   private currentYaw: number = 0; // Current yaw offset in degrees
   private currentPitch: number = 0; // Current pitch offset in degrees
-  private readonly MAX_YAW = 70; // Maximum yaw rotation in degrees
-  private readonly MAX_PITCH = 70; // Maximum pitch rotation in degrees
+  private readonly MAX_YAW = 120; // Maximum yaw rotation in degrees (significantly increased for wider range)
+  private readonly MAX_PITCH = 91; // Maximum pitch rotation in degrees (increased by 30%)
   private readonly ROTATION_SPEED = 60; // Degrees per second
 
   // Zoom control

@@ -34,7 +34,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   
   // Camera 7 animation
   private camera7StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
-  private camera7EndPos = new THREE.Vector3(-2.46, 20.83, 7.05); // Lowered by 2 units
+  private camera7EndPos = new THREE.Vector3(-2.46, 25.83, 7.05); // Raised by 5 units from 20.83
   private camera7Target = new THREE.Vector3(-2.46, 6.22, -1.71);
   private camera7IsAnimating = false;
   private camera7AnimationProgress = 0; // 0 = start, 1 = end
