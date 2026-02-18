@@ -125,6 +125,15 @@ export class FixedCamera extends ENGINE.Actor {
   }
 
   /**
+   * Sets the field of view for the camera
+   * @param fov Field of view in degrees
+   */
+  public setFOV(fov: number): void {
+    this.currentFOV = fov;
+    this.cameraComponent.setFOV(fov);
+  }
+
+  /**
    * Updates the camera direction to look at the target
    */
   private updateCameraDirection(): void {

@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
 import './auto-imports.js';
+import './stan-blended-actor.js';
 
 class MyGame extends ENGINE.BaseGameLoop {
   private pawn: FreeCameraPlayer | null = null;
@@ -20,10 +21,24 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera7: FixedCamera | null = null;
   private camera8: FixedCamera | null = null;
   private camera9: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 = 1;
+  private camera10: FixedCamera | null = null;
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
+  private hill2Actor: ENGINE.Actor | null = null;
+
+  // H key: move to absolute x=200 in 10 seconds
+  private readonly HILL2_TARGET_X = 200;
+  private readonly HILL2_MOVE_DURATION = 10;
+
+  private hill2MoveStartPos = new THREE.Vector3();
+  private hill2MoveTargetPos = new THREE.Vector3();
+  private hill2MoveProgress = 0;
+  private hill2IsMoving = false;
+
+  // Camera 10 focal length toggle
+  private camera10FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
   
   // Camera 3 dolly (forward/backward movement)
   private camera3BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
@@ -53,9 +68,9 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   protected override async preStart(): Promise<void> {
-    // Create first camera at position (x:-3.45, y:4.75, z:-5.88)
+    // Create first camera at position (x:8.37, y:2.73, z:11.28)
     // pointing at Stan model at (x:1.43, y:2.15, z:-3.97)
-    const camera1Position = new THREE.Vector3(-3.45, 4.75, -5.88);
+    const camera1Position = new THREE.Vector3(8.37, 2.73, 11.28);
     const stanPosition = new THREE.Vector3(1.43, 2.15, -3.97);
     this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true });
     
@@ -185,72 +200,26 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera9.setTarget(camera9Target);
     
+    // Camera 10 - focal length toggle camera with W/S keys
+    // Position: (x:0.11, y:5.16, z:0.86)
+    // Points at: (x:0.11, y:4.34, z:2.46)
+    // W/S keys toggle between 20mm (FOV 70°) and 120mm (FOV 11.5°)
+    const camera10Position = new THREE.Vector3(0.11, 5.16, 0.86);
+    const camera10Target = new THREE.Vector3(0.11, 4.34, 2.46);
+    this.camera10 = FixedCamera.create({ 
+      position: camera10Position, 
+      startActive: false,
+      fov: 70, // Start at 20mm (70° FOV)
+      enableRotationControl: false,
+      enableZoom: false // Will handle focal length toggle manually
+    });
+    this.camera10.setTarget(camera10Target);
+    
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8, this.camera9);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8, this.camera9, this.camera10);
     
     // Wait for the level to load completely
     await this.waitForLevelLoad();
-    
-    // === PRZYKŁADY JAK DODAĆ MATERIAŁ NA OBIEKT Z LEVELU ===
-    
-    // PRZYKŁAD 1: Zastosuj materiał na konkretny obiekt po nazwie
-    // Odkomentuj i zmień 'NazwaObiektu' na nazwę Twojego obiektu ze sceny
-    /*
-    const myObject = this.findActorByName('NazwaObiektu');
-    if (myObject) {
-      const metalMaterial = new DirtyYellowMetalMaterial();
-      
-      // Znajdź mesh component
-      const meshComponent = myObject.findComponentByClass(ENGINE.MeshComponent);
-      if (meshComponent) {
-        const mesh = meshComponent.getMesh();
-        if (mesh) {
-          metalMaterial.applyToMesh(mesh);
-          console.log('Materiał zastosowany na:', myObject.name);
-        }
-      }
-    }
-    */
-    
-    // PRZYKŁAD 2: Zastosuj na wszystkie meshe w aktorze
-    /*
-    const myObject = this.findActorByName('NazwaObiektu');
-    if (myObject) {
-      const metalMaterial = new DirtyYellowMetalMaterial();
-      
-      // Znajdź wszystkie mesh componenty
-      const meshComponents = myObject.findComponentsByClass(ENGINE.MeshComponent);
-      for (const meshComponent of meshComponents) {
-        const mesh = meshComponent.getMesh();
-        if (mesh) {
-          metalMaterial.applyToMesh(mesh);
-        }
-      }
-      
-      // Opcjonalne dostosowanie
-      metalMaterial.setColor(0xFFD700);  // złoty
-      metalMaterial.setRoughness(0.5);
-      metalMaterial.setTextureRepeat(3, 3);
-    }
-    */
-    
-    // PRZYKŁAD 3: Zastosuj na wszystkie obiekty o określonym prefiksie nazwy
-    /*
-    const allActors = this.world.getActors();
-    const metalMaterial = new DirtyYellowMetalMaterial();
-    
-    for (const actor of allActors) {
-      if (actor.name.startsWith('Metal_')) { // Wszystkie aktory zaczynające się od "Metal_"
-        const meshComponents = actor.findComponentsByClass(ENGINE.MeshComponent);
-        for (const meshComponent of meshComponents) {
-          const mesh = meshComponent.getMesh();
-          if (mesh) {
-            metalMaterial.applyToMesh(mesh);
-          }
-        }
-      }
-    }
-    */
     
     // Try to find Stan actor for camera 1
     let stanActor = this.findActorByName('Stan');
@@ -267,6 +236,25 @@ class MyGame extends ENGINE.BaseGameLoop {
       console.warn('Stan actor not found, pointing camera 1 at expected position');
       this.camera1.setTarget(stanPosition);
     }
+
+    // Stan_Blended at (10.07, 0.6, 10.19) with farming animation
+    const stanBlended = ENGINE.ClassRegistry.constructObject('GAME.StanBlendedActor', false) as ENGINE.Actor;
+    this.world.addActors(stanBlended);
+
+    // Second animated Stan at (0.94, 4.91, 2.29)
+    const stanBlended2 = ENGINE.ClassRegistry.constructObject(
+      'GAME.StanBlendedActor',
+      false,
+      new THREE.Vector3(0.94, 4.91, 2.29)
+    ) as ENGINE.Actor;
+    this.world.addActors(stanBlended2);
+
+    this.hill2Actor = this.findActorByDisplayName('hill2') ?? this.findActorByName('hill2');
+    if (this.hill2Actor) {
+      const startPos = this.hill2Actor.getWorldPosition();
+      startPos.x = 630;
+      this.hill2Actor.setWorldPosition(startPos);
+    }
   }
 
   protected override tick(tickTime: ENGINE.TickTime): void {
@@ -274,6 +262,8 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleCameraSwitching();
     this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
     this.handleCamera3Dolly(tickTime.deltaTimeMS / 1000);
+    this.handleCamera10FocalToggle();
+    this.handleHill2Move(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -355,6 +345,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
+    // Check for key '0' press
+    if (inputManager.isKeyDown('0') && this.activeCamera !== 10) {
+      if (currentTime - this.lastKeyPressTime['0'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(10);
+        this.lastKeyPressTime['0'] = currentTime;
+      }
+    }
+
     // Handle arrow left/right for camera 6 sub-camera switching
     if (this.activeCamera === 6) {
       // Arrow Left - switch to previous camera (c -> b -> a)
@@ -378,7 +376,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
     if (this.camera2) this.camera2.setActive(false);
@@ -391,6 +389,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.camera7) this.camera7.setActive(false);
     if (this.camera8) this.camera8.setActive(false);
     if (this.camera9) this.camera9.setActive(false);
+    if (this.camera10) this.camera10.setActive(false);
 
     // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
@@ -442,6 +441,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera9.setActive(true);
       this.activeCamera = 9;
       console.log('Switched to Camera 9 - Use arrows to rotate');
+    } else if (cameraNumber === 10 && this.camera10) {
+      // Activate camera 10 - zoom camera
+      this.camera10.setActive(true);
+      this.activeCamera = 10;
+      console.log('Switched to Camera 10 - Use W/S to toggle focal length (20mm/120mm)');
     }
   }
 
@@ -506,6 +510,19 @@ class MyGame extends ENGINE.BaseGameLoop {
     return actors.find(actor => 
       actor.name.toLowerCase().includes(namePattern.toLowerCase())
     ) ?? null;
+  }
+
+  /**
+   * Find an actor by editor display name (exact match, case-insensitive).
+   * Use for actors placed in the scene editor (displayName in .genesys-scene).
+   */
+  private findActorByDisplayName(displayName: string): ENGINE.Actor | null {
+    const key = displayName.toLowerCase();
+    const actors = this.world.getActors();
+    return actors.find(actor => {
+      const ed = (actor as unknown as { editorData?: { displayName?: string } }).editorData;
+      return ed?.displayName?.toLowerCase() === key;
+    }) ?? null;
   }
 
   /**
@@ -632,6 +649,79 @@ class MyGame extends ENGINE.BaseGameLoop {
 
       this.camera3.setWorldPosition(newPosition);
       this.camera3.setTarget(this.camera3Target);
+    }
+  }
+
+  /**
+   * Handle camera 10 focal length toggle (W/S keys for instant switch between 20mm and 70mm)
+   */
+  private handleCamera10FocalToggle(): void {
+    if (!this.camera10 || this.activeCamera !== 10) return;
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    // W key - switch to 120mm (FOV 11.5°)
+    if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
+      if (currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN) {
+        if (this.camera10FocalLength !== '120mm') {
+          this.camera10FocalLength = '120mm';
+          this.camera10.setFOV(11.5); // 120mm focal length ≈ 11.5° FOV
+          console.log('Camera 10: Switched to 120mm (FOV 11.5°)');
+        }
+        this.lastKeyPressTime['w'] = currentTime;
+      }
+    }
+
+    // S key - switch to 20mm (FOV 70°)
+    if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
+      if (currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN) {
+        if (this.camera10FocalLength !== '20mm') {
+          this.camera10FocalLength = '20mm';
+          this.camera10.setFOV(70); // 20mm focal length = 70° FOV
+          console.log('Camera 10: Switched to 20mm (FOV 70°)');
+        }
+        this.lastKeyPressTime['s'] = currentTime;
+      }
+    }
+  }
+
+  /**
+   * H key: move hill2 to absolute x=250 over 10 seconds.
+   */
+  private handleHill2Move(deltaTime: number): void {
+    if (!this.hill2Actor) {
+      this.hill2Actor = this.findActorByDisplayName('hill2') ?? this.findActorByName('hill2');
+    }
+    if (!this.hill2Actor) return;
+
+    if (this.hill2IsMoving) {
+      this.hill2MoveProgress += deltaTime / this.HILL2_MOVE_DURATION;
+      if (this.hill2MoveProgress >= 1) {
+        this.hill2MoveProgress = 1;
+        this.hill2IsMoving = false;
+        this.hill2Actor.setWorldPosition(this.hill2MoveTargetPos.clone());
+        return;
+      }
+      const pos = new THREE.Vector3().lerpVectors(
+        this.hill2MoveStartPos,
+        this.hill2MoveTargetPos,
+        this.hill2MoveProgress
+      );
+      this.hill2Actor.setWorldPosition(pos);
+      return;
+    }
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    if ((inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
+      && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['h'] = currentTime;
+      this.hill2MoveStartPos.copy(this.hill2Actor.getWorldPosition());
+      this.hill2MoveTargetPos.set(this.HILL2_TARGET_X, this.hill2MoveStartPos.y, this.hill2MoveStartPos.z);
+      this.hill2MoveProgress = 0;
+      this.hill2IsMoving = true;
     }
   }
 }
