@@ -24,18 +24,43 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera10: FixedCamera | null = null;
   private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'b': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'b': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
+  // H key: move all hills to their target X over 30 seconds
+  private readonly HILLS_MOVE_DURATION = 30;
+
+  private hill1Actor: ENGINE.Actor | null = null;
+  private readonly HILL1_START_X = 700;
+  private readonly HILL1_TARGET_X = 50;
+  private hill1MoveStartPos = new THREE.Vector3();
+  private hill1MoveTargetPos = new THREE.Vector3();
+  private hill1MoveProgress = 0;
+  private hill1IsMoving = false;
+
   private hill2Actor: ENGINE.Actor | null = null;
-
-  // H key: move to absolute x=200 in 10 seconds
+  private readonly HILL2_START_X = 630;
   private readonly HILL2_TARGET_X = 200;
-  private readonly HILL2_MOVE_DURATION = 10;
-
   private hill2MoveStartPos = new THREE.Vector3();
   private hill2MoveTargetPos = new THREE.Vector3();
   private hill2MoveProgress = 0;
   private hill2IsMoving = false;
+
+  private hill3Actor: ENGINE.Actor | null = null;
+  private readonly HILL3_START_X = 530;
+  private readonly HILL3_TARGET_X = 30;
+  private hill3MoveStartPos = new THREE.Vector3();
+  private hill3MoveTargetPos = new THREE.Vector3();
+  private hill3MoveProgress = 0;
+  private hill3IsMoving = false;
+
+  // B key: raise all barriers (any actor with displayName starting with "barrier") from y=-2.16 to y=3.59 over 12 seconds
+  private readonly BARRIER_START_Y = -2.16;
+  private readonly BARRIER_TARGET_Y = 3.59;
+  private readonly BARRIER_RISE_DURATION = 12;
+  private barrierActors: ENGINE.Actor[] = [];
+  private barrierRiseStartY: number[] = [];
+  private barrierRiseProgress = 0;
+  private barrierIsRising = false;
 
   // Camera 10 focal length toggle
   private camera10FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
@@ -249,11 +274,32 @@ class MyGame extends ENGINE.BaseGameLoop {
     ) as ENGINE.Actor;
     this.world.addActors(stanBlended2);
 
+    this.hill1Actor = this.findActorByDisplayName('hill1') ?? this.findActorByName('hill1');
+    if (this.hill1Actor) {
+      const pos = this.hill1Actor.getWorldPosition();
+      pos.x = this.HILL1_START_X;
+      this.hill1Actor.setWorldPosition(pos);
+    }
+
     this.hill2Actor = this.findActorByDisplayName('hill2') ?? this.findActorByName('hill2');
     if (this.hill2Actor) {
-      const startPos = this.hill2Actor.getWorldPosition();
-      startPos.x = 630;
-      this.hill2Actor.setWorldPosition(startPos);
+      const pos = this.hill2Actor.getWorldPosition();
+      pos.x = this.HILL2_START_X;
+      this.hill2Actor.setWorldPosition(pos);
+    }
+
+    this.hill3Actor = this.findActorByDisplayName('hill3') ?? this.findActorByName('hill3');
+    if (this.hill3Actor) {
+      const pos = this.hill3Actor.getWorldPosition();
+      pos.x = this.HILL3_START_X;
+      this.hill3Actor.setWorldPosition(pos);
+    }
+
+    this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
+    for (const actor of this.barrierActors) {
+      const pos = actor.getWorldPosition();
+      pos.y = this.BARRIER_START_Y;
+      actor.setWorldPosition(pos);
     }
   }
 
@@ -263,7 +309,8 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
     this.handleCamera3Dolly(tickTime.deltaTimeMS / 1000);
     this.handleCamera10FocalToggle();
-    this.handleHill2Move(tickTime.deltaTimeMS / 1000);
+    this.handleHillsMove(tickTime.deltaTimeMS / 1000);
+    this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -513,6 +560,17 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
+   * Find all actors whose editor displayName starts with the given prefix (case-insensitive).
+   */
+  private findActorsByDisplayNamePrefix(prefix: string): ENGINE.Actor[] {
+    const key = prefix.toLowerCase();
+    return this.world.getActors().filter(actor => {
+      const ed = (actor as unknown as { editorData?: { displayName?: string } }).editorData;
+      return ed?.displayName?.toLowerCase().startsWith(key);
+    });
+  }
+
+  /**
    * Find an actor by editor display name (exact match, case-insensitive).
    * Use for actors placed in the scene editor (displayName in .genesys-scene).
    */
@@ -687,41 +745,105 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * H key: move hill2 to absolute x=250 over 10 seconds.
+   * H key: start moving all hills to their target X positions over 30 seconds.
    */
-  private handleHill2Move(deltaTime: number): void {
-    if (!this.hill2Actor) {
-      this.hill2Actor = this.findActorByDisplayName('hill2') ?? this.findActorByName('hill2');
-    }
-    if (!this.hill2Actor) return;
+  private handleHillsMove(deltaTime: number): void {
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+    const hPressed = (inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
+      && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN;
 
-    if (this.hill2IsMoving) {
-      this.hill2MoveProgress += deltaTime / this.HILL2_MOVE_DURATION;
-      if (this.hill2MoveProgress >= 1) {
-        this.hill2MoveProgress = 1;
-        this.hill2IsMoving = false;
-        this.hill2Actor.setWorldPosition(this.hill2MoveTargetPos.clone());
-        return;
+    if (hPressed) this.lastKeyPressTime['h'] = currentTime;
+
+    this.tickHill(
+      'hill1', this.hill1Actor, this.HILL1_TARGET_X, deltaTime, hPressed,
+      this.hill1MoveStartPos, this.hill1MoveTargetPos,
+      () => this.hill1MoveProgress, (v) => { this.hill1MoveProgress = v; },
+      () => this.hill1IsMoving, (v) => { this.hill1IsMoving = v; }
+    );
+    this.tickHill(
+      'hill2', this.hill2Actor, this.HILL2_TARGET_X, deltaTime, hPressed,
+      this.hill2MoveStartPos, this.hill2MoveTargetPos,
+      () => this.hill2MoveProgress, (v) => { this.hill2MoveProgress = v; },
+      () => this.hill2IsMoving, (v) => { this.hill2IsMoving = v; }
+    );
+    this.tickHill(
+      'hill3', this.hill3Actor, this.HILL3_TARGET_X, deltaTime, hPressed,
+      this.hill3MoveStartPos, this.hill3MoveTargetPos,
+      () => this.hill3MoveProgress, (v) => { this.hill3MoveProgress = v; },
+      () => this.hill3IsMoving, (v) => { this.hill3IsMoving = v; }
+    );
+  }
+
+  /**
+   * B key: raise all barriers from y=-2.16 to y=3.59 over 7 seconds.
+   */
+  private handleBarrierRise(deltaTime: number): void {
+    if (this.barrierActors.length === 0) {
+      this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
+    }
+    if (this.barrierActors.length === 0) return;
+
+    if (this.barrierIsRising) {
+      this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
+      const t = this.barrierRiseProgress;
+      for (let i = 0; i < this.barrierActors.length; i++) {
+        const actor = this.barrierActors[i];
+        const startY = this.barrierRiseStartY[i];
+        const currentY = startY + (this.BARRIER_TARGET_Y - startY) * t;
+        const pos = actor.getWorldPosition();
+        pos.y = currentY;
+        actor.setWorldPosition(pos);
       }
-      const pos = new THREE.Vector3().lerpVectors(
-        this.hill2MoveStartPos,
-        this.hill2MoveTargetPos,
-        this.hill2MoveProgress
-      );
-      this.hill2Actor.setWorldPosition(pos);
+      if (this.barrierRiseProgress >= 1) {
+        this.barrierIsRising = false;
+      }
       return;
     }
 
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
+    if ((inputManager.isKeyDown('b') || inputManager.isKeyDown('B'))
+      && currentTime - this.lastKeyPressTime['b'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['b'] = currentTime;
+      this.barrierRiseStartY = this.barrierActors.map(a => a.getWorldPosition().y);
+      this.barrierRiseProgress = 0;
+      this.barrierIsRising = true;
+    }
+  }
 
-    if ((inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
-      && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN) {
-      this.lastKeyPressTime['h'] = currentTime;
-      this.hill2MoveStartPos.copy(this.hill2Actor.getWorldPosition());
-      this.hill2MoveTargetPos.set(this.HILL2_TARGET_X, this.hill2MoveStartPos.y, this.hill2MoveStartPos.z);
-      this.hill2MoveProgress = 0;
-      this.hill2IsMoving = true;
+  private tickHill(
+    displayName: string,
+    actor: ENGINE.Actor | null,
+    targetX: number,
+    deltaTime: number,
+    hPressed: boolean,
+    startPos: THREE.Vector3,
+    targetPos: THREE.Vector3,
+    getProgress: () => number,
+    setProgress: (v: number) => void,
+    getIsMoving: () => boolean,
+    setIsMoving: (v: boolean) => void
+  ): void {
+    if (!actor) return;
+
+    if (getIsMoving()) {
+      const progress = Math.min(getProgress() + deltaTime / this.HILLS_MOVE_DURATION, 1);
+      setProgress(progress);
+      if (progress >= 1) {
+        setIsMoving(false);
+        actor.setWorldPosition(targetPos.clone());
+        return;
+      }
+      actor.setWorldPosition(new THREE.Vector3().lerpVectors(startPos, targetPos, progress));
+      return;
+    }
+
+    if (hPressed) {
+      startPos.copy(actor.getWorldPosition());
+      targetPos.set(targetX, startPos.y, startPos.z);
+      setProgress(0);
+      setIsMoving(true);
     }
   }
 }
