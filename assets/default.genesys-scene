@@ -84,7 +84,7 @@
           "scale": {
             "_": [
               1,
-              19.13,
+              19.12,
               1
             ],
             "$bc": "v3"
@@ -5602,8 +5602,8 @@
           "name": "GLTFMeshComponent",
           "position": {
             "_": [
-              297.04,
-              -98.12,
+              356.19,
+              -61.98,
               -34.68
             ],
             "$bc": "v3"
@@ -9338,8 +9338,8 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              3.52,
-              5.315,
+              3.5,
+              5.3,
               -3.53
             ],
             "$bc": "v3"
@@ -9422,8 +9422,8 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              3.52,
-              6.245,
+              3.5,
+              6.27,
               -3.53
             ],
             "$bc": "v3"
@@ -34602,6 +34602,22 @@
             {
               "uuid": "38deae6d-da6d-490f-ad41-1db45a04cb96",
               "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "e71eecb3-f4e7-4983-814c-f850a91dc607",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "8fc6bfb4-665c-42b1-bc3d-4895e3bd7eb1",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "1a61a364-8424-4e4a-be6a-49711836b037",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "2ca51dc6-5ddc-45ec-884f-a4ce77743b19",
+              "$bc": "THREE.Object3D"
             }
           ],
           "color": {
@@ -35115,6 +35131,22 @@
             {
               "uuid": "0e21943c-c4a0-4709-8d4a-d973bb3166a4",
               "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "aa646baa-7818-4eef-92c9-6a8cda04b80e",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "35d7232f-bb8e-462f-a09f-50f0ba7b9902",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "ef9d2ef2-8013-4c1b-81b6-44e9606f8042",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "1c903b3f-88bb-4d98-a911-cf736e7baf5c",
+              "$bc": "THREE.Object3D"
             }
           ],
           "color": {
@@ -35594,6 +35626,22 @@
             },
             {
               "uuid": "4c6c6b4e-810a-44d2-a747-0c0f5d33f172",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "a5411bce-21e3-442c-8699-322106d2560e",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "90934953-705c-49f8-9ab9-ef660dec7d99",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "454e273e-fbd1-46c5-a4a8-71a9f7c2af17",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "e5dd5924-e87d-43e3-aedc-699097487f38",
               "$bc": "THREE.Object3D"
             }
           ],
@@ -37632,7 +37680,7 @@
                   ],
                   "$bc": "c"
                 },
-                8.6,
+                18.3,
                 10.7,
                 2
               ],
@@ -37647,18 +37695,19 @@
             ],
             "$bc": "c"
           },
-          "intensity": 8.6,
+          "intensity": 18.3,
           "distance": 10.7,
           "uuid": "3837c061-b4ca-44f0-9c5c-60bf2895e0db",
           "name": "PointLightComponent",
           "position": {
             "_": [
-              1.62,
-              6.09,
-              -3.84
+              1.93,
+              6.36,
+              -3.27
             ],
             "$bc": "v3"
           },
+          "castShadow": true,
           "$bc": "ENGINE.PointLightComponent"
         },
         "uuid": "d6fab11c104bdab7",
@@ -38079,90 +38128,6 @@
             "$length": 1
           },
           "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
-          "uuid": "600d7d5b5aaef9d3",
-          "name": "MeshComponent",
-          "position": {
-            "_": [
-              1.97,
-              6.4,
-              -3.11
-            ],
-            "$bc": "v3"
-          },
-          "rotation": {
-            "_": [
-              0,
-              -1.570796,
-              0
-            ],
-            "$bc": "e"
-          },
-          "scale": {
-            "_": [
-              0.27,
-              0.39,
-              0.27
-            ],
-            "$bc": "v3"
-          },
-          "castShadow": true,
-          "receiveShadow": true,
-          "$bc": "ENGINE.MeshComponent"
-        },
-        "editorData": {
-          "displayName": "Box_844"
-        },
-        "uuid": "f597c83c993982a1",
-        "$bc": "ENGINE.Actor"
-      },
-      "903": {
-        "rootComponent": {
-          "children": {
-            "$length": 1
-          },
-          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
-          "uuid": "18737937cb0b6085",
-          "name": "MeshComponent",
-          "position": {
-            "_": [
-              1.97,
-              6.33,
-              -3.11
-            ],
-            "$bc": "v3"
-          },
-          "rotation": {
-            "_": [
-              1.570796,
-              0,
-              1.570796
-            ],
-            "$bc": "e"
-          },
-          "scale": {
-            "_": [
-              0.27,
-              0.39,
-              0.27
-            ],
-            "$bc": "v3"
-          },
-          "castShadow": true,
-          "receiveShadow": true,
-          "$bc": "ENGINE.MeshComponent"
-        },
-        "editorData": {
-          "displayName": "Box_845"
-        },
-        "uuid": "86f3ed1de8f76476",
-        "$bc": "ENGINE.Actor"
-      },
-      "904": {
-        "rootComponent": {
-          "children": {
-            "$length": 1
-          },
-          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
           "uuid": "e127b26c6318a8bd",
           "name": "MeshComponent",
           "position": {
@@ -38199,7 +38164,7 @@
         "uuid": "122580c413981bd0",
         "$bc": "ENGINE.Actor"
       },
-      "905": {
+      "903": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38241,7 +38206,7 @@
         "uuid": "e4185a6eb5730a0b",
         "$bc": "ENGINE.Actor"
       },
-      "906": {
+      "904": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38283,7 +38248,7 @@
         "uuid": "4d4c77e468910315",
         "$bc": "ENGINE.Actor"
       },
-      "907": {
+      "905": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38325,7 +38290,7 @@
         "uuid": "323ca9982ddd6f69",
         "$bc": "ENGINE.Actor"
       },
-      "908": {
+      "906": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38367,7 +38332,7 @@
         "uuid": "5d3043f6f598c734",
         "$bc": "ENGINE.Actor"
       },
-      "909": {
+      "907": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38409,7 +38374,7 @@
         "uuid": "4b9e4688f34b594b",
         "$bc": "ENGINE.Actor"
       },
-      "910": {
+      "908": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38451,7 +38416,7 @@
         "uuid": "a6ea74ca1ef6cc53",
         "$bc": "ENGINE.Actor"
       },
-      "911": {
+      "909": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38485,7 +38450,7 @@
         "uuid": "6d4cf8efe73cc55b",
         "$bc": "ENGINE.Actor"
       },
-      "912": {
+      "910": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38519,7 +38484,7 @@
         "uuid": "3043d11b2451315a",
         "$bc": "ENGINE.Actor"
       },
-      "913": {
+      "911": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38561,7 +38526,7 @@
         "uuid": "461782fd6f88ac05",
         "$bc": "ENGINE.Actor"
       },
-      "914": {
+      "912": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38603,7 +38568,7 @@
         "uuid": "c30c715fc49af90e",
         "$bc": "ENGINE.Actor"
       },
-      "915": {
+      "913": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38645,7 +38610,7 @@
         "uuid": "2e66fa9b1bbd1652",
         "$bc": "ENGINE.Actor"
       },
-      "916": {
+      "914": {
         "rootComponent": {
           "children": [
             {
@@ -38690,7 +38655,7 @@
         "uuid": "efe1093dcb512900",
         "$bc": "ENGINE.Actor"
       },
-      "917": {
+      "915": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38724,7 +38689,7 @@
         "uuid": "d77faac52d06f4f1",
         "$bc": "ENGINE.Actor"
       },
-      "918": {
+      "916": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38766,7 +38731,7 @@
         "uuid": "e87ccdfeee523d26",
         "$bc": "ENGINE.Actor"
       },
-      "919": {
+      "917": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38808,7 +38773,7 @@
         "uuid": "4f6baa2e0354b0b5",
         "$bc": "ENGINE.Actor"
       },
-      "920": {
+      "918": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38850,7 +38815,7 @@
         "uuid": "ce13eb7a1aee7369",
         "$bc": "ENGINE.Actor"
       },
-      "921": {
+      "919": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38892,7 +38857,7 @@
         "uuid": "71a73da6c4ea4c1a",
         "$bc": "ENGINE.Actor"
       },
-      "922": {
+      "920": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38934,7 +38899,7 @@
         "uuid": "cb2d6f652f9eb0e6",
         "$bc": "ENGINE.Actor"
       },
-      "923": {
+      "921": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -38968,7 +38933,7 @@
         "uuid": "2dc80c47142292c2",
         "$bc": "ENGINE.Actor"
       },
-      "924": {
+      "922": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39010,7 +38975,7 @@
         "uuid": "e5527850c1685e82",
         "$bc": "ENGINE.Actor"
       },
-      "925": {
+      "923": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39052,7 +39017,7 @@
         "uuid": "4463438c03775f30",
         "$bc": "ENGINE.Actor"
       },
-      "926": {
+      "924": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39094,7 +39059,7 @@
         "uuid": "e5b37cf3937f2659",
         "$bc": "ENGINE.Actor"
       },
-      "927": {
+      "925": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39136,7 +39101,7 @@
         "uuid": "eb5ed887e70cef69",
         "$bc": "ENGINE.Actor"
       },
-      "928": {
+      "926": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39178,7 +39143,7 @@
         "uuid": "6d8a7a22aef63236",
         "$bc": "ENGINE.Actor"
       },
-      "929": {
+      "927": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39220,7 +39185,7 @@
         "uuid": "f8820a2cf5a3dbc5",
         "$bc": "ENGINE.Actor"
       },
-      "930": {
+      "928": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39262,7 +39227,7 @@
         "uuid": "17cb0743d27a80b8",
         "$bc": "ENGINE.Actor"
       },
-      "931": {
+      "929": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39304,7 +39269,7 @@
         "uuid": "604054fc013e2633",
         "$bc": "ENGINE.Actor"
       },
-      "932": {
+      "930": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39346,7 +39311,7 @@
         "uuid": "ff74cf19263c21f1",
         "$bc": "ENGINE.Actor"
       },
-      "933": {
+      "931": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39388,7 +39353,7 @@
         "uuid": "cbbb8ec9e70ca683",
         "$bc": "ENGINE.Actor"
       },
-      "934": {
+      "932": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39430,7 +39395,7 @@
         "uuid": "f95a594b221b6b6f",
         "$bc": "ENGINE.Actor"
       },
-      "935": {
+      "933": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39472,7 +39437,7 @@
         "uuid": "e952bbe139457ca2",
         "$bc": "ENGINE.Actor"
       },
-      "936": {
+      "934": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39514,7 +39479,7 @@
         "uuid": "f2bfdf968e5640c9",
         "$bc": "ENGINE.Actor"
       },
-      "937": {
+      "935": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39556,7 +39521,7 @@
         "uuid": "edd6a10b1528a71b",
         "$bc": "ENGINE.Actor"
       },
-      "938": {
+      "936": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39598,7 +39563,7 @@
         "uuid": "77e1f54d4e8fab79",
         "$bc": "ENGINE.Actor"
       },
-      "939": {
+      "937": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39640,7 +39605,7 @@
         "uuid": "d546059050c9581b",
         "$bc": "ENGINE.Actor"
       },
-      "940": {
+      "938": {
         "rootComponent": {
           "children": [
             {
@@ -39686,7 +39651,7 @@
         "uuid": "2a8d8bf1c19a720a",
         "$bc": "ENGINE.Actor"
       },
-      "941": {
+      "939": {
         "rootComponent": {
           "children": [
             {
@@ -39866,6 +39831,22 @@
             {
               "uuid": "9eca4a9f-8d0c-46fc-90a7-c48ba139f6a6",
               "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "c23ebe8a-b7d3-4ed1-a769-75cfd296a577",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "6c72311a-f102-400a-a2f0-2630a8f965ca",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "38368b5a-b677-4dd1-bbc8-7cb647733bc3",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "bcd38643-34da-4c34-bc23-a8e9e96211a8",
+              "$bc": "THREE.Object3D"
             }
           ],
           "color": {
@@ -39903,7 +39884,7 @@
         "uuid": "0bb5300283847665",
         "$bc": "ENGINE.Actor"
       },
-      "942": {
+      "940": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39945,7 +39926,7 @@
         "uuid": "376e733a821d15c9",
         "$bc": "ENGINE.Actor"
       },
-      "943": {
+      "941": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -39987,7 +39968,7 @@
         "uuid": "2ad6a2ea81d36cac",
         "$bc": "ENGINE.Actor"
       },
-      "944": {
+      "942": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40029,7 +40010,7 @@
         "uuid": "ec21b0c79af6b927",
         "$bc": "ENGINE.Actor"
       },
-      "945": {
+      "943": {
         "rootComponent": {
           "children": [
             {
@@ -40070,7 +40051,7 @@
         "uuid": "c2f8a40ea0567502",
         "$bc": "ENGINE.Actor"
       },
-      "946": {
+      "944": {
         "rootComponent": {
           "children": [
             {
@@ -40111,7 +40092,7 @@
         "uuid": "def81e6a71c579e6",
         "$bc": "ENGINE.Actor"
       },
-      "947": {
+      "945": {
         "rootComponent": {
           "children": [
             {
@@ -40152,7 +40133,7 @@
         "uuid": "0f67f9c09f0c7f61",
         "$bc": "ENGINE.Actor"
       },
-      "948": {
+      "946": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40194,7 +40175,7 @@
         "uuid": "427e82cd10a62d65",
         "$bc": "ENGINE.Actor"
       },
-      "949": {
+      "947": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40236,7 +40217,7 @@
         "uuid": "9ed907b527cf7025",
         "$bc": "ENGINE.Actor"
       },
-      "950": {
+      "948": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40278,7 +40259,7 @@
         "uuid": "35dd6b190b8c389d",
         "$bc": "ENGINE.Actor"
       },
-      "951": {
+      "949": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40320,7 +40301,7 @@
         "uuid": "bae0e0efcda971ed",
         "$bc": "ENGINE.Actor"
       },
-      "952": {
+      "950": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40362,7 +40343,7 @@
         "uuid": "7563cba55b41c600",
         "$bc": "ENGINE.Actor"
       },
-      "953": {
+      "951": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40404,7 +40385,7 @@
         "uuid": "84c29b9f7b6d7fb4",
         "$bc": "ENGINE.Actor"
       },
-      "954": {
+      "952": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40438,7 +40419,7 @@
         "uuid": "34268fbe1f1b0c1c",
         "$bc": "ENGINE.Actor"
       },
-      "955": {
+      "953": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40480,7 +40461,7 @@
         "uuid": "dec4ddd3dfd5b6a4",
         "$bc": "ENGINE.Actor"
       },
-      "956": {
+      "954": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40522,7 +40503,7 @@
         "uuid": "2a624dd72e24f4d6",
         "$bc": "ENGINE.Actor"
       },
-      "957": {
+      "955": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40564,7 +40545,7 @@
         "uuid": "346f6c69ebb25596",
         "$bc": "ENGINE.Actor"
       },
-      "958": {
+      "956": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40606,7 +40587,7 @@
         "uuid": "85c3bacda5f6d4ce",
         "$bc": "ENGINE.Actor"
       },
-      "959": {
+      "957": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40648,7 +40629,7 @@
         "uuid": "73c327c5646f8f7e",
         "$bc": "ENGINE.Actor"
       },
-      "960": {
+      "958": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40690,7 +40671,7 @@
         "uuid": "61709e8295025bd8",
         "$bc": "ENGINE.Actor"
       },
-      "961": {
+      "959": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40732,7 +40713,7 @@
         "uuid": "a53620fb78217f84",
         "$bc": "ENGINE.Actor"
       },
-      "962": {
+      "960": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40774,7 +40755,7 @@
         "uuid": "d5f7ab47793a07bd",
         "$bc": "ENGINE.Actor"
       },
-      "963": {
+      "961": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40816,7 +40797,7 @@
         "uuid": "d0ba6a170cccf698",
         "$bc": "ENGINE.Actor"
       },
-      "964": {
+      "962": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40858,7 +40839,7 @@
         "uuid": "2f558f4274a50953",
         "$bc": "ENGINE.Actor"
       },
-      "965": {
+      "963": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40900,7 +40881,7 @@
         "uuid": "2efad1a5af8338b7",
         "$bc": "ENGINE.Actor"
       },
-      "966": {
+      "964": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40934,7 +40915,7 @@
         "uuid": "0e8b672d6359ca3f",
         "$bc": "ENGINE.Actor"
       },
-      "967": {
+      "965": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -40976,7 +40957,7 @@
         "uuid": "46c0ff399ddcf20b",
         "$bc": "ENGINE.Actor"
       },
-      "968": {
+      "966": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41018,7 +40999,7 @@
         "uuid": "f0bd003b1cf4b1ef",
         "$bc": "ENGINE.Actor"
       },
-      "969": {
+      "967": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41060,7 +41041,7 @@
         "uuid": "6de876488b81dbae",
         "$bc": "ENGINE.Actor"
       },
-      "970": {
+      "968": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41102,7 +41083,7 @@
         "uuid": "2ab026718e99b91b",
         "$bc": "ENGINE.Actor"
       },
-      "971": {
+      "969": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41144,7 +41125,7 @@
         "uuid": "303cb481d1e4fc09",
         "$bc": "ENGINE.Actor"
       },
-      "972": {
+      "970": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41186,7 +41167,7 @@
         "uuid": "825e33519de59ef1",
         "$bc": "ENGINE.Actor"
       },
-      "973": {
+      "971": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41228,7 +41209,7 @@
         "uuid": "4d70ecec69b42b74",
         "$bc": "ENGINE.Actor"
       },
-      "974": {
+      "972": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41270,7 +41251,7 @@
         "uuid": "88d9c1b7ea010563",
         "$bc": "ENGINE.Actor"
       },
-      "975": {
+      "973": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41312,7 +41293,7 @@
         "uuid": "7e920aa16bc04609",
         "$bc": "ENGINE.Actor"
       },
-      "976": {
+      "974": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41354,7 +41335,7 @@
         "uuid": "1fb9b9832abbcbec",
         "$bc": "ENGINE.Actor"
       },
-      "977": {
+      "975": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41396,7 +41377,7 @@
         "uuid": "ce3eda3387d8a5ef",
         "$bc": "ENGINE.Actor"
       },
-      "978": {
+      "976": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41430,7 +41411,7 @@
         "uuid": "bdf170fb87de3117",
         "$bc": "ENGINE.Actor"
       },
-      "979": {
+      "977": {
         "rootComponent": {
           "children": [
             {
@@ -41480,7 +41461,7 @@
         "uuid": "b624a9e0f34bedbf",
         "$bc": "ENGINE.Actor"
       },
-      "980": {
+      "978": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41522,7 +41503,7 @@
         "uuid": "3371528b92de25b4",
         "$bc": "ENGINE.Actor"
       },
-      "981": {
+      "979": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41564,7 +41545,7 @@
         "uuid": "44ad56c46a6dc23e",
         "$bc": "ENGINE.Actor"
       },
-      "982": {
+      "980": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41604,7 +41585,7 @@
         "uuid": "d7e8c2379649ba63",
         "$bc": "ENGINE.Actor"
       },
-      "983": {
+      "981": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41644,7 +41625,7 @@
         "uuid": "e3a161176e4ba1d2",
         "$bc": "ENGINE.Actor"
       },
-      "984": {
+      "982": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41684,7 +41665,7 @@
         "uuid": "d9b2344c959fc44a",
         "$bc": "ENGINE.Actor"
       },
-      "985": {
+      "983": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41724,7 +41705,7 @@
         "uuid": "4ef2085d27eae06f",
         "$bc": "ENGINE.Actor"
       },
-      "986": {
+      "984": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41766,7 +41747,7 @@
         "uuid": "7eaadfa9ed20e451",
         "$bc": "ENGINE.Actor"
       },
-      "987": {
+      "985": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41808,7 +41789,7 @@
         "uuid": "532cb0f771fea2c4",
         "$bc": "ENGINE.Actor"
       },
-      "988": {
+      "986": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41850,7 +41831,7 @@
         "uuid": "8f948e71a4596a8e",
         "$bc": "ENGINE.Actor"
       },
-      "989": {
+      "987": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41892,7 +41873,7 @@
         "uuid": "9ab72fd9a0f88a26",
         "$bc": "ENGINE.Actor"
       },
-      "990": {
+      "988": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41934,7 +41915,7 @@
         "uuid": "8ca9dc78f69ec229",
         "$bc": "ENGINE.Actor"
       },
-      "991": {
+      "989": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -41976,7 +41957,7 @@
         "uuid": "eef623105f2c8271",
         "$bc": "ENGINE.Actor"
       },
-      "992": {
+      "990": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42018,7 +41999,7 @@
         "uuid": "90c065b479fc1741",
         "$bc": "ENGINE.Actor"
       },
-      "993": {
+      "991": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42060,7 +42041,7 @@
         "uuid": "75dd9c51e4088ffd",
         "$bc": "ENGINE.Actor"
       },
-      "994": {
+      "992": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42102,7 +42083,7 @@
         "uuid": "d1479e4c401de610",
         "$bc": "ENGINE.Actor"
       },
-      "995": {
+      "993": {
         "rootComponent": {
           "children": [
             {
@@ -42143,7 +42124,7 @@
         "uuid": "cd13d0314a6a04fa",
         "$bc": "ENGINE.Actor"
       },
-      "996": {
+      "994": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42185,7 +42166,7 @@
         "uuid": "92ffa788ca85fdbf",
         "$bc": "ENGINE.Actor"
       },
-      "997": {
+      "995": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42227,7 +42208,7 @@
         "uuid": "0fe362a9e0bd5be0",
         "$bc": "ENGINE.Actor"
       },
-      "998": {
+      "996": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42269,7 +42250,7 @@
         "uuid": "d40bfa5535323a0a",
         "$bc": "ENGINE.Actor"
       },
-      "999": {
+      "997": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42311,7 +42292,7 @@
         "uuid": "da69d589918128e2",
         "$bc": "ENGINE.Actor"
       },
-      "1000": {
+      "998": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42353,7 +42334,7 @@
         "uuid": "c6a18357670eb8e3",
         "$bc": "ENGINE.Actor"
       },
-      "1001": {
+      "999": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42395,7 +42376,7 @@
         "uuid": "607d7cc68d32b51d",
         "$bc": "ENGINE.Actor"
       },
-      "1002": {
+      "1000": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42437,7 +42418,7 @@
         "uuid": "ebe0ab5311f3d095",
         "$bc": "ENGINE.Actor"
       },
-      "1003": {
+      "1001": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42479,7 +42460,7 @@
         "uuid": "a668d110233d3600",
         "$bc": "ENGINE.Actor"
       },
-      "1004": {
+      "1002": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42521,7 +42502,7 @@
         "uuid": "6209e4c940291810",
         "$bc": "ENGINE.Actor"
       },
-      "1005": {
+      "1003": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42563,7 +42544,7 @@
         "uuid": "b057386373f5518c",
         "$bc": "ENGINE.Actor"
       },
-      "1006": {
+      "1004": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42605,7 +42586,7 @@
         "uuid": "410c8d421c21a4a6",
         "$bc": "ENGINE.Actor"
       },
-      "1007": {
+      "1005": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42647,7 +42628,7 @@
         "uuid": "119625e5317a5c47",
         "$bc": "ENGINE.Actor"
       },
-      "1008": {
+      "1006": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42682,7 +42663,7 @@
         "uuid": "0bb04ad68b4a93f2",
         "$bc": "ENGINE.Actor"
       },
-      "1009": {
+      "1007": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42724,7 +42705,7 @@
         "uuid": "6a66f01203a74149",
         "$bc": "ENGINE.Actor"
       },
-      "1010": {
+      "1008": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -42759,7 +42740,548 @@
         "uuid": "702299c35142d57b",
         "$bc": "ENGINE.Actor"
       },
-      "$length": 1011
+      "1009": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "4fd4dc706248b359",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.609999,
+              6.2,
+              -1.42
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -3.141592,
+              0,
+              -3.141592
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              1.68,
+              0.07,
+              0.38
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_581"
+        },
+        "uuid": "57e86df75df293b5",
+        "$bc": "ENGINE.Actor"
+      },
+      "1010": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "857fcaef74ef324a",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.97,
+              6.26,
+              -1.38
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.21,
+              0.08,
+              0.11
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_940"
+        },
+        "uuid": "03aee5c93eb361f8",
+        "$bc": "ENGINE.Actor"
+      },
+      "1011": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "8d0c9805d4cf0815",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.88,
+              6.3,
+              -1.38
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -3.141593,
+              0,
+              -3.141593
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              -0.03,
+              0.17,
+              0.1
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_942"
+        },
+        "uuid": "db63ab5ba992b8c6",
+        "$bc": "ENGINE.Actor"
+      },
+      "1012": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "de29e39d2a09f263",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.84,
+              6.3,
+              -1.38
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -3.141593,
+              0,
+              -3.141593
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              -0.03,
+              0.17,
+              0.1
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_943"
+        },
+        "uuid": "2fda779a979ebe0f",
+        "$bc": "ENGINE.Actor"
+      },
+      "1013": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "55ddf0c2251cd543",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.2725,
+              6.285,
+              -1.475
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.21,
+              0.08,
+              0.11
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_944"
+        },
+        "uuid": "4acb04842e5800df",
+        "$bc": "ENGINE.Actor"
+      },
+      "1014": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "cfe69a701c7404a2",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.54,
+              6.26,
+              -1.43
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -3.141593,
+              0,
+              -3.141593
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.21,
+              0.08,
+              0.11
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_945"
+        },
+        "uuid": "26ed4c4ef153d5d9",
+        "$bc": "ENGINE.Actor"
+      },
+      "1015": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "f5f657d3c708b382",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.3625,
+              6.325,
+              -1.475
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              -0.03,
+              0.17,
+              0.1
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_946"
+        },
+        "uuid": "91c3707e40736202",
+        "$bc": "ENGINE.Actor"
+      },
+      "1016": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "4c919ba1ac26b5c6",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              1.4025,
+              6.325,
+              -1.475
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              -0.03,
+              0.17,
+              0.1
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_947"
+        },
+        "uuid": "053baf45d56b784f",
+        "$bc": "ENGINE.Actor"
+      },
+      "1017": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "48bcd804138c3ec1",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              3.214264,
+              5.549076,
+              -3.05
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              0,
+              -0.942478
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.36,
+              0.03,
+              0.08
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_948"
+        },
+        "uuid": "cca4873f8e89d44e",
+        "$bc": "ENGINE.Actor"
+      },
+      "1018": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "c94f16ff357dd6a3",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              3.04,
+              5.69,
+              -3.05
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.21,
+              0.06,
+              0.11
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_949"
+        },
+        "uuid": "4653bda9809d7196",
+        "$bc": "ENGINE.Actor"
+      },
+      "1019": {
+        "rootComponent": {
+          "children": [
+            {
+              "_": [
+                {
+                  "_": [
+                    1,
+                    0.913099,
+                    0.47932
+                  ],
+                  "$bc": "c"
+                },
+                2.2,
+                0.7,
+                1.2,
+                0,
+                1.3
+              ],
+              "$bc": "THREE.SpotLight"
+            },
+            {
+              "uuid": "0dca938f-e791-4d1d-8af1-073702ff3fab",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "190ee19d-ad16-4d62-a71e-07abb3053410",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "c8243a9c-a2c2-412e-9bb5-ba5f247d7ae3",
+              "$bc": "THREE.Object3D"
+            },
+            {
+              "uuid": "fb0f95ff-4069-4a7c-8629-e5208cb6f71a",
+              "$bc": "THREE.Object3D"
+            }
+          ],
+          "color": {
+            "_": [
+              1,
+              0.913099,
+              0.47932
+            ],
+            "$bc": "c"
+          },
+          "intensity": 2.2,
+          "distance": 0.7,
+          "decay": 1.3,
+          "angle": 1.2,
+          "uuid": "6275d294-fa8a-4c0a-90ba-e8f6feaaf383",
+          "name": "SpotLightComponent",
+          "position": {
+            "_": [
+              3,
+              4.71,
+              -3.057314
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.SpotLightComponent"
+        },
+        "uuid": "c028c676eb0b7776",
+        "$bc": "ENGINE.Actor"
+      },
+      "1020": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "3cd7e4f6d562f65c",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              0.080003,
+              5.150001,
+              -2.229997
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0.000001,
+              1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.88,
+              0.5,
+              0.81
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_585"
+        },
+        "uuid": "4d8557b390cf3583",
+        "$bc": "ENGINE.Actor"
+      },
+      "1021": {
+        "rootComponent": {
+          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-10_14-15-00.glb",
+          "modelMaterial": "@project/assets/materials/M_Earthy_Snow_Grey.material.json",
+          "uuid": "7cabb301066a9c0c",
+          "name": "GLTFMeshComponent",
+          "position": {
+            "_": [
+              321.43,
+              -31.37,
+              899.02
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -0.000001,
+              -0.017453,
+              -0.000001
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              2014.8,
+              291.78,
+              811.31
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.GLTFMeshComponent"
+        },
+        "editorData": {
+          "displayName": "hill4"
+        },
+        "uuid": "e5bc49cfb0fcd965",
+        "$bc": "ENGINE.GLTFMeshActor"
+      },
+      "$length": 1022
     },
     "resources": null,
     "editorData": {
@@ -42960,6 +43482,14 @@
             "nodeType": "actor"
           },
           {
+            "id": "4d8557b390cf3583",
+            "nodeType": "actor"
+          },
+          {
+            "id": "57e86df75df293b5",
+            "nodeType": "actor"
+          },
+          {
             "id": "bcee39847fb68455",
             "nodeType": "actor"
           },
@@ -43028,6 +43558,46 @@
             "nodeType": "actor"
           },
           {
+            "id": "cca4873f8e89d44e",
+            "nodeType": "actor"
+          },
+          {
+            "id": "4653bda9809d7196",
+            "nodeType": "actor"
+          },
+          {
+            "id": "c028c676eb0b7776",
+            "nodeType": "actor"
+          },
+          {
+            "id": "03aee5c93eb361f8",
+            "nodeType": "actor"
+          },
+          {
+            "id": "db63ab5ba992b8c6",
+            "nodeType": "actor"
+          },
+          {
+            "id": "2fda779a979ebe0f",
+            "nodeType": "actor"
+          },
+          {
+            "id": "4acb04842e5800df",
+            "nodeType": "actor"
+          },
+          {
+            "id": "26ed4c4ef153d5d9",
+            "nodeType": "actor"
+          },
+          {
+            "id": "91c3707e40736202",
+            "nodeType": "actor"
+          },
+          {
+            "id": "053baf45d56b784f",
+            "nodeType": "actor"
+          },
+          {
             "id": "5d3043f6f598c734",
             "nodeType": "actor"
           },
@@ -43045,14 +43615,6 @@
           },
           {
             "id": "cd3b39b314c757a6",
-            "nodeType": "actor"
-          },
-          {
-            "id": "f597c83c993982a1",
-            "nodeType": "actor"
-          },
-          {
-            "id": "86f3ed1de8f76476",
             "nodeType": "actor"
           },
           {
@@ -46805,6 +47367,10 @@
           },
           {
             "id": "702299c35142d57b",
+            "nodeType": "actor"
+          },
+          {
+            "id": "e5bc49cfb0fcd965",
             "nodeType": "actor"
           }
         ]

@@ -59,11 +59,11 @@ class MyGame extends ENGINE.BaseGameLoop {
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'b': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'b': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
-  private readonly HILLS_MOVE_DURATION = 30;
+  private readonly HILLS_MOVE_DURATION = 120;
 
   private hill1Actor: ENGINE.Actor | null = null;
   private readonly HILL1_START_X = 700;
-  private readonly HILL1_TARGET_X = 50;
+  private readonly HILL1_TARGET_X = -560;
   private hill1MoveStartPos = new THREE.Vector3();
   private hill1MoveTargetPos = new THREE.Vector3();
   private hill1MoveProgress = 0;
@@ -71,15 +71,24 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   private hill2Actor: ENGINE.Actor | null = null;
   private readonly HILL2_START_X = 630;
-  private readonly HILL2_TARGET_X = 200;
+  private readonly HILL2_TARGET_X = -590;
   private hill2MoveStartPos = new THREE.Vector3();
   private hill2MoveTargetPos = new THREE.Vector3();
   private hill2MoveProgress = 0;
   private hill2IsMoving = false;
 
+  // hill2 Y descent: at x=113.48 starts descending from y=-61.98 to y=-98.16 over 10 seconds
+  private readonly HILL2_START_Y = -61.98;
+  private readonly HILL2_DESCENT_TRIGGER_X = 113.48;
+  private readonly HILL2_DESCENT_TARGET_Y = -98.16;
+  private readonly HILL2_DESCENT_DURATION = 10;
+  private hill2YProgress = 0;
+  private hill2YIsDescending = false;
+  private hill2YReachedTarget = false;
+
   private hill3Actor: ENGINE.Actor | null = null;
   private readonly HILL3_START_X = 530;
-  private readonly HILL3_TARGET_X = 30;
+  private readonly HILL3_TARGET_X = -590;
   private hill3MoveStartPos = new THREE.Vector3();
   private hill3MoveTargetPos = new THREE.Vector3();
   private hill3MoveProgress = 0;
@@ -311,6 +320,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.hill2Actor) {
       const pos = this.hill2Actor.getWorldPosition();
       pos.x = this.HILL2_START_X;
+      pos.y = this.HILL2_START_Y;
       this.hill2Actor.setWorldPosition(pos);
     }
 
@@ -901,7 +911,12 @@ class MyGame extends ENGINE.BaseGameLoop {
     const hPressed = (inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
       && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN;
 
-    if (hPressed) this.lastKeyPressTime['h'] = currentTime;
+    if (hPressed) {
+      this.lastKeyPressTime['h'] = currentTime;
+      this.hill2YIsDescending = false;
+      this.hill2YReachedTarget = false;
+      this.hill2YProgress = 0;
+    }
 
     this.tickHill(
       'hill1', this.hill1Actor, this.HILL1_TARGET_X, deltaTime, hPressed,
@@ -915,12 +930,41 @@ class MyGame extends ENGINE.BaseGameLoop {
       () => this.hill2MoveProgress, (v) => { this.hill2MoveProgress = v; },
       () => this.hill2IsMoving, (v) => { this.hill2IsMoving = v; }
     );
+    this.handleHill2YDescent(deltaTime);
     this.tickHill(
       'hill3', this.hill3Actor, this.HILL3_TARGET_X, deltaTime, hPressed,
       this.hill3MoveStartPos, this.hill3MoveTargetPos,
       () => this.hill3MoveProgress, (v) => { this.hill3MoveProgress = v; },
       () => this.hill3IsMoving, (v) => { this.hill3IsMoving = v; }
     );
+  }
+
+  /**
+   * hill2 Y descent: when hill2 crosses x=113.48, descends from y=-61.98 to y=-98.16 over 10 seconds.
+   */
+  private handleHill2YDescent(deltaTime: number): void {
+    if (!this.hill2Actor) return;
+    if (!this.hill2IsMoving && !this.hill2YIsDescending && !this.hill2YReachedTarget) return;
+
+    const pos = this.hill2Actor.getWorldPosition();
+
+    if (!this.hill2YIsDescending && !this.hill2YReachedTarget && pos.x <= this.HILL2_DESCENT_TRIGGER_X) {
+      this.hill2YIsDescending = true;
+      this.hill2YProgress = 0;
+    }
+
+    if (this.hill2YIsDescending) {
+      this.hill2YProgress = Math.min(this.hill2YProgress + deltaTime / this.HILL2_DESCENT_DURATION, 1);
+      pos.y = this.HILL2_START_Y + (this.HILL2_DESCENT_TARGET_Y - this.HILL2_START_Y) * this.hill2YProgress;
+      this.hill2Actor.setWorldPosition(pos);
+      if (this.hill2YProgress >= 1) {
+        this.hill2YIsDescending = false;
+        this.hill2YReachedTarget = true;
+      }
+    } else if (this.hill2YReachedTarget) {
+      pos.y = this.HILL2_DESCENT_TARGET_Y;
+      this.hill2Actor.setWorldPosition(pos);
+    }
   }
 
   /**
