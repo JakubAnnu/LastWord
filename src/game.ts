@@ -24,6 +24,38 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera10: FixedCamera | null = null;
   private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 = 1;
   private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
+
+  // Camera 8 (external) - 4 fixed positions, all pointing at the same target
+  private readonly CAMERA8_TARGET = new THREE.Vector3(-0.28, 7.49, -3.57);
+  private readonly CAMERA8_POSITIONS = [
+    new THREE.Vector3(-45.33, 5.25, -8),
+    new THREE.Vector3(-15.92, 1.05, 15.96),
+    new THREE.Vector3(21.74, 0.8, 29.1),
+    new THREE.Vector3(1.37, 13.38, -3.49),
+  ];
+  private activeCamera8Position: number = 0;
+  // Focal length steps for camera 8: 20mm=70°, 50mm=31°, 80mm=20°
+  private readonly CAMERA8_FOCAL_STEPS: Array<{ label: string; fov: number }> = [
+    { label: '20mm', fov: 70 },
+    { label: '50mm', fov: 31 },
+    { label: '80mm', fov: 20 },
+  ];
+  private camera8FocalIndex: number = 0;
+
+  // Camera 9 (internal) - 4 fixed positions, each with its own target; W/S rotate yaw
+  private readonly CAMERA9_POSITIONS = [
+    new THREE.Vector3(-1.65, 5.41, 2.22),
+    new THREE.Vector3(-1.16, 4.75, -6.51),
+    new THREE.Vector3(0.04, 4.77, -5.98),
+    new THREE.Vector3(3.53, 5.79, -5.16),
+  ];
+  private readonly CAMERA9_TARGETS = [
+    new THREE.Vector3(0.03, 4.81, 1.35),
+    new THREE.Vector3(0.85, 4.35, -8.07),
+    new THREE.Vector3(0.04, 3.2, -3.58),
+    new THREE.Vector3(3.53, 5.79, -2.14),
+  ];
+  private activeCamera9Position: number = 0;
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'b': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'b': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
@@ -199,31 +231,25 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera7.setTarget(this.camera7Target);
     
-    // Camera 8 - rotatable camera with arrow keys
-    // Position: (x:-1.95, y:4.82, z:2.1)
-    // Initially points at: (x:-0.39, y:4.78, z:1.27)
-    const camera8Position = new THREE.Vector3(-1.95, 4.82, 2.1);
-    const camera8Target = new THREE.Vector3(-0.39, 4.78, 1.27);
+    // Camera 8 (zewnętrzna) - cycles through 4 fixed positions with arrow keys
+    // All positions point at the same fixed target
     this.camera8 = FixedCamera.create({ 
-      position: camera8Position, 
+      position: this.CAMERA8_POSITIONS[0].clone(), 
       startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: true // Enable arrow key rotation
+      fov: 70,
+      enableRotationControl: false
     });
-    this.camera8.setTarget(camera8Target);
+    this.camera8.setTarget(this.CAMERA8_TARGET);
     
-    // Camera 9 - fixed camera
-    // Position: (x:-1.08, y:4.68, z:-6.58)
-    // Points at: (x:0.59, y:4.21, z:-8.82)
-    const camera9Position = new THREE.Vector3(-1.08, 4.68, -6.58);
-    const camera9Target = new THREE.Vector3(0.59, 4.21, -8.82);
-    this.camera9 = FixedCamera.create({ 
-      position: camera9Position, 
+    // Camera 9 (wewnętrzna) - cycles through 4 positions with arrow keys; W/S rotate yaw
+    this.camera9 = FixedCamera.create({
+      position: this.CAMERA9_POSITIONS[0].clone(),
       startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: true // Enable arrow key rotation
+      fov: 70,
+      enableRotationControl: false,
+      enableWSYawControl: true,
     });
-    this.camera9.setTarget(camera9Target);
+    this.camera9.setTarget(this.CAMERA9_TARGETS[0]);
     
     // Camera 10 - focal length toggle camera with W/S keys
     // Position: (x:0.11, y:5.16, z:0.86)
@@ -308,6 +334,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleCameraSwitching();
     this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
     this.handleCamera3Dolly(tickTime.deltaTimeMS / 1000);
+    this.handleCamera8FocalSwitch();
     this.handleCamera10FocalToggle();
     this.handleHillsMove(tickTime.deltaTimeMS / 1000);
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
@@ -418,6 +445,40 @@ class MyGame extends ENGINE.BaseGameLoop {
         }
       }
     }
+
+    // Handle arrow left/right for camera 8 (external) position cycling
+    if (this.activeCamera === 8) {
+      if (inputManager.isKeyDown('ArrowLeft')) {
+        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera8Position('left');
+          this.lastKeyPressTime['ArrowLeft'] = currentTime;
+        }
+      }
+
+      if (inputManager.isKeyDown('ArrowRight')) {
+        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera8Position('right');
+          this.lastKeyPressTime['ArrowRight'] = currentTime;
+        }
+      }
+    }
+
+    // Handle arrow left/right for camera 9 (internal) position cycling
+    if (this.activeCamera === 9) {
+      if (inputManager.isKeyDown('ArrowLeft')) {
+        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera9Position('left');
+          this.lastKeyPressTime['ArrowLeft'] = currentTime;
+        }
+      }
+
+      if (inputManager.isKeyDown('ArrowRight')) {
+        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
+          this.switchCamera9Position('right');
+          this.lastKeyPressTime['ArrowRight'] = currentTime;
+        }
+      }
+    }
   }
 
   /**
@@ -479,15 +540,22 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera7.setTarget(this.camera7Target);
       console.log('Switched to Camera 7 - Animation started');
     } else if (cameraNumber === 8 && this.camera8) {
-      // Activate camera 8 - rotatable camera
       this.camera8.setActive(true);
       this.activeCamera = 8;
-      console.log('Switched to Camera 8 - Use arrows to rotate');
+      this.activeCamera8Position = 0;
+      this.camera8FocalIndex = 0;
+      this.camera8.setWorldPosition(this.CAMERA8_POSITIONS[0].clone());
+      this.camera8.setTarget(this.CAMERA8_TARGET);
+      this.camera8.setFOV(this.CAMERA8_FOCAL_STEPS[0].fov);
+      console.log('Switched to Camera 8 (zewnętrzna) - position 8.1 - arrows: cycle positions, W/S: focal length');
     } else if (cameraNumber === 9 && this.camera9) {
-      // Activate camera 9 - rotatable camera
       this.camera9.setActive(true);
       this.activeCamera = 9;
-      console.log('Switched to Camera 9 - Use arrows to rotate');
+      this.activeCamera9Position = 0;
+      this.camera9.setWorldPosition(this.CAMERA9_POSITIONS[0].clone());
+      this.camera9.setTarget(this.CAMERA9_TARGETS[0]);
+      this.camera9.resetRotationOffsets();
+      console.log('Switched to Camera 9 (wewnętrzna) - position 9.1 - Use arrows to cycle, A/D to rotate');
     } else if (cameraNumber === 10 && this.camera10) {
       // Activate camera 10 - zoom camera
       this.camera10.setActive(true);
@@ -539,6 +607,47 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera6c.setActive(true);
       console.log('Switched to Camera 6c');
     }
+  }
+
+  /**
+   * Cycle camera 8 (external) through its 4 fixed positions using arrow keys
+   */
+  private switchCamera8Position(direction: 'left' | 'right'): void {
+    if (!this.camera8) return;
+
+    const count = this.CAMERA8_POSITIONS.length;
+    if (direction === 'left') {
+      this.activeCamera8Position = (this.activeCamera8Position - 1 + count) % count;
+    } else {
+      this.activeCamera8Position = (this.activeCamera8Position + 1) % count;
+    }
+
+    const pos = this.CAMERA8_POSITIONS[this.activeCamera8Position];
+    this.camera8.setWorldPosition(pos.clone());
+    this.camera8.setTarget(this.CAMERA8_TARGET);
+    console.log(`Camera 8 (zewnętrzna) - position 8.${this.activeCamera8Position + 1}`);
+  }
+
+  /**
+   * Cycle camera 9 (internal) through its 4 fixed positions using arrow keys.
+   * Resets yaw rotation on each position change.
+   */
+  private switchCamera9Position(direction: 'left' | 'right'): void {
+    if (!this.camera9) return;
+
+    const count = this.CAMERA9_POSITIONS.length;
+    if (direction === 'left') {
+      this.activeCamera9Position = (this.activeCamera9Position - 1 + count) % count;
+    } else {
+      this.activeCamera9Position = (this.activeCamera9Position + 1) % count;
+    }
+
+    const pos = this.CAMERA9_POSITIONS[this.activeCamera9Position];
+    const target = this.CAMERA9_TARGETS[this.activeCamera9Position];
+    this.camera9.setWorldPosition(pos.clone());
+    this.camera9.setTarget(target);
+    this.camera9.resetRotationOffsets();
+    console.log(`Camera 9 (wewnętrzna) - position 9.${this.activeCamera9Position + 1}`);
   }
 
   /**
@@ -707,6 +816,45 @@ class MyGame extends ENGINE.BaseGameLoop {
 
       this.camera3.setWorldPosition(newPosition);
       this.camera3.setTarget(this.camera3Target);
+    }
+  }
+
+  /**
+   * Handle camera 8 focal length stepping: W = longer focal (narrower), S = shorter focal (wider)
+   * Steps: 20mm (70°) → 50mm (31°) → 80mm (20°)
+   */
+  private handleCamera8FocalSwitch(): void {
+    if (!this.camera8 || this.activeCamera !== 8) return;
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    // W key - step to longer focal length (narrower FOV)
+    if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
+      if (currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN) {
+        this.lastKeyPressTime['w'] = currentTime;
+        const next = Math.min(this.camera8FocalIndex + 1, this.CAMERA8_FOCAL_STEPS.length - 1);
+        if (next !== this.camera8FocalIndex) {
+          this.camera8FocalIndex = next;
+          const step = this.CAMERA8_FOCAL_STEPS[this.camera8FocalIndex];
+          this.camera8.setFOV(step.fov);
+          console.log(`Camera 8: ${step.label} (FOV ${step.fov}°)`);
+        }
+      }
+    }
+
+    // S key - step to shorter focal length (wider FOV)
+    if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
+      if (currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN) {
+        this.lastKeyPressTime['s'] = currentTime;
+        const prev = Math.max(this.camera8FocalIndex - 1, 0);
+        if (prev !== this.camera8FocalIndex) {
+          this.camera8FocalIndex = prev;
+          const step = this.CAMERA8_FOCAL_STEPS[this.camera8FocalIndex];
+          this.camera8.setFOV(step.fov);
+          console.log(`Camera 8: ${step.label} (FOV ${step.fov}°)`);
+        }
+      }
     }
   }
 

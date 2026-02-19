@@ -15,6 +15,8 @@ export interface FixedCameraOptions extends ENGINE.ActorOptions {
   rollDegrees?: number;
   /** Enable zoom functionality (W/S keys) */
   enableZoom?: boolean;
+  /** Enable A/D keys for yaw rotation (left/right pan) */
+  enableWSYawControl?: boolean;
   /** Minimum FOV for zoom (maximum zoom in) */
   minFOV?: number;
   /** Maximum FOV for zoom (maximum zoom out) */
@@ -41,6 +43,9 @@ export class FixedCamera extends ENGINE.Actor {
   private readonly MAX_YAW = 120; // Maximum yaw rotation in degrees (significantly increased for wider range)
   private readonly MAX_PITCH = 91; // Maximum pitch rotation in degrees (increased by 30%)
   private readonly ROTATION_SPEED = 60; // Degrees per second
+
+  // W/S yaw rotation control
+  private enableWSYawControl: boolean = false;
 
   // Zoom control
   private enableZoom: boolean = false;
@@ -97,6 +102,9 @@ export class FixedCamera extends ENGINE.Actor {
 
     // Store rotation control setting
     this.enableRotationControl = options?.enableRotationControl ?? true;
+
+    // Store W/S yaw control setting
+    this.enableWSYawControl = options?.enableWSYawControl ?? false;
   }
 
   /**
@@ -122,6 +130,15 @@ export class FixedCamera extends ENGINE.Actor {
    */
   public isActive(): boolean {
     return this.cameraComponent.isActive();
+  }
+
+  /**
+   * Resets yaw and pitch rotation offsets back to zero (base look-at direction)
+   */
+  public resetRotationOffsets(): void {
+    this.currentYaw = 0;
+    this.currentPitch = 0;
+    this.applyCameraRotation();
   }
 
   /**
@@ -235,6 +252,36 @@ export class FixedCamera extends ENGINE.Actor {
   }
 
   /**
+   * Handles W/S keys for yaw-only rotation (left/right pan)
+   */
+  private handleWSYawControl(deltaTime: number): void {
+    if (!this.enableWSYawControl || !this.isActive()) return;
+
+    const world = this.getWorld();
+    if (!world) return;
+
+    const inputManager = world.inputManager;
+    const rotationAmount = this.ROTATION_SPEED * deltaTime;
+    let rotationChanged = false;
+
+    // A key - rotate left (negative yaw)
+    if (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) {
+      this.currentYaw = Math.max(this.currentYaw - rotationAmount, -this.MAX_YAW);
+      rotationChanged = true;
+    }
+
+    // D key - rotate right (positive yaw)
+    if (inputManager.isKeyDown('d') || inputManager.isKeyDown('D')) {
+      this.currentYaw = Math.min(this.currentYaw + rotationAmount, this.MAX_YAW);
+      rotationChanged = true;
+    }
+
+    if (rotationChanged) {
+      this.applyCameraRotation();
+    }
+  }
+
+  /**
    * Handles keyboard input for camera zoom (W/S keys)
    */
   private handleCameraZoom(deltaTime: number): void {
@@ -281,6 +328,9 @@ export class FixedCamera extends ENGINE.Actor {
     
     // Handle camera rotation input
     this.handleCameraRotation(deltaTime);
+
+    // Handle W/S yaw rotation input
+    this.handleWSYawControl(deltaTime);
     
     // Handle camera zoom input
     this.handleCameraZoom(deltaTime);
