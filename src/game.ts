@@ -86,7 +86,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activeCamera9Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
   private readonly HILLS_MOVE_DURATION = 240;
@@ -145,6 +145,49 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly PRINT_SCALE_MIN = 0.1;
   private readonly PRINT_SCALE_MAX = 0.5;
   private readonly PRINT_SCALE_SPEED = 0.25; // units per second — controls smoothness
+
+  // K key: "generator" sequence — slider → coal → (coal + door + slider simultaneously)
+  private genSliderActor: ENGINE.Actor | null = null;
+  private genCoalActor: ENGINE.Actor | null = null;
+  private genDoorActor: ENGINE.Actor | null = null;
+
+  // Step durations (seconds)
+  private readonly GEN_STEP1_DURATION = 2.4;  // slider slides in
+  private readonly GEN_STEP2_DURATION = 1.8;  // coal moves in
+  private readonly GEN_STEP3_DURATION = 1.0;  // coal holds position (pause)
+  private readonly GEN_STEP4_DURATION = 4.8;  // all three move simultaneously
+
+  // Step 1: slider (3.3,2.8,-29.58) → (0.3,1.84,-29.58)
+  private readonly GEN_SLIDER_STEP1_START = new THREE.Vector3(0.3, 2.8, -29.58);
+  private readonly GEN_SLIDER_STEP1_END   = new THREE.Vector3(0.3, 1.79, -29.58);
+  // Step 2: coal (0.6,1.52,-31.8) → (0.6,1.52,-29.55)
+  private readonly GEN_COAL_STEP2_START   = new THREE.Vector3(0.6, 1.52, -31.8);
+  private readonly GEN_COAL_STEP2_END     = new THREE.Vector3(0.6, 1.52, -29.55);
+  // Step 3: coal → (4.92,1.52,-29.55)
+  private readonly GEN_COAL_STEP3_END     = new THREE.Vector3(4.92, 1.52, -29.55);
+  // Step 3: door (3.3,2.19,-29.58) → (3.3,2.98,-29.58)
+  private readonly GEN_DOOR_STEP3_START   = new THREE.Vector3(3.3, 2.21, -29.58);
+  private readonly GEN_DOOR_STEP3_END     = new THREE.Vector3(3.3, 2.98, -29.58);
+  // Step 3: slider (0.3,1.84,-29.58) → (3.3,2.8,-29.58)
+  // Slider returns to its original start position (no pause — starts during step 3)
+  private readonly GEN_SLIDER_RETURN_DURATION = 3.0;
+
+  // State machine: 0=idle, 1=step1, 2=step2, 3=step3
+  private readonly GEN_DOOR_SPEED_MULT = 1.4;          // door 40% faster
+  private readonly GEN_COAL_DOOR_TRIGGER_X = 3.25;     // coal X that triggers door close
+  private readonly GEN_DOOR_CLOSE_DURATION = 4 / 1.4;  // same speed as opening
+
+  private genStep = 0;
+  private genProgress = 0;
+  private genStep3SliderStart = new THREE.Vector3();
+  private genActive = false;
+  private genSliderReturnActive = false;
+  private genSliderReturnProgress = 0;
+  private genSliderReturnStartPos = new THREE.Vector3();
+  private genStep3CoalStart = new THREE.Vector3();
+  private genDoorClosing = false;
+  private genDoorCloseProgress = 0;
+  private genDoorCloseStartPos = new THREE.Vector3();
 
   // Camera 10 focal length toggle
   private camera10FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
@@ -365,6 +408,14 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.printActor) {
       this.printActor.setWorldScale(this.printCurrentScale.clone());
     }
+
+    this.genSliderActor = this.findActorByDisplayName('slider') ?? this.findActorByDisplayName('slider_02');
+    this.genCoalActor   = this.findActorByDisplayName('coal')   ?? this.findActorByName('coal');
+    this.genDoorActor   = this.findActorByDisplayName('door')   ?? this.findActorByName('door');
+
+    if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
+    if (this.genCoalActor)   this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
+    if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
   }
 
   protected override tick(tickTime: ENGINE.TickTime): void {
@@ -377,6 +428,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleHillsMove(tickTime.deltaTimeMS / 1000);
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
     this.handlePrintScale(tickTime.deltaTimeMS / 1000);
+    this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -1113,6 +1165,145 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     for (const axis of axes) {
       this.printScaleTarget[axis] = Math.max(min, Math.min(max, this.printScaleTarget[axis]));
+    }
+  }
+
+  /**
+   * K key: "generator" sequence.
+   * Step 1: slider slides to loading position.
+   * Step 2: coal moves in.
+   * Step 3: coal holds position (1 s pause).
+   * Step 4: coal moves out, door opens, slider returns — simultaneously.
+   */
+  private handleGeneratorSequence(deltaTime: number): void {
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    if ((inputManager.isKeyDown('k') || inputManager.isKeyDown('K'))
+      && currentTime - this.lastKeyPressTime['k'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['k'] = currentTime;
+
+      if (!this.genActive) {
+        // Start looping sequence
+        this.genActive = true;
+        this.genStartLoop();
+      } else {
+        // Stop sequence and reset
+        this.genActive = false;
+        this.genStep = 0;
+        this.genProgress = 0;
+        this.genSliderReturnActive = false;
+        this.genSliderReturnProgress = 0;
+        this.genDoorClosing = false;
+        this.genDoorCloseProgress = 0;
+        if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
+        if (this.genCoalActor)   this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
+        if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
+      }
+    }
+
+    if (!this.genActive || this.genStep === 0) return;
+
+    this.genProgress += deltaTime / this.genCurrentDuration();
+    const t = Math.min(this.genProgress, 1);
+    this.applyGenStep(t);
+
+    // Slider return: starts at step 3, runs independently through step 3+4
+    if (this.genSliderReturnActive && this.genSliderActor) {
+      this.genSliderReturnProgress = Math.min(
+        this.genSliderReturnProgress + deltaTime / this.GEN_SLIDER_RETURN_DURATION, 1
+      );
+      this.genSliderActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(
+          this.genSliderReturnStartPos, this.GEN_SLIDER_STEP1_START, this.genSliderReturnProgress
+        )
+      );
+      if (this.genSliderReturnProgress >= 1) this.genSliderReturnActive = false;
+    }
+
+    // Step 4: door 40% faster + close when coal passes x=3.25
+    if (this.genStep === 4) {
+      if (!this.genDoorClosing && this.genCoalActor) {
+        const coalX = this.genCoalActor.getWorldPosition().x;
+        if (coalX >= this.GEN_COAL_DOOR_TRIGGER_X) {
+          this.genDoorClosing = true;
+          this.genDoorCloseProgress = 0;
+          if (this.genDoorActor) this.genDoorCloseStartPos.copy(this.genDoorActor.getWorldPosition());
+        }
+      }
+
+      if (this.genDoorClosing && this.genDoorActor) {
+        this.genDoorCloseProgress = Math.min(
+          this.genDoorCloseProgress + deltaTime / this.GEN_DOOR_CLOSE_DURATION, 1
+        );
+        this.genDoorActor.setWorldPosition(
+          new THREE.Vector3().lerpVectors(
+            this.genDoorCloseStartPos, this.GEN_DOOR_STEP3_START, this.genDoorCloseProgress
+          )
+        );
+      }
+    }
+
+    if (this.genProgress >= 1) {
+      if (this.genStep < 4) {
+        this.genStep++;
+        this.genProgress = 0;
+        if (this.genStep === 3) {
+          this.genSliderReturnActive = true;
+          this.genSliderReturnProgress = 0;
+          if (this.genSliderActor) this.genSliderReturnStartPos.copy(this.genSliderActor.getWorldPosition());
+        }
+        if (this.genStep === 4) {
+          this.genDoorClosing = false;
+          this.genDoorCloseProgress = 0;
+          if (this.genCoalActor) this.genStep3CoalStart.copy(this.genCoalActor.getWorldPosition());
+        }
+      } else {
+        // Step 4 finished — loop back to step 1
+        if (this.genCoalActor) this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
+        this.genStartLoop();
+      }
+    }
+  }
+
+  private genStartLoop(): void {
+    this.genStep = 1;
+    this.genProgress = 0;
+    this.genSliderReturnActive = false;
+    this.genSliderReturnProgress = 0;
+    this.genDoorClosing = false;
+    this.genDoorCloseProgress = 0;
+  }
+
+  private genCurrentDuration(): number {
+    if (this.genStep === 1) return this.GEN_STEP1_DURATION;
+    if (this.genStep === 2) return this.GEN_STEP2_DURATION;
+    if (this.genStep === 3) return this.GEN_STEP3_DURATION;
+    return this.GEN_STEP4_DURATION;
+  }
+
+  private applyGenStep(t: number): void {
+    const lerp = (a: THREE.Vector3, b: THREE.Vector3, f: number) =>
+      new THREE.Vector3().lerpVectors(a, b, Math.min(f, 1));
+
+    if (this.genStep === 1 && this.genSliderActor) {
+      this.genSliderActor.setWorldPosition(lerp(this.GEN_SLIDER_STEP1_START, this.GEN_SLIDER_STEP1_END, t));
+    }
+
+    if (this.genStep === 2 && this.genCoalActor) {
+      this.genCoalActor.setWorldPosition(lerp(this.GEN_COAL_STEP2_START, this.GEN_COAL_STEP2_END, t));
+    }
+
+    // Step 3: pause — coal holds its position, nothing moves
+
+    if (this.genStep === 4) {
+      if (this.genCoalActor)
+        this.genCoalActor.setWorldPosition(lerp(this.genStep3CoalStart, this.GEN_COAL_STEP3_END, t));
+      if (!this.genDoorClosing && this.genDoorActor)
+        this.genDoorActor.setWorldPosition(
+          lerp(this.GEN_DOOR_STEP3_START, this.GEN_DOOR_STEP3_END, t * this.GEN_DOOR_SPEED_MULT)
+        );
+      // Slider is handled by independent return animation (genSliderReturnActive)
     }
   }
 
