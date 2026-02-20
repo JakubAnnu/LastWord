@@ -50,6 +50,10 @@
 "metalness": number      // 0=dielectric, 1=conductor
 "envMapIntensity": number // reflection multiplier
 
+// Emissive (self-illumination)
+"emissive": { "_": [R, G, B], "$bc": "c" }  // glow color
+"emissiveIntensity": number  // glow strength (0-10+)
+
 // Transparency (optional)
 "transparent": boolean
 "opacity": 0.0-1.0       // 0=invisible, 1=opaque
@@ -118,6 +122,24 @@
     "roughness": 0.1,
     "metalness": 0.2,
     "envMapIntensity": 1.6,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}
+```
+
+### Emissive (Self-illuminating)
+```json
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Emissive_Glow",
+    "userData": {},
+    "color": { "_": [R, G, B], "$bc": "c" },
+    "emissive": { "_": [R, G, B], "$bc": "c" },
+    "emissiveIntensity": 2.0,
+    "roughness": 0.2,
+    "metalness": 0.0,
+    "envMapIntensity": 0.3,
     "$bc": "THREE.MeshStandardMaterial"
   }
 }

@@ -15,7 +15,7 @@ export interface FixedCameraOptions extends ENGINE.ActorOptions {
   rollDegrees?: number;
   /** Enable zoom functionality (W/S keys) */
   enableZoom?: boolean;
-  /** Enable A/D keys for yaw rotation (left/right pan) */
+  /** Enable Arrow Left/Right keys for yaw rotation (left/right pan) */
   enableWSYawControl?: boolean;
   /** Minimum FOV for zoom (maximum zoom in) */
   minFOV?: number;
@@ -264,14 +264,14 @@ export class FixedCamera extends ENGINE.Actor {
     const rotationAmount = this.ROTATION_SPEED * deltaTime;
     let rotationChanged = false;
 
-    // A key - rotate left (negative yaw)
-    if (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) {
+    // Arrow Left - rotate left (negative yaw)
+    if (inputManager.isKeyDown('ArrowLeft')) {
       this.currentYaw = Math.max(this.currentYaw - rotationAmount, -this.MAX_YAW);
       rotationChanged = true;
     }
 
-    // D key - rotate right (positive yaw)
-    if (inputManager.isKeyDown('d') || inputManager.isKeyDown('D')) {
+    // Arrow Right - rotate right (positive yaw)
+    if (inputManager.isKeyDown('ArrowRight')) {
       this.currentYaw = Math.min(this.currentYaw + rotationAmount, this.MAX_YAW);
       rotationChanged = true;
     }

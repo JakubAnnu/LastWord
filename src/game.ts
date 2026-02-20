@@ -15,15 +15,43 @@ class MyGame extends ENGINE.BaseGameLoop {
   private camera3: FixedCamera | null = null;
   private camera4: FixedCamera | null = null;
   private camera5: FixedCamera | null = null;
-  private camera6a: FixedCamera | null = null;
-  private camera6b: FixedCamera | null = null;
-  private camera6c: FixedCamera | null = null;
+  private camera6: FixedCamera | null = null;
   private camera7: FixedCamera | null = null;
   private camera8: FixedCamera | null = null;
   private camera9: FixedCamera | null = null;
   private camera10: FixedCamera | null = null;
   private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 = 1;
-  private activeCamera6Sub: 'a' | 'b' | 'c' = 'a'; // Track which sub-camera of 6 is active
+
+  // Camera 1 - 3 positions; position 1.1 tracks Stan actor
+  private readonly CAMERA1_POSITIONS = [
+    new THREE.Vector3(8.37, 2.73, 11.28),
+    new THREE.Vector3(-9.8, 2.3, -18.9),
+    new THREE.Vector3(-4.4, 2.7, -29.5),
+  ];
+  private readonly CAMERA1_TARGETS_FIXED = [
+    new THREE.Vector3(1.43, 2.15, -3.97),
+    new THREE.Vector3(-7.3, 1.48, 1.48),
+    new THREE.Vector3(2.9, 1.6, -29.6),
+  ];
+  private camera1StanTarget: THREE.Vector3 | ENGINE.Actor = new THREE.Vector3(1.43, 2.15, -3.97);
+  private activeCamera1Position: number = 0;
+
+  // Camera 6 - single camera cycling through 4 positions with arrow keys
+  private readonly CAMERA6_POSITIONS = [
+    new THREE.Vector3(2.3, 10.39, -4.1),
+    new THREE.Vector3(9.05, 3.04, -14.35),
+    new THREE.Vector3(9.07, 3.14, -8.48),
+    new THREE.Vector3(9.12, 3.13, -20.79),
+  ];
+  private readonly CAMERA6_TARGETS = [
+    new THREE.Vector3(9.5, 3.57, -11.46),
+    new THREE.Vector3(11.08, 2.29, -14.91),
+    new THREE.Vector3(10.85, 2.3, -8.48),
+    new THREE.Vector3(11.14, 1.98, -20.79),
+  ];
+  // FOV per position: 40mm≈39° for pos 6.1, 20mm=70° for the rest
+  private readonly CAMERA6_FOVS = [39, 70, 70, 70];
+  private activeCamera6Position: number = 0;
 
   // Camera 8 (external) - 4 fixed positions, all pointing at the same target
   private readonly CAMERA8_TARGET = new THREE.Vector3(-0.28, 7.49, -3.57);
@@ -56,10 +84,12 @@ class MyGame extends ENGINE.BaseGameLoop {
     new THREE.Vector3(3.53, 5.79, -2.14),
   ];
   private activeCamera9Position: number = 0;
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'h': number; 'b': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'h': 0, 'b': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private cameraPositionLabel: HTMLElement | null = null;
+
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
-  private readonly HILLS_MOVE_DURATION = 120;
+  private readonly HILLS_MOVE_DURATION = 240;
 
   private hill1Actor: ENGINE.Actor | null = null;
   private readonly HILL1_START_X = 700;
@@ -77,14 +107,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   private hill2MoveProgress = 0;
   private hill2IsMoving = false;
 
-  // hill2 Y descent: at x=113.48 starts descending from y=-61.98 to y=-98.16 over 10 seconds
+  // hill2 Y: starts at y=-61.98, reaches y=-98.16 exactly when x=113.48, stays there after
   private readonly HILL2_START_Y = -61.98;
-  private readonly HILL2_DESCENT_TRIGGER_X = 113.48;
   private readonly HILL2_DESCENT_TARGET_Y = -98.16;
-  private readonly HILL2_DESCENT_DURATION = 10;
-  private hill2YProgress = 0;
-  private hill2YIsDescending = false;
-  private hill2YReachedTarget = false;
+  private readonly HILL2_DESCENT_TRIGGER_X = 113.48;
 
   private hill3Actor: ENGINE.Actor | null = null;
   private readonly HILL3_START_X = 530;
@@ -94,6 +120,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   private hill3MoveProgress = 0;
   private hill3IsMoving = false;
 
+  private hill4Actor: ENGINE.Actor | null = null;
+  private readonly HILL4_START_X = 1043.47;
+  private readonly HILL4_TARGET_X = -799.72;
+  private hill4MoveStartPos = new THREE.Vector3();
+  private hill4MoveTargetPos = new THREE.Vector3();
+  private hill4MoveProgress = 0;
+  private hill4IsMoving = false;
+
   // B key: raise all barriers (any actor with displayName starting with "barrier") from y=-2.16 to y=3.59 over 12 seconds
   private readonly BARRIER_START_Y = -2.16;
   private readonly BARRIER_TARGET_Y = 3.59;
@@ -102,6 +136,15 @@ class MyGame extends ENGINE.BaseGameLoop {
   private barrierRiseStartY: number[] = [];
   private barrierRiseProgress = 0;
   private barrierIsRising = false;
+
+  // P key: toggle smooth random scale animation on "print" model (scale 0.1–0.5 per axis)
+  private printActor: ENGINE.Actor | null = null;
+  private printScaleActive = false;
+  private printCurrentScale = new THREE.Vector3(0.41, 0.18, 0.3);
+  private printScaleTarget = new THREE.Vector3(0.41, 0.18, 0.3);
+  private readonly PRINT_SCALE_MIN = 0.1;
+  private readonly PRINT_SCALE_MAX = 0.5;
+  private readonly PRINT_SCALE_SPEED = 0.25; // units per second — controls smoothness
 
   // Camera 10 focal length toggle
   private camera10FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
@@ -190,42 +233,14 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
     this.camera5.setTarget(camera5Target);
     
-    // Create sixth camera set (6a, 6b, 6c) - all immobile cameras
-    // Camera 6a at position (x:9.05, y:3.04, z:-14.35)
-    // pointing at (x:11.08, y:2.29, z:-14.91)
-    const camera6aPosition = new THREE.Vector3(9.05, 3.04, -14.35);
-    const camera6aTarget = new THREE.Vector3(11.08, 2.29, -14.91);
-    this.camera6a = FixedCamera.create({ 
-      position: camera6aPosition, 
+    // Camera 6 - single camera cycling through 4 positions with arrow keys
+    this.camera6 = FixedCamera.create({
+      position: this.CAMERA6_POSITIONS[0].clone(),
       startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: false // Immobile camera
+      fov: this.CAMERA6_FOVS[0],
+      enableRotationControl: false,
     });
-    this.camera6a.setTarget(camera6aTarget);
-    
-    // Camera 6b at position (x:9.07, y:3.14, z:-8.48)
-    // pointing at (x:10.85, y:2.3, z:-8.48)
-    const camera6bPosition = new THREE.Vector3(9.07, 3.14, -8.48);
-    const camera6bTarget = new THREE.Vector3(10.85, 2.3, -8.48);
-    this.camera6b = FixedCamera.create({ 
-      position: camera6bPosition, 
-      startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: false // Immobile camera
-    });
-    this.camera6b.setTarget(camera6bTarget);
-    
-    // Camera 6c at position (x:9.12, y:3.13, z:-20.79)
-    // pointing at (x:11.14, y:1.98, z:-20.79)
-    const camera6cPosition = new THREE.Vector3(9.12, 3.13, -20.79);
-    const camera6cTarget = new THREE.Vector3(11.14, 1.98, -20.79);
-    this.camera6c = FixedCamera.create({ 
-      position: camera6cPosition, 
-      startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: false // Immobile camera
-    });
-    this.camera6c.setTarget(camera6cTarget);
+    this.camera6.setTarget(this.CAMERA6_TARGETS[0]);
     
     // Camera 7 - animated camera that moves from start to end position with drone-like hover
     // Starts at (x:-2.46, y:6.38, z:-1.73)
@@ -276,9 +291,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera10.setTarget(camera10Target);
     
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6a, this.camera6b, this.camera6c, this.camera7, this.camera8, this.camera9, this.camera10);
+    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6, this.camera7, this.camera8, this.camera9, this.camera10);
     
     // Wait for the level to load completely
+    this.createCameraPositionLabel();
     await this.waitForLevelLoad();
     
     // Try to find Stan actor for camera 1
@@ -291,11 +307,11 @@ class MyGame extends ENGINE.BaseGameLoop {
     
     if (stanActor) {
       console.log(`Found Stan actor: ${stanActor.name}`);
-      this.camera1.setTarget(stanActor);
+      this.camera1StanTarget = stanActor;
     } else {
       console.warn('Stan actor not found, pointing camera 1 at expected position');
-      this.camera1.setTarget(stanPosition);
     }
+    this.camera1.setTarget(this.camera1StanTarget);
 
     // Stan_Blended at (10.07, 0.6, 10.19) with farming animation
     const stanBlended = ENGINE.ClassRegistry.constructObject('GAME.StanBlendedActor', false) as ENGINE.Actor;
@@ -331,11 +347,23 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.hill3Actor.setWorldPosition(pos);
     }
 
+    this.hill4Actor = this.findActorByDisplayName('hill4') ?? this.findActorByName('hill4');
+    if (this.hill4Actor) {
+      const pos = this.hill4Actor.getWorldPosition();
+      pos.x = this.HILL4_START_X;
+      this.hill4Actor.setWorldPosition(pos);
+    }
+
     this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
     for (const actor of this.barrierActors) {
       const pos = actor.getWorldPosition();
       pos.y = this.BARRIER_START_Y;
       actor.setWorldPosition(pos);
+    }
+
+    this.printActor = this.findActorByDisplayName('print') ?? this.findActorByName('print');
+    if (this.printActor) {
+      this.printActor.setWorldScale(this.printCurrentScale.clone());
     }
   }
 
@@ -348,6 +376,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleCamera10FocalToggle();
     this.handleHillsMove(tickTime.deltaTimeMS / 1000);
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
+    this.handlePrintScale(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -437,57 +466,23 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Handle arrow left/right for camera 6 sub-camera switching
-    if (this.activeCamera === 6) {
-      // Arrow Left - switch to previous camera (c -> b -> a)
-      if (inputManager.isKeyDown('ArrowLeft')) {
-        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera6Sub('left');
-          this.lastKeyPressTime['ArrowLeft'] = currentTime;
-        }
-      }
+    // Handle A/D keys for position cycling across cameras 1, 6, 8, 9
+    const switchLeft =
+      (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) &&
+      currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
+    const switchRight =
+      (inputManager.isKeyDown('d') || inputManager.isKeyDown('D')) &&
+      currentTime - this.lastKeyPressTime['d'] > this.KEY_PRESS_COOLDOWN;
 
-      // Arrow Right - switch to next camera (a -> b -> c)
-      if (inputManager.isKeyDown('ArrowRight')) {
-        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera6Sub('right');
-          this.lastKeyPressTime['ArrowRight'] = currentTime;
-        }
-      }
-    }
+    if (switchLeft || switchRight) {
+      const dir = switchLeft ? 'left' : 'right';
+      if (switchLeft) this.lastKeyPressTime['a'] = currentTime;
+      if (switchRight) this.lastKeyPressTime['d'] = currentTime;
 
-    // Handle arrow left/right for camera 8 (external) position cycling
-    if (this.activeCamera === 8) {
-      if (inputManager.isKeyDown('ArrowLeft')) {
-        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera8Position('left');
-          this.lastKeyPressTime['ArrowLeft'] = currentTime;
-        }
-      }
-
-      if (inputManager.isKeyDown('ArrowRight')) {
-        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera8Position('right');
-          this.lastKeyPressTime['ArrowRight'] = currentTime;
-        }
-      }
-    }
-
-    // Handle arrow left/right for camera 9 (internal) position cycling
-    if (this.activeCamera === 9) {
-      if (inputManager.isKeyDown('ArrowLeft')) {
-        if (currentTime - this.lastKeyPressTime['ArrowLeft'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera9Position('left');
-          this.lastKeyPressTime['ArrowLeft'] = currentTime;
-        }
-      }
-
-      if (inputManager.isKeyDown('ArrowRight')) {
-        if (currentTime - this.lastKeyPressTime['ArrowRight'] > this.KEY_PRESS_COOLDOWN) {
-          this.switchCamera9Position('right');
-          this.lastKeyPressTime['ArrowRight'] = currentTime;
-        }
-      }
+      if (this.activeCamera === 1) this.switchCamera1Position(dir);
+      else if (this.activeCamera === 6) this.switchCamera6Position(dir);
+      else if (this.activeCamera === 8) this.switchCamera8Position(dir);
+      else if (this.activeCamera === 9) this.switchCamera9Position(dir);
     }
   }
 
@@ -501,9 +496,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.camera3) this.camera3.setActive(false);
     if (this.camera4) this.camera4.setActive(false);
     if (this.camera5) this.camera5.setActive(false);
-    if (this.camera6a) this.camera6a.setActive(false);
-    if (this.camera6b) this.camera6b.setActive(false);
-    if (this.camera6c) this.camera6c.setActive(false);
+    if (this.camera6) this.camera6.setActive(false);
     if (this.camera7) this.camera7.setActive(false);
     if (this.camera8) this.camera8.setActive(false);
     if (this.camera9) this.camera9.setActive(false);
@@ -513,7 +506,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (cameraNumber === 1 && this.camera1) {
       this.camera1.setActive(true);
       this.activeCamera = 1;
-      console.log('Switched to Camera 1');
+      this.activeCamera1Position = 0;
+      this.camera1.setWorldPosition(this.CAMERA1_POSITIONS[0].clone());
+      this.camera1.setTarget(this.camera1StanTarget);
+      console.log('Switched to Camera 1 - position 1.1 - Use arrows to cycle positions');
     } else if (cameraNumber === 2 && this.camera2) {
       this.camera2.setActive(true);
       this.activeCamera = 2;
@@ -533,10 +529,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera5.setActive(true);
       this.activeCamera = 5;
       console.log('Switched to Camera 5');
-    } else if (cameraNumber === 6) {
-      // Activate camera 6 - which sub-camera depends on activeCamera6Sub
+    } else if (cameraNumber === 6 && this.camera6) {
+      this.camera6.setActive(true);
       this.activeCamera = 6;
-      this.activateCamera6Sub(this.activeCamera6Sub);
+      this.activeCamera6Position = 0;
+      this.camera6.setWorldPosition(this.CAMERA6_POSITIONS[0].clone());
+      this.camera6.setTarget(this.CAMERA6_TARGETS[0]);
+      this.camera6.setFOV(this.CAMERA6_FOVS[0]);
+      console.log('Switched to Camera 6 - position 6.1 - Use arrows to cycle positions');
     } else if (cameraNumber === 7 && this.camera7) {
       // Activate camera 7 and start animation
       this.camera7.setActive(true);
@@ -567,56 +567,60 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.camera9.resetRotationOffsets();
       console.log('Switched to Camera 9 (wewnętrzna) - position 9.1 - Use arrows to cycle, A/D to rotate');
     } else if (cameraNumber === 10 && this.camera10) {
-      // Activate camera 10 - zoom camera
       this.camera10.setActive(true);
       this.activeCamera = 10;
       console.log('Switched to Camera 10 - Use W/S to toggle focal length (20mm/120mm)');
     }
+
+    this.updateCameraPositionLabel();
   }
 
   /**
-   * Switch between camera 6 sub-cameras (a, b, c) using arrow keys
+   * Cycle camera 1 through its 3 fixed positions using arrow keys.
+   * Position 1.1 uses the Stan actor as target (or fallback Vector3).
    */
-  private switchCamera6Sub(direction: 'left' | 'right'): void {
-    const subCameras: Array<'a' | 'b' | 'c'> = ['a', 'b', 'c'];
-    const currentIndex = subCameras.indexOf(this.activeCamera6Sub);
+  private switchCamera1Position(direction: 'left' | 'right'): void {
+    if (!this.camera1) return;
 
-    let newIndex: number;
+    const count = this.CAMERA1_POSITIONS.length;
     if (direction === 'left') {
-      // Go to previous camera (wrap around: a -> c)
-      newIndex = currentIndex - 1;
-      if (newIndex < 0) newIndex = subCameras.length - 1;
+      this.activeCamera1Position = (this.activeCamera1Position - 1 + count) % count;
     } else {
-      // Go to next camera (wrap around: c -> a)
-      newIndex = currentIndex + 1;
-      if (newIndex >= subCameras.length) newIndex = 0;
+      this.activeCamera1Position = (this.activeCamera1Position + 1) % count;
     }
 
-    const newSubCamera = subCameras[newIndex];
-    this.activeCamera6Sub = newSubCamera;
-    this.activateCamera6Sub(newSubCamera);
+    const pos = this.CAMERA1_POSITIONS[this.activeCamera1Position];
+    const target = this.activeCamera1Position === 0
+      ? this.camera1StanTarget
+      : this.CAMERA1_TARGETS_FIXED[this.activeCamera1Position];
+
+    this.camera1.setWorldPosition(pos.clone());
+    this.camera1.setTarget(target);
+    this.updateCameraPositionLabel();
+    console.log(`Camera 1 - position 1.${this.activeCamera1Position + 1}`);
   }
 
   /**
-   * Activate the specified camera 6 sub-camera
+   * Cycle camera 6 through its 4 fixed positions using arrow keys
    */
-  private activateCamera6Sub(subCamera: 'a' | 'b' | 'c'): void {
-    // Deactivate all camera 6 sub-cameras
-    if (this.camera6a) this.camera6a.setActive(false);
-    if (this.camera6b) this.camera6b.setActive(false);
-    if (this.camera6c) this.camera6c.setActive(false);
+  private switchCamera6Position(direction: 'left' | 'right'): void {
+    if (!this.camera6) return;
 
-    // Activate the selected sub-camera
-    if (subCamera === 'a' && this.camera6a) {
-      this.camera6a.setActive(true);
-      console.log('Switched to Camera 6a');
-    } else if (subCamera === 'b' && this.camera6b) {
-      this.camera6b.setActive(true);
-      console.log('Switched to Camera 6b');
-    } else if (subCamera === 'c' && this.camera6c) {
-      this.camera6c.setActive(true);
-      console.log('Switched to Camera 6c');
+    const count = this.CAMERA6_POSITIONS.length;
+    if (direction === 'left') {
+      this.activeCamera6Position = (this.activeCamera6Position - 1 + count) % count;
+    } else {
+      this.activeCamera6Position = (this.activeCamera6Position + 1) % count;
     }
+
+    const pos = this.CAMERA6_POSITIONS[this.activeCamera6Position];
+    const target = this.CAMERA6_TARGETS[this.activeCamera6Position];
+    const fov = this.CAMERA6_FOVS[this.activeCamera6Position];
+    this.camera6.setWorldPosition(pos.clone());
+    this.camera6.setTarget(target);
+    this.camera6.setFOV(fov);
+    this.updateCameraPositionLabel();
+    console.log(`Camera 6 - position 6.${this.activeCamera6Position + 1}`);
   }
 
   /**
@@ -635,6 +639,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     const pos = this.CAMERA8_POSITIONS[this.activeCamera8Position];
     this.camera8.setWorldPosition(pos.clone());
     this.camera8.setTarget(this.CAMERA8_TARGET);
+    this.updateCameraPositionLabel();
     console.log(`Camera 8 (zewnętrzna) - position 8.${this.activeCamera8Position + 1}`);
   }
 
@@ -657,7 +662,55 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera9.setWorldPosition(pos.clone());
     this.camera9.setTarget(target);
     this.camera9.resetRotationOffsets();
+    this.updateCameraPositionLabel();
     console.log(`Camera 9 (wewnętrzna) - position 9.${this.activeCamera9Position + 1}`);
+  }
+
+  /**
+   * Create the bottom-left camera position label UI element
+   */
+  private createCameraPositionLabel(): void {
+    const label = document.createElement('div');
+    label.style.cssText = [
+      'position: absolute',
+      'bottom: 24px',
+      'left: 24px',
+      'color: white',
+      'font-family: monospace',
+      'font-size: 32px',
+      'font-weight: bold',
+      'letter-spacing: 3px',
+      'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+      'display: none',
+      'pointer-events: none',
+      'user-select: none',
+    ].join(';');
+    this.world.gameContainer?.appendChild(label);
+    this.cameraPositionLabel = label;
+  }
+
+  /**
+   * Update the camera position label text and visibility
+   */
+  private updateCameraPositionLabel(): void {
+    if (!this.cameraPositionLabel) return;
+
+    let text = '';
+    switch (this.activeCamera) {
+      case 1:  text = `1.${this.activeCamera1Position + 1}`;  break;
+      case 2:  text = '2';  break;
+      case 3:  text = '3';  break;
+      case 4:  text = '4';  break;
+      case 5:  text = '5';  break;
+      case 6:  text = `6.${this.activeCamera6Position + 1}`;  break;
+      case 7:  text = '7';  break;
+      case 8:  text = `8.${this.activeCamera8Position + 1}`;  break;
+      case 9:  text = `9.${this.activeCamera9Position + 1}`;  break;
+      case 10: text = '10'; break;
+    }
+
+    this.cameraPositionLabel.textContent = text;
+    this.cameraPositionLabel.style.display = text ? 'block' : 'none';
   }
 
   /**
@@ -911,12 +964,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     const hPressed = (inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
       && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN;
 
-    if (hPressed) {
-      this.lastKeyPressTime['h'] = currentTime;
-      this.hill2YIsDescending = false;
-      this.hill2YReachedTarget = false;
-      this.hill2YProgress = 0;
-    }
+    if (hPressed) this.lastKeyPressTime['h'] = currentTime;
 
     this.tickHill(
       'hill1', this.hill1Actor, this.HILL1_TARGET_X, deltaTime, hPressed,
@@ -937,34 +985,30 @@ class MyGame extends ENGINE.BaseGameLoop {
       () => this.hill3MoveProgress, (v) => { this.hill3MoveProgress = v; },
       () => this.hill3IsMoving, (v) => { this.hill3IsMoving = v; }
     );
+    this.tickHill(
+      'hill4', this.hill4Actor, this.HILL4_TARGET_X, deltaTime, hPressed,
+      this.hill4MoveStartPos, this.hill4MoveTargetPos,
+      () => this.hill4MoveProgress, (v) => { this.hill4MoveProgress = v; },
+      () => this.hill4IsMoving, (v) => { this.hill4IsMoving = v; }
+    );
   }
 
   /**
-   * hill2 Y descent: when hill2 crosses x=113.48, descends from y=-61.98 to y=-98.16 over 10 seconds.
+   * hill2 Y: lerps from y=-61.98 to y=-98.16 proportionally to X progress,
+   * reaching -98.16 exactly at x=113.48, then stays there.
    */
-  private handleHill2YDescent(deltaTime: number): void {
+  private handleHill2YDescent(_deltaTime: number): void {
     if (!this.hill2Actor) return;
-    if (!this.hill2IsMoving && !this.hill2YIsDescending && !this.hill2YReachedTarget) return;
+    if (!this.hill2IsMoving && this.hill2MoveProgress <= 0) return;
+
+    const triggerProgress = (this.HILL2_START_X - this.HILL2_DESCENT_TRIGGER_X)
+      / (this.HILL2_START_X - this.HILL2_TARGET_X);
+    const yProgress = Math.min(this.hill2MoveProgress / triggerProgress, 1);
+    const newY = this.HILL2_START_Y + (this.HILL2_DESCENT_TARGET_Y - this.HILL2_START_Y) * yProgress;
 
     const pos = this.hill2Actor.getWorldPosition();
-
-    if (!this.hill2YIsDescending && !this.hill2YReachedTarget && pos.x <= this.HILL2_DESCENT_TRIGGER_X) {
-      this.hill2YIsDescending = true;
-      this.hill2YProgress = 0;
-    }
-
-    if (this.hill2YIsDescending) {
-      this.hill2YProgress = Math.min(this.hill2YProgress + deltaTime / this.HILL2_DESCENT_DURATION, 1);
-      pos.y = this.HILL2_START_Y + (this.HILL2_DESCENT_TARGET_Y - this.HILL2_START_Y) * this.hill2YProgress;
-      this.hill2Actor.setWorldPosition(pos);
-      if (this.hill2YProgress >= 1) {
-        this.hill2YIsDescending = false;
-        this.hill2YReachedTarget = true;
-      }
-    } else if (this.hill2YReachedTarget) {
-      pos.y = this.HILL2_DESCENT_TARGET_Y;
-      this.hill2Actor.setWorldPosition(pos);
-    }
+    pos.y = newY;
+    this.hill2Actor.setWorldPosition(pos);
   }
 
   /**
@@ -1001,6 +1045,74 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.barrierRiseStartY = this.barrierActors.map(a => a.getWorldPosition().y);
       this.barrierRiseProgress = 0;
       this.barrierIsRising = true;
+    }
+  }
+
+  /**
+   * P key: toggle smooth random scale animation on "print" model.
+   * Each axis moves continuously toward a random target in range [0.1, 0.5].
+   * When target is reached, a new random target is chosen (at least one axis up, one down).
+   */
+  private handlePrintScale(deltaTime: number): void {
+    if (!this.printActor) {
+      this.printActor = this.findActorByDisplayName('print') ?? this.findActorByName('print');
+    }
+    if (!this.printActor) return;
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+    if ((inputManager.isKeyDown('p') || inputManager.isKeyDown('P'))
+      && currentTime - this.lastKeyPressTime['p'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['p'] = currentTime;
+      this.printScaleActive = !this.printScaleActive;
+      if (this.printScaleActive) this.pickNewPrintScaleTarget();
+    }
+
+    if (!this.printScaleActive) return;
+
+    const move = this.PRINT_SCALE_SPEED * deltaTime;
+    const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
+    let allReached = true;
+
+    for (const axis of axes) {
+      const diff = this.printScaleTarget[axis] - this.printCurrentScale[axis];
+      if (Math.abs(diff) > 0.005) {
+        allReached = false;
+        this.printCurrentScale[axis] += Math.sign(diff) * Math.min(Math.abs(diff), move);
+      } else {
+        this.printCurrentScale[axis] = this.printScaleTarget[axis];
+      }
+    }
+
+    if (allReached) this.pickNewPrintScaleTarget();
+
+    this.printActor.setWorldScale(this.printCurrentScale.clone());
+  }
+
+  private pickNewPrintScaleTarget(): void {
+    const min = this.PRINT_SCALE_MIN;
+    const max = this.PRINT_SCALE_MAX;
+    const rand = () => min + Math.random() * (max - min);
+
+    // Shuffle axes to guarantee at least one goes up and one goes down
+    const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
+    for (let i = axes.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [axes[i], axes[j]] = [axes[j], axes[i]];
+    }
+
+    const cur = this.printCurrentScale;
+    // One axis targets above current, one below, one fully random
+    this.printScaleTarget[axes[0]] = cur[axes[0]] < max
+      ? cur[axes[0]] + Math.random() * (max - cur[axes[0]])
+      : rand();
+    this.printScaleTarget[axes[1]] = cur[axes[1]] > min
+      ? min + Math.random() * (cur[axes[1]] - min)
+      : rand();
+    this.printScaleTarget[axes[2]] = rand();
+
+    for (const axis of axes) {
+      this.printScaleTarget[axis] = Math.max(min, Math.min(max, this.printScaleTarget[axis]));
     }
   }
 

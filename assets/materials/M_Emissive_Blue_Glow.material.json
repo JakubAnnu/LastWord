@@ -1,0 +1,28 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Emissive_Blue_Glow",
+    "userData": {},
+    "color": {
+      "_": [
+        0.4,
+        0.6,
+        1.0
+      ],
+      "$bc": "c"
+    },
+    "emissive": {
+      "_": [
+        0.4,
+        0.7,
+        1.0
+      ],
+      "$bc": "c"
+    },
+    "emissiveIntensity": 5.0,
+    "roughness": 0.15,
+    "metalness": 0.0,
+    "envMapIntensity": 0.2,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}
