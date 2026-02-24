@@ -1,0 +1,21 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Transparent_Light_Yellow",
+    "userData": {},
+    "color": {
+      "_": [
+        1.0,
+        0.95,
+        0.3
+      ],
+      "$bc": "c"
+    },
+    "transparent": true,
+    "opacity": 0.5,
+    "roughness": 0.2,
+    "metalness": 0.3,
+    "envMapIntensity": 1.5,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

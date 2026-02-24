@@ -1,0 +1,28 @@
+{
+  "$version": 2,
+  "$root": {
+    "name": "M_Emissive_Yellow_Bright",
+    "userData": {},
+    "color": {
+      "_": [
+        1.0,
+        0.95,
+        0.3
+      ],
+      "$bc": "c"
+    },
+    "emissive": {
+      "_": [
+        1.0,
+        0.95,
+        0.2
+      ],
+      "$bc": "c"
+    },
+    "emissiveIntensity": 3.0,
+    "roughness": 0.2,
+    "metalness": 0.0,
+    "envMapIntensity": 0.3,
+    "$bc": "THREE.MeshStandardMaterial"
+  }
+}

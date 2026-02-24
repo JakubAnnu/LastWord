@@ -86,7 +86,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activeCamera9Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
   private readonly HILLS_MOVE_DURATION = 240;
@@ -145,6 +145,25 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly PRINT_SCALE_MIN = 0.1;
   private readonly PRINT_SCALE_MAX = 0.5;
   private readonly PRINT_SCALE_SPEED = 0.25; // units per second — controls smoothness
+
+  // Y key: raise all "bubble"/"bubbel" models by 0.60, each with independent random delay
+  private readonly BUBBLE_RISE_OFFSET = 0.60;
+  private readonly BUBBLE_RISE_DURATION = 4; // seconds per actor (50% slower than before)
+  private readonly BUBBLE_MAX_DELAY = 2.5; // max random start delay in seconds
+  private bubbleStates: Array<{
+    actor: ENGINE.Actor;
+    originY: number; // oryginalna pozycja Y — stała przez cały czas
+    startY: number;
+    delay: number;   // seconds to wait before starting
+    elapsed: number; // total elapsed since Y pressed
+    done: boolean;
+  }> = [];
+  private bubbleActive = false;
+
+  // print_02: same P-key animation with independent random state
+  private print2Actor: ENGINE.Actor | null = null;
+  private print2CurrentScale = new THREE.Vector3(0.41, 0.18, 0.3);
+  private print2ScaleTarget = new THREE.Vector3(0.41, 0.18, 0.3);
 
   // K key: "generator" sequence — slider → coal → (coal + door + slider simultaneously)
   private genSliderActor: ENGINE.Actor | null = null;
@@ -409,6 +428,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.printActor.setWorldScale(this.printCurrentScale.clone());
     }
 
+    this.print2Actor = this.findActorByDisplayName('print_02') ?? this.findActorByName('print_02');
+    if (this.print2Actor) {
+      this.print2Actor.setWorldScale(this.print2CurrentScale.clone());
+    }
+
     this.genSliderActor = this.findActorByDisplayName('slider') ?? this.findActorByDisplayName('slider_02');
     this.genCoalActor   = this.findActorByDisplayName('coal')   ?? this.findActorByName('coal');
     this.genDoorActor   = this.findActorByDisplayName('door')   ?? this.findActorByName('door');
@@ -429,6 +453,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
     this.handlePrintScale(tickTime.deltaTimeMS / 1000);
     this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
+    this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -1109,7 +1134,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (!this.printActor) {
       this.printActor = this.findActorByDisplayName('print') ?? this.findActorByName('print');
     }
-    if (!this.printActor) return;
+    if (!this.print2Actor) {
+      this.print2Actor = this.findActorByDisplayName('print_02') ?? this.findActorByName('print_02');
+    }
 
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
@@ -1117,54 +1144,61 @@ class MyGame extends ENGINE.BaseGameLoop {
       && currentTime - this.lastKeyPressTime['p'] > this.KEY_PRESS_COOLDOWN) {
       this.lastKeyPressTime['p'] = currentTime;
       this.printScaleActive = !this.printScaleActive;
-      if (this.printScaleActive) this.pickNewPrintScaleTarget();
+      if (this.printScaleActive) {
+        this.pickNewPrintScaleTarget(this.printCurrentScale, this.printScaleTarget);
+        this.pickNewPrintScaleTarget(this.print2CurrentScale, this.print2ScaleTarget);
+      }
     }
 
     if (!this.printScaleActive) return;
 
     const move = this.PRINT_SCALE_SPEED * deltaTime;
-    const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
-    let allReached = true;
 
-    for (const axis of axes) {
-      const diff = this.printScaleTarget[axis] - this.printCurrentScale[axis];
-      if (Math.abs(diff) > 0.005) {
-        allReached = false;
-        this.printCurrentScale[axis] += Math.sign(diff) * Math.min(Math.abs(diff), move);
-      } else {
-        this.printCurrentScale[axis] = this.printScaleTarget[axis];
-      }
+    if (this.printActor) {
+      const allReached = this.tickPrintScale(this.printCurrentScale, this.printScaleTarget, move);
+      if (allReached) this.pickNewPrintScaleTarget(this.printCurrentScale, this.printScaleTarget);
+      this.printActor.setWorldScale(this.printCurrentScale.clone());
     }
 
-    if (allReached) this.pickNewPrintScaleTarget();
-
-    this.printActor.setWorldScale(this.printCurrentScale.clone());
+    if (this.print2Actor) {
+      const allReached = this.tickPrintScale(this.print2CurrentScale, this.print2ScaleTarget, move);
+      if (allReached) this.pickNewPrintScaleTarget(this.print2CurrentScale, this.print2ScaleTarget);
+      this.print2Actor.setWorldScale(this.print2CurrentScale.clone());
+    }
   }
 
-  private pickNewPrintScaleTarget(): void {
+  private tickPrintScale(current: THREE.Vector3, target: THREE.Vector3, move: number): boolean {
+    const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
+    let allReached = true;
+    for (const axis of axes) {
+      const diff = target[axis] - current[axis];
+      if (Math.abs(diff) > 0.005) {
+        allReached = false;
+        current[axis] += Math.sign(diff) * Math.min(Math.abs(diff), move);
+      } else {
+        current[axis] = target[axis];
+      }
+    }
+    return allReached;
+  }
+
+  private pickNewPrintScaleTarget(cur: THREE.Vector3, target: THREE.Vector3): void {
     const min = this.PRINT_SCALE_MIN;
     const max = this.PRINT_SCALE_MAX;
     const rand = () => min + Math.random() * (max - min);
 
-    // Shuffle axes to guarantee at least one goes up and one goes down
     const axes: Array<'x' | 'y' | 'z'> = ['x', 'y', 'z'];
     for (let i = axes.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [axes[i], axes[j]] = [axes[j], axes[i]];
     }
 
-    const cur = this.printCurrentScale;
-    // One axis targets above current, one below, one fully random
-    this.printScaleTarget[axes[0]] = cur[axes[0]] < max
-      ? cur[axes[0]] + Math.random() * (max - cur[axes[0]])
-      : rand();
-    this.printScaleTarget[axes[1]] = cur[axes[1]] > min
-      ? min + Math.random() * (cur[axes[1]] - min)
-      : rand();
-    this.printScaleTarget[axes[2]] = rand();
+    target[axes[0]] = cur[axes[0]] < max ? cur[axes[0]] + Math.random() * (max - cur[axes[0]]) : rand();
+    target[axes[1]] = cur[axes[1]] > min ? min + Math.random() * (cur[axes[1]] - min) : rand();
+    target[axes[2]] = rand();
 
     for (const axis of axes) {
-      this.printScaleTarget[axis] = Math.max(min, Math.min(max, this.printScaleTarget[axis]));
+      target[axis] = Math.max(min, Math.min(max, target[axis]));
     }
   }
 
@@ -1304,6 +1338,81 @@ class MyGame extends ENGINE.BaseGameLoop {
           lerp(this.GEN_DOOR_STEP3_START, this.GEN_DOOR_STEP3_END, t * this.GEN_DOOR_SPEED_MULT)
         );
       // Slider is handled by independent return animation (genSliderReturnActive)
+    }
+  }
+
+  /**
+   * Y key: raise all "bubble" models by 0.60 on Y axis over 2 seconds.
+   * Automatically finds all actors whose displayName starts with "bubble".
+   */
+  private handleBubbleRise(deltaTime: number): void {
+    if (this.bubbleActive) {
+      let allDone = true;
+
+      for (const state of this.bubbleStates) {
+        if (state.done) continue;
+
+        state.elapsed += deltaTime;
+        const timeAfterDelay = state.elapsed - state.delay;
+
+        if (timeAfterDelay <= 0) {
+          allDone = false;
+          continue;
+        }
+
+        const progress = Math.min(timeAfterDelay / this.BUBBLE_RISE_DURATION, 1);
+        const pos = state.actor.getWorldPosition();
+        pos.y = state.startY + this.BUBBLE_RISE_OFFSET * progress;
+        state.actor.setWorldPosition(pos);
+
+        if (progress >= 1) {
+          state.done = true;
+          state.actor.setHidden(true);
+        } else {
+          allDone = false;
+        }
+      }
+
+      if (allDone) {
+        for (const state of this.bubbleStates) {
+          const pos = state.actor.getWorldPosition();
+          pos.y = state.originY;
+          state.actor.setWorldPosition(pos);
+          state.actor.setHidden(false);
+          state.startY = state.originY;
+          state.delay = Math.random() * this.BUBBLE_MAX_DELAY;
+          state.elapsed = 0;
+          state.done = false;
+        }
+      }
+      return;
+    }
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    if ((inputManager.isKeyDown('y') || inputManager.isKeyDown('Y'))
+      && currentTime - this.lastKeyPressTime['y'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['y'] = currentTime;
+
+      // Prefiks "bubb" — łapie zarówno "bubble" jak i "bubbel"
+      const actors = this.findActorsByDisplayNamePrefix('bubb');
+      if (actors.length === 0) return;
+
+      this.bubbleStates = actors.map(actor => {
+        actor.setHidden(false);
+        const originY = actor.getWorldPosition().y;
+        return {
+          actor,
+          originY,
+          startY: originY,
+          delay: Math.random() * this.BUBBLE_MAX_DELAY,
+          elapsed: 0,
+          done: false,
+        };
+      });
+
+      this.bubbleActive = true;
     }
   }
 
