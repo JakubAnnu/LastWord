@@ -83,7 +83,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activeCamera9Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
 
-  private lastKeyPressTime: { '1': number; '3': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '3': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '3': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '3': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
   private readonly HILLS_MOVE_DURATION = 240;
@@ -156,6 +156,17 @@ class MyGame extends ENGINE.BaseGameLoop {
     done: boolean;
   }> = [];
   private bubbleActive = false;
+
+  // E key: elevator sequence — both models move simultaneously
+  private elevatorActor: ENGINE.Actor | null = null;
+  private stanElevatorActor: ENGINE.Actor | null = null;
+  private readonly ELEVATOR_START     = new THREE.Vector3(0.11, 1.88, -4.07);
+  private readonly ELEVATOR_END       = new THREE.Vector3(0.11, 3.29, -4.07);
+  private readonly STAN_ELEVATOR_START = new THREE.Vector3(0.08, 1.95, -4.04);
+  private readonly STAN_ELEVATOR_END   = new THREE.Vector3(0.08, 3.35, -4.04);
+  private readonly ELEVATOR_DURATION  = 15; // seconds
+  private elevatorProgress = 0;
+  private elevatorIsMoving = false;
 
   // print_02: same P-key animation with independent random state
   private print2Actor: ENGINE.Actor | null = null;
@@ -399,6 +410,11 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
     if (this.genCoalActor)   this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
     if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
+
+    this.elevatorActor     = this.findActorByDisplayName('elevator')      ?? this.findActorByName('elevator');
+    this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
+    if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
+    if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
   }
 
   protected override tick(tickTime: ENGINE.TickTime): void {
@@ -413,6 +429,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handlePrintScale(tickTime.deltaTimeMS / 1000);
     this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
+    this.handleElevator(tickTime.deltaTimeMS / 1000);
   }
 
   /**
@@ -1330,6 +1347,45 @@ class MyGame extends ENGINE.BaseGameLoop {
       });
 
       this.bubbleActive = true;
+    }
+  }
+
+  private handleElevator(deltaTime: number): void {
+    if (!this.elevatorActor) {
+      this.elevatorActor = this.findActorByDisplayName('elevator') ?? this.findActorByName('elevator');
+    }
+    if (!this.stanElevatorActor) {
+      this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
+    }
+
+    if (this.elevatorIsMoving) {
+      this.elevatorProgress = Math.min(this.elevatorProgress + deltaTime / this.ELEVATOR_DURATION, 1);
+      const t = this.elevatorProgress;
+
+      if (this.elevatorActor) {
+        const pos = new THREE.Vector3();
+        pos.lerpVectors(this.ELEVATOR_START, this.ELEVATOR_END, t);
+        this.elevatorActor.setWorldPosition(pos);
+      }
+      if (this.stanElevatorActor) {
+        const pos = new THREE.Vector3();
+        pos.lerpVectors(this.STAN_ELEVATOR_START, this.STAN_ELEVATOR_END, t);
+        this.stanElevatorActor.setWorldPosition(pos);
+      }
+
+      if (this.elevatorProgress >= 1) {
+        this.elevatorIsMoving = false;
+      }
+      return;
+    }
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+    if ((inputManager.isKeyDown('e') || inputManager.isKeyDown('E'))
+      && currentTime - this.lastKeyPressTime['e'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['e'] = currentTime;
+      this.elevatorProgress = 0;
+      this.elevatorIsMoving = true;
     }
   }
 
