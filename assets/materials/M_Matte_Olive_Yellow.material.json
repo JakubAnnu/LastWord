@@ -1,25 +1,16 @@
 {
   "$version": 2,
   "$root": {
-    "name": "M_Emissive_Yellow",
+    "name": "M_Matte_Olive_Yellow",
     "userData": {},
     "color": {
       "_": [
-        1.0,
-        0.9,
-        0.2
+        0.580,
+        0.580,
+        0.247
       ],
       "$bc": "c"
     },
-    "emissive": {
-      "_": [
-        1.0,
-        0.9,
-        0.0
-      ],
-      "$bc": "c"
-    },
-    "emissiveIntensity": 1.5,
     "roughness": 1.0,
     "metalness": 0.0,
     "envMapIntensity": 0.0,

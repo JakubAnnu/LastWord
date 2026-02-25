@@ -11,16 +11,13 @@ class MyGame extends ENGINE.BaseGameLoop {
   private pawn: FreeCameraPlayer | null = null;
   private controller: ENGINE.PlayerController | null = null;
   private camera1: FixedCamera | null = null;
-  private camera2: FixedCamera | null = null;
   private camera3: FixedCamera | null = null;
-  private camera4: FixedCamera | null = null;
-  private camera5: FixedCamera | null = null;
   private camera6: FixedCamera | null = null;
   private camera7: FixedCamera | null = null;
   private camera8: FixedCamera | null = null;
   private camera9: FixedCamera | null = null;
   private camera10: FixedCamera | null = null;
-  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 = 1;
+  private activeCamera: 1 | 3 | 6 | 7 | 8 | 9 | 10 = 1;
 
   // Camera 1 - 3 positions; position 1.1 tracks Stan actor
   private readonly CAMERA1_POSITIONS = [
@@ -86,7 +83,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activeCamera9Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '3': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '3': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
   private readonly HILLS_MOVE_DURATION = 240;
@@ -245,14 +242,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     const stanPosition = new THREE.Vector3(1.43, 2.15, -3.97);
     this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true });
     
-    // Create second camera at position (x:0.44, y:13.76, z:-3.62)
-    // pointing at position (x:-0.14, y:2.21, z:-3.98)
-    // with 20mm focal length (approximately 70° FOV)
-    const camera2Position = new THREE.Vector3(0.44, 13.76, -3.62);
-    const camera2Target = new THREE.Vector3(-0.14, 2.21, -3.98);
-    this.camera2 = FixedCamera.create({ position: camera2Position, startActive: false, fov: 70 });
-    this.camera2.setTarget(camera2Target);
-    
     // Create third camera at position (x:0.71, y:4.71, z:-8.82) - raised back by 0.05 from previous
     // pointing at position (x:0.74, y:3.93, z:-8.82)
     // with 15mm focal length (approximately 94° FOV) and 90° roll rotation
@@ -267,33 +256,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       enableRotationControl: true // Enable arrow key rotation
     });
     this.camera3.setTarget(camera3Target);
-    
-    // Create fourth camera at position (x:-45.78, y:5.28, z:-7.77)
-    // pointing at position (x:-4.86, y:5.28, z:-7.77)
-    // with zoom functionality: 20mm (70° FOV) to 120mm (20° FOV)
-    const camera4Position = new THREE.Vector3(-45.78, 5.28, -7.77);
-    const camera4Target = new THREE.Vector3(-4.86, 5.28, -7.77);
-    this.camera4 = FixedCamera.create({ 
-      position: camera4Position, 
-      startActive: false,
-      enableZoom: true,
-      minFOV: 20, // 120mm (zoomed in)
-      maxFOV: 70  // 20mm (zoomed out)
-    });
-    this.camera4.setTarget(camera4Target);
-    
-    // Create fifth camera at position (x:1.5, y:4.51, z:-9.01)
-    // Fixed camera (no rotation control), 20mm focal length (70° FOV)
-    // Pointing forward in -Z direction
-    const camera5Position = new THREE.Vector3(1.5, 4.51, -9.01);
-    const camera5Target = new THREE.Vector3(1.5, 4.51, -10.01); // Looking forward (deeper into -Z)
-    this.camera5 = FixedCamera.create({ 
-      position: camera5Position, 
-      startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: false // Immobile camera
-    });
-    this.camera5.setTarget(camera5Target);
     
     // Camera 6 - single camera cycling through 4 positions with arrow keys
     this.camera6 = FixedCamera.create({
@@ -353,7 +315,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera10.setTarget(camera10Target);
     
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6, this.camera7, this.camera8, this.camera9, this.camera10);
+    this.world.addActors(this.camera1, this.camera3, this.camera6, this.camera7, this.camera8, this.camera9, this.camera10);
     
     // Wait for the level to load completely
     this.createCameraPositionLabel();
@@ -368,18 +330,15 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
     
     if (stanActor) {
-      console.log(`Found Stan actor: ${stanActor.name}`);
-      this.camera1StanTarget = stanActor;
+      console.log(`Found Stan actor: ${stanActor.name} - storing position and removing from world`);
+      this.camera1StanTarget = stanActor.getWorldPosition().clone();
+      this.world.removeActor(stanActor);
     } else {
-      console.warn('Stan actor not found, pointing camera 1 at expected position');
+      console.warn('Stan actor not found, using fallback position');
     }
     this.camera1.setTarget(this.camera1StanTarget);
 
-    // Stan_Blended at (10.07, 0.6, 10.19) with farming animation
-    const stanBlended = ENGINE.ClassRegistry.constructObject('GAME.StanBlendedActor', false) as ENGINE.Actor;
-    this.world.addActors(stanBlended);
-
-    // Second animated Stan at (0.94, 4.91, 2.29)
+    // Animated Stan at (0.94, 4.91, 2.29)
     const stanBlended2 = ENGINE.ClassRegistry.constructObject(
       'GAME.StanBlendedActor',
       false,
@@ -471,35 +430,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Check for key '2' press
-    if (inputManager.isKeyDown('2') && this.activeCamera !== 2) {
-      if (currentTime - this.lastKeyPressTime['2'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(2);
-        this.lastKeyPressTime['2'] = currentTime;
-      }
-    }
-
     // Check for key '3' press
     if (inputManager.isKeyDown('3') && this.activeCamera !== 3) {
       if (currentTime - this.lastKeyPressTime['3'] > this.KEY_PRESS_COOLDOWN) {
         this.switchToCamera(3);
         this.lastKeyPressTime['3'] = currentTime;
-      }
-    }
-
-    // Check for key '4' press
-    if (inputManager.isKeyDown('4') && this.activeCamera !== 4) {
-      if (currentTime - this.lastKeyPressTime['4'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(4);
-        this.lastKeyPressTime['4'] = currentTime;
-      }
-    }
-
-    // Check for key '5' press
-    if (inputManager.isKeyDown('5') && this.activeCamera !== 5) {
-      if (currentTime - this.lastKeyPressTime['5'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(5);
-        this.lastKeyPressTime['5'] = currentTime;
       }
     }
 
@@ -566,13 +501,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10): void {
+  private switchToCamera(cameraNumber: 1 | 3 | 6 | 7 | 8 | 9 | 10): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
-    if (this.camera2) this.camera2.setActive(false);
     if (this.camera3) this.camera3.setActive(false);
-    if (this.camera4) this.camera4.setActive(false);
-    if (this.camera5) this.camera5.setActive(false);
     if (this.camera6) this.camera6.setActive(false);
     if (this.camera7) this.camera7.setActive(false);
     if (this.camera8) this.camera8.setActive(false);
@@ -586,26 +518,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.activeCamera1Position = 0;
       this.camera1.setWorldPosition(this.CAMERA1_POSITIONS[0].clone());
       this.camera1.setTarget(this.camera1StanTarget);
-      console.log('Switched to Camera 1 - position 1.1 - Use arrows to cycle positions');
-    } else if (cameraNumber === 2 && this.camera2) {
-      this.camera2.setActive(true);
-      this.activeCamera = 2;
-      console.log('Switched to Camera 2');
+      console.log('Switched to Camera 1 - position 1.1 - Use A/D to cycle positions');
     } else if (cameraNumber === 3 && this.camera3) {
       this.camera3.setActive(true);
       this.activeCamera = 3;
-      this.camera3DollyOffset = 0; // Reset dolly position
+      this.camera3DollyOffset = 0;
       this.camera3.setWorldPosition(this.camera3BasePosition.clone());
       this.camera3.setTarget(this.camera3Target);
       console.log('Switched to Camera 3 - Use W/S to dolly in/out');
-    } else if (cameraNumber === 4 && this.camera4) {
-      this.camera4.setActive(true);
-      this.activeCamera = 4;
-      console.log('Switched to Camera 4');
-    } else if (cameraNumber === 5 && this.camera5) {
-      this.camera5.setActive(true);
-      this.activeCamera = 5;
-      console.log('Switched to Camera 5');
     } else if (cameraNumber === 6 && this.camera6) {
       this.camera6.setActive(true);
       this.activeCamera = 6;
@@ -775,10 +695,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     let text = '';
     switch (this.activeCamera) {
       case 1:  text = `1.${this.activeCamera1Position + 1}`;  break;
-      case 2:  text = '2';  break;
       case 3:  text = '3';  break;
-      case 4:  text = '4';  break;
-      case 5:  text = '5';  break;
       case 6:  text = `6.${this.activeCamera6Position + 1}`;  break;
       case 7:  text = '7';  break;
       case 8:  text = `8.${this.activeCamera8Position + 1}`;  break;
