@@ -95,6 +95,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private hill1MoveTargetPos = new THREE.Vector3();
   private hill1MoveProgress = 0;
   private hill1IsMoving = false;
+  private hillsActivated = false; // toggle: false=at start, true=animating or at end
 
   private hill2Actor: ENGINE.Actor | null = null;
   private readonly HILL2_START_X = 630;
@@ -133,6 +134,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private barrierRiseStartY: number[] = [];
   private barrierRiseProgress = 0;
   private barrierIsRising = false;
+  private barrierActivated = false;
 
   // P key: toggle smooth random scale animation on "print" model (scale 0.1–0.5 per axis)
   private printActor: ENGINE.Actor | null = null;
@@ -167,6 +169,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly ELEVATOR_DURATION  = 15; // seconds
   private elevatorProgress = 0;
   private elevatorIsMoving = false;
+  private elevatorActivated = false;
 
   // print_02: same P-key animation with independent random state
   private print2Actor: ENGINE.Actor | null = null;
@@ -975,29 +978,49 @@ class MyGame extends ENGINE.BaseGameLoop {
     const hPressed = (inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
       && currentTime - this.lastKeyPressTime['h'] > this.KEY_PRESS_COOLDOWN;
 
-    if (hPressed) this.lastKeyPressTime['h'] = currentTime;
+    if (hPressed) {
+      this.lastKeyPressTime['h'] = currentTime;
+
+      if (!this.hillsActivated) {
+        this.hillsActivated = true;
+      } else {
+        // Reset wszystkich hill do pozycji startowych
+        this.hillsActivated = false;
+        this.hill1IsMoving = false; this.hill1MoveProgress = 0;
+        this.hill2IsMoving = false; this.hill2MoveProgress = 0;
+        this.hill3IsMoving = false; this.hill3MoveProgress = 0;
+        this.hill4IsMoving = false; this.hill4MoveProgress = 0;
+        if (this.hill1Actor) { const p = this.hill1Actor.getWorldPosition(); p.x = this.HILL1_START_X; this.hill1Actor.setWorldPosition(p); }
+        if (this.hill2Actor) { const p = this.hill2Actor.getWorldPosition(); p.x = this.HILL2_START_X; p.y = this.HILL2_START_Y; this.hill2Actor.setWorldPosition(p); }
+        if (this.hill3Actor) { const p = this.hill3Actor.getWorldPosition(); p.x = this.HILL3_START_X; this.hill3Actor.setWorldPosition(p); }
+        if (this.hill4Actor) { const p = this.hill4Actor.getWorldPosition(); p.x = this.HILL4_START_X; this.hill4Actor.setWorldPosition(p); }
+        return;
+      }
+    }
+
+    if (!this.hillsActivated) return;
 
     this.tickHill(
-      'hill1', this.hill1Actor, this.HILL1_TARGET_X, deltaTime, hPressed,
+      'hill1', this.hill1Actor, this.HILL1_TARGET_X, deltaTime, hPressed && this.hillsActivated,
       this.hill1MoveStartPos, this.hill1MoveTargetPos,
       () => this.hill1MoveProgress, (v) => { this.hill1MoveProgress = v; },
       () => this.hill1IsMoving, (v) => { this.hill1IsMoving = v; }
     );
     this.tickHill(
-      'hill2', this.hill2Actor, this.HILL2_TARGET_X, deltaTime, hPressed,
+      'hill2', this.hill2Actor, this.HILL2_TARGET_X, deltaTime, hPressed && this.hillsActivated,
       this.hill2MoveStartPos, this.hill2MoveTargetPos,
       () => this.hill2MoveProgress, (v) => { this.hill2MoveProgress = v; },
       () => this.hill2IsMoving, (v) => { this.hill2IsMoving = v; }
     );
     this.handleHill2YDescent(deltaTime);
     this.tickHill(
-      'hill3', this.hill3Actor, this.HILL3_TARGET_X, deltaTime, hPressed,
+      'hill3', this.hill3Actor, this.HILL3_TARGET_X, deltaTime, hPressed && this.hillsActivated,
       this.hill3MoveStartPos, this.hill3MoveTargetPos,
       () => this.hill3MoveProgress, (v) => { this.hill3MoveProgress = v; },
       () => this.hill3IsMoving, (v) => { this.hill3IsMoving = v; }
     );
     this.tickHill(
-      'hill4', this.hill4Actor, this.HILL4_TARGET_X, deltaTime, hPressed,
+      'hill4', this.hill4Actor, this.HILL4_TARGET_X, deltaTime, hPressed && this.hillsActivated,
       this.hill4MoveStartPos, this.hill4MoveTargetPos,
       () => this.hill4MoveProgress, (v) => { this.hill4MoveProgress = v; },
       () => this.hill4IsMoving, (v) => { this.hill4IsMoving = v; }
@@ -1031,31 +1054,45 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
     if (this.barrierActors.length === 0) return;
 
-    if (this.barrierIsRising) {
-      this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
-      const t = this.barrierRiseProgress;
-      for (let i = 0; i < this.barrierActors.length; i++) {
-        const actor = this.barrierActors[i];
-        const startY = this.barrierRiseStartY[i];
-        const currentY = startY + (this.BARRIER_TARGET_Y - startY) * t;
-        const pos = actor.getWorldPosition();
-        pos.y = currentY;
-        actor.setWorldPosition(pos);
-      }
-      if (this.barrierRiseProgress >= 1) {
-        this.barrierIsRising = false;
-      }
-      return;
-    }
-
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
-    if ((inputManager.isKeyDown('b') || inputManager.isKeyDown('B'))
-      && currentTime - this.lastKeyPressTime['b'] > this.KEY_PRESS_COOLDOWN) {
+    const bPressed = (inputManager.isKeyDown('b') || inputManager.isKeyDown('B'))
+      && currentTime - this.lastKeyPressTime['b'] > this.KEY_PRESS_COOLDOWN;
+
+    if (bPressed) {
       this.lastKeyPressTime['b'] = currentTime;
-      this.barrierRiseStartY = this.barrierActors.map(a => a.getWorldPosition().y);
-      this.barrierRiseProgress = 0;
-      this.barrierIsRising = true;
+
+      if (!this.barrierActivated) {
+        this.barrierActivated = true;
+        this.barrierRiseStartY = this.barrierActors.map(a => a.getWorldPosition().y);
+        this.barrierRiseProgress = 0;
+        this.barrierIsRising = true;
+      } else {
+        // Reset do pozycji startowej
+        this.barrierActivated = false;
+        this.barrierIsRising = false;
+        this.barrierRiseProgress = 0;
+        for (const actor of this.barrierActors) {
+          const pos = actor.getWorldPosition();
+          pos.y = this.BARRIER_START_Y;
+          actor.setWorldPosition(pos);
+        }
+      }
+    }
+
+    if (!this.barrierIsRising) return;
+
+    this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
+    const t = this.barrierRiseProgress;
+    for (let i = 0; i < this.barrierActors.length; i++) {
+      const actor = this.barrierActors[i];
+      const startY = this.barrierRiseStartY[i];
+      const pos = actor.getWorldPosition();
+      pos.y = startY + (this.BARRIER_TARGET_Y - startY) * t;
+      actor.setWorldPosition(pos);
+    }
+    if (this.barrierRiseProgress >= 1) {
+      this.barrierIsRising = false;
     }
   }
 
@@ -1329,6 +1366,18 @@ class MyGame extends ENGINE.BaseGameLoop {
       && currentTime - this.lastKeyPressTime['y'] > this.KEY_PRESS_COOLDOWN) {
       this.lastKeyPressTime['y'] = currentTime;
 
+      if (this.bubbleActive) {
+        // Stop loop — reset do pozycji startowych
+        this.bubbleActive = false;
+        for (const state of this.bubbleStates) {
+          const pos = state.actor.getWorldPosition();
+          pos.y = state.originY;
+          state.actor.setWorldPosition(pos);
+          state.actor.setHidden(false);
+        }
+        return;
+      }
+
       // Prefiks "bubb" — łapie zarówno "bubble" jak i "bubbel"
       const actors = this.findActorsByDisplayNamePrefix('bubb');
       if (actors.length === 0) return;
@@ -1358,34 +1407,42 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
     }
 
-    if (this.elevatorIsMoving) {
-      this.elevatorProgress = Math.min(this.elevatorProgress + deltaTime / this.ELEVATOR_DURATION, 1);
-      const t = this.elevatorProgress;
-
-      if (this.elevatorActor) {
-        const pos = new THREE.Vector3();
-        pos.lerpVectors(this.ELEVATOR_START, this.ELEVATOR_END, t);
-        this.elevatorActor.setWorldPosition(pos);
-      }
-      if (this.stanElevatorActor) {
-        const pos = new THREE.Vector3();
-        pos.lerpVectors(this.STAN_ELEVATOR_START, this.STAN_ELEVATOR_END, t);
-        this.stanElevatorActor.setWorldPosition(pos);
-      }
-
-      if (this.elevatorProgress >= 1) {
-        this.elevatorIsMoving = false;
-      }
-      return;
-    }
-
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
-    if ((inputManager.isKeyDown('e') || inputManager.isKeyDown('E'))
-      && currentTime - this.lastKeyPressTime['e'] > this.KEY_PRESS_COOLDOWN) {
+    const ePressed = (inputManager.isKeyDown('e') || inputManager.isKeyDown('E'))
+      && currentTime - this.lastKeyPressTime['e'] > this.KEY_PRESS_COOLDOWN;
+
+    if (ePressed) {
       this.lastKeyPressTime['e'] = currentTime;
-      this.elevatorProgress = 0;
-      this.elevatorIsMoving = true;
+
+      if (!this.elevatorActivated) {
+        this.elevatorActivated = true;
+        this.elevatorProgress = 0;
+        this.elevatorIsMoving = true;
+      } else {
+        // Reset do pozycji startowej
+        this.elevatorActivated = false;
+        this.elevatorIsMoving = false;
+        this.elevatorProgress = 0;
+        if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
+        if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
+      }
+    }
+
+    if (!this.elevatorIsMoving) return;
+
+    this.elevatorProgress = Math.min(this.elevatorProgress + deltaTime / this.ELEVATOR_DURATION, 1);
+    const t = this.elevatorProgress;
+
+    if (this.elevatorActor) {
+      this.elevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.ELEVATOR_START, this.ELEVATOR_END, t));
+    }
+    if (this.stanElevatorActor) {
+      this.stanElevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.STAN_ELEVATOR_START, this.STAN_ELEVATOR_END, t));
+    }
+
+    if (this.elevatorProgress >= 1) {
+      this.elevatorIsMoving = false;
     }
   }
 
