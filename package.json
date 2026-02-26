@@ -10,12 +10,13 @@
     "remove-engine-comments": "pnpm exec tsx ./scripts/genesys/remove-engine-comments.ts",
     "dev": "pnpm exec tsx ./scripts/genesys/dev/generate-manifest.ts && vite",
     "validate-prefabs": "pnpm exec tsx ./scripts/genesys/validate-prefabs.ts",
-    "migrate-scenes-and-prefabs": "pnpm exec tsx ./scripts/genesys/migrate-scenes-and-prefabs.ts"
+    "migrate-scenes-and-prefabs": "pnpm exec tsx ./scripts/genesys/migrate-scenes-and-prefabs.ts",
+    "turbo:build": "turbo run build"
   },
   "keywords": [],
   "type": "module",
   "dependencies": {
-    "@gnsx/genesys.js": "6.0.4",
+    "@gnsx/genesys.js": "6.0.6",
     "three": "0.182.0"
   },
   "devDependencies": {
@@ -41,6 +42,8 @@
     "@typescript-eslint/utils": "8.38.0",
     "eslint": "9.24.0",
     "@types/ws": "8.18.1",
-    "ts-morph": "26.0.0"
-  }
+    "ts-morph": "26.0.0",
+    "turbo": "2.8.11"
+  },
+  "packageManager": "pnpm@10.25.0"
 }

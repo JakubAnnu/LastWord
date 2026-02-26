@@ -183,7 +183,7 @@ export class DevStorageProvider implements ENGINE.IStorageProvider {
     }
   }
 
-  async buildCurrentProject(runTsc: boolean): Promise<boolean> {
+  async buildCurrentProject(): Promise<boolean> {
     // For development, we don't need to build the project
     // Vite handles the compilation
     return true;

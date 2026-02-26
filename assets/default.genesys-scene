@@ -17201,7 +17201,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "62fcca56ff2f4169",
           "name": "MeshComponent",
           "position": {
@@ -17243,7 +17243,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Dirty_Steel.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "98b5537f067496e3",
           "name": "MeshComponent",
           "position": {
@@ -17285,7 +17285,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Dirty_Steel.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "0c30953a94730d09",
           "name": "MeshComponent",
           "position": {
@@ -18470,7 +18470,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Matte_Olive_Yellow.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "64f34795bd882f4f",
           "name": "MeshComponent",
           "position": {
@@ -18722,7 +18722,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "59c799b5c2aaf110",
           "name": "MeshComponent",
           "position": {
@@ -18764,7 +18764,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "2f39a034e972fee7",
           "name": "MeshComponent",
           "position": {
@@ -18806,7 +18806,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Matte_Olive_Yellow.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "8b2875703f061e04",
           "name": "MeshComponent",
           "position": {
@@ -19268,7 +19268,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "414c6ae1c443341a",
           "name": "MeshComponent",
           "position": {
@@ -19310,7 +19310,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "3e0a2e1924998849",
           "name": "MeshComponent",
           "position": {
@@ -19352,7 +19352,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "89187ca1507e6c7e",
           "name": "MeshComponent",
           "position": {
@@ -19394,7 +19394,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Olive_Green.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "e43f058421d35a34",
           "name": "MeshComponent",
           "position": {
@@ -25430,7 +25430,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Matte_Olive_Yellow.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "50a0440caf4cf9c0",
           "name": "MeshComponent",
           "position": {
@@ -25514,7 +25514,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Matte_Olive_Yellow.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "uuid": "c90652de7d03d823",
           "name": "MeshComponent",
           "position": {
@@ -27040,7 +27040,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "meshMaterial": "@project/assets/materials/M_Emissive_Blue.material.json",
           "uuid": "4109b3107c2f031d",
           "name": "MeshComponent",
           "position": {
@@ -27452,7 +27452,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "meshMaterial": "@project/assets/materials/M_Emissive_Blue_Glow.material.json",
           "uuid": "cf9bda47eef0825c",
           "name": "MeshComponent",
           "position": {
@@ -27536,7 +27536,7 @@
           "children": {
             "$length": 1
           },
-          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "meshMaterial": "@project/assets/materials/M_Emissive_Blue.material.json",
           "uuid": "1aefe9b0eaeff6d5",
           "name": "MeshComponent",
           "position": {
@@ -28178,9 +28178,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              13.284418,
+              13.235719,
               1.87,
-              -16.82259
+              -16.773891
             ],
             "$bc": "v3"
           },
@@ -28196,7 +28196,7 @@
             "_": [
               2.87,
               2.17,
-              0.96
+              0.68
             ],
             "$bc": "v3"
           },
@@ -28220,9 +28220,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              13.175582,
+              12.96,
               1.87,
-              -13.168574
+              -13.41
             ],
             "$bc": "v3"
           },
@@ -28238,7 +28238,7 @@
             "_": [
               2.87,
               2.17,
-              0.96
+              0.74
             ],
             "$bc": "v3"
           },
@@ -39164,9 +39164,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              10.200001,
-              2.009997,
-              9.41
+              10.14,
+              1.99,
+              9.44
             ],
             "$bc": "v3"
           },
@@ -66867,7 +66867,7 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              -0.139991,
+              0.1,
               2.090149,
               -32.86
             ],
@@ -66885,7 +66885,7 @@
             "_": [
               12.49,
               2.46,
-              0.56
+              0.51
             ],
             "$bc": "v3"
           },
@@ -68497,7 +68497,581 @@
         "uuid": "c0141690810b5a8e",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "$length": 1660
+      "1660": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "cd7c1d0792ab94b8",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              13.54,
+              1.87,
+              -15.16
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -1.570796,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              2.87,
+              17.68,
+              0.38
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_634"
+        },
+        "uuid": "80e377f4b2fd0ab4",
+        "$bc": "ENGINE.Actor"
+      },
+      "1661": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "uuid": "68bab5d85e301595",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              13.88,
+              1.88,
+              -15.05
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -1.570796,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              2.87,
+              18.5,
+              0.38
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "barrier_18"
+        },
+        "uuid": "29132764e1cc2d53",
+        "$bc": "ENGINE.Actor"
+      },
+      "1662": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
+          "uuid": "a887c6c3a09e64c8",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -7.065,
+              0.450006,
+              -17.870001
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -1.570796,
+              0,
+              -1.570796
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              5.87,
+              7.87,
+              0.41
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_513"
+        },
+        "uuid": "fa0681c0d42053a6",
+        "$bc": "ENGINE.Actor"
+      },
+      "1663": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Grey.material.json",
+          "uuid": "ab3140e52bd66e98",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -0.21,
+              1.574467,
+              -31.84
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -2.652901,
+              0,
+              -0.000001
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.16,
+              4.24,
+              0.93
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_367"
+        },
+        "uuid": "8b27e576f9276c36",
+        "$bc": "ENGINE.Actor"
+      },
+      "1664": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Grey.material.json",
+          "uuid": "d2fecab30f137eb5",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -0.12,
+              1.574467,
+              -27.35
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -0.488692,
+              0,
+              3.141592
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.23,
+              4.24,
+              0.93
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_368"
+        },
+        "uuid": "6a2677eaef3df6af",
+        "$bc": "ENGINE.Actor"
+      },
+      "1665": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "geometry": {
+            "_": [
+              0.5,
+              32,
+              32
+            ],
+            "$bc": "THREE.SphereGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "3ffd4e8d70658aed",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.35,
+              1.79,
+              9.44
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.02,
+              0.02,
+              0.02
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "bubbel_48"
+        },
+        "uuid": "386055201153b47b",
+        "$bc": "ENGINE.Actor"
+      },
+      "1666": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "geometry": {
+            "_": [
+              0.5,
+              32,
+              32
+            ],
+            "$bc": "THREE.SphereGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "336ac75f18e17a62",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.43,
+              1.79,
+              9.44
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.01,
+              0.01,
+              0.01
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "bubbel_49"
+        },
+        "uuid": "d999b18eec28aec4",
+        "$bc": "ENGINE.Actor"
+      },
+      "1667": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "06648154ad507310",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.31,
+              2.009997,
+              9.43
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              0,
+              1.570796
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.59,
+              0.02,
+              0.02
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "plant_580"
+        },
+        "uuid": "795bb993932d9a94",
+        "$bc": "ENGINE.Actor"
+      },
+      "1668": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "5f65e4bdae32ef40",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.23,
+              1.94,
+              9.33
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              0,
+              1.570796
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.43,
+              0.02,
+              0.02
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "plant_581"
+        },
+        "uuid": "76542234dde25a5b",
+        "$bc": "ENGINE.Actor"
+      },
+      "1669": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": {
+            "uuid": "f70c844e10143577",
+            "userData": {
+              "colorSpaceFixed": true
+            },
+            "$bc": "THREE.MeshStandardMaterial"
+          },
+          "uuid": "1255b84fb14bcfe3",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -6.22,
+              2.3,
+              -29.61
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.33,
+              0.33,
+              0.33
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "Box_46"
+        },
+        "uuid": "23611d6dc7b6a083",
+        "$bc": "ENGINE.Actor"
+      },
+      "1670": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "49d6d754eff2ab29",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.22,
+              1.81,
+              9.43
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              0,
+              1.570796
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.13,
+              0.02,
+              0.02
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "plant_582"
+        },
+        "uuid": "8be230c7a41f8d88",
+        "$bc": "ENGINE.Actor"
+      },
+      "1671": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "geometry": {
+            "_": [
+              0.5,
+              32,
+              32
+            ],
+            "$bc": "THREE.SphereGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "b852a5e584d721fe",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.37,
+              1.79,
+              9.38
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.01,
+              0.01,
+              0.01
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "bubbel_50"
+        },
+        "uuid": "9b371d25e862d0cc",
+        "$bc": "ENGINE.Actor"
+      },
+      "1672": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "geometry": {
+            "_": [
+              0.5,
+              32,
+              32
+            ],
+            "$bc": "THREE.SphereGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "6488e64e9d4e237d",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.32,
+              1.78,
+              9.44
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.01,
+              0.01,
+              0.01
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "bubbel_51"
+        },
+        "uuid": "24eeb1b01476d5e9",
+        "$bc": "ENGINE.Actor"
+      },
+      "1673": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "geometry": {
+            "_": [
+              0.5,
+              32,
+              32
+            ],
+            "$bc": "THREE.SphereGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "uuid": "8abcf16a688de73d",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              10.45,
+              1.78,
+              9.45
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              0.01,
+              0.01,
+              0.01
+            ],
+            "$bc": "v3"
+          },
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "editorData": {
+          "displayName": "bubbel_52"
+        },
+        "uuid": "6a72043d053f4f72",
+        "$bc": "ENGINE.Actor"
+      },
+      "$length": 1674
     },
     "resources": null,
     "editorData": {
@@ -69954,6 +70528,10 @@
             "nodeType": "actor"
           },
           {
+            "id": "8b27e576f9276c36",
+            "nodeType": "actor"
+          },
+          {
             "id": "6a572b156a663f39",
             "nodeType": "actor"
           },
@@ -70795,6 +71373,10 @@
           },
           {
             "id": "ee5cccd793735e2c",
+            "nodeType": "actor"
+          },
+          {
+            "id": "80e377f4b2fd0ab4",
             "nodeType": "actor"
           },
           {
@@ -71719,6 +72301,14 @@
           },
           {
             "id": "8aa118ff4b501397",
+            "nodeType": "actor"
+          },
+          {
+            "id": "795bb993932d9a94",
+            "nodeType": "actor"
+          },
+          {
+            "id": "8be230c7a41f8d88",
             "nodeType": "actor"
           },
           {
@@ -75058,6 +75648,22 @@
             "nodeType": "actor"
           },
           {
+            "id": "9b371d25e862d0cc",
+            "nodeType": "actor"
+          },
+          {
+            "id": "24eeb1b01476d5e9",
+            "nodeType": "actor"
+          },
+          {
+            "id": "386055201153b47b",
+            "nodeType": "actor"
+          },
+          {
+            "id": "d999b18eec28aec4",
+            "nodeType": "actor"
+          },
+          {
             "id": "dc5e93339f025fd2",
             "nodeType": "actor"
           },
@@ -75139,6 +75745,30 @@
           },
           {
             "id": "c0141690810b5a8e",
+            "nodeType": "actor"
+          },
+          {
+            "id": "29132764e1cc2d53",
+            "nodeType": "actor"
+          },
+          {
+            "id": "fa0681c0d42053a6",
+            "nodeType": "actor"
+          },
+          {
+            "id": "6a2677eaef3df6af",
+            "nodeType": "actor"
+          },
+          {
+            "id": "76542234dde25a5b",
+            "nodeType": "actor"
+          },
+          {
+            "id": "23611d6dc7b6a083",
+            "nodeType": "actor"
+          },
+          {
+            "id": "6a72043d053f4f72",
             "nodeType": "actor"
           }
         ]

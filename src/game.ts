@@ -11,13 +11,16 @@ class MyGame extends ENGINE.BaseGameLoop {
   private pawn: FreeCameraPlayer | null = null;
   private controller: ENGINE.PlayerController | null = null;
   private camera1: FixedCamera | null = null;
-  private camera3: FixedCamera | null = null;
-  private camera6: FixedCamera | null = null;
-  private camera7: FixedCamera | null = null;
-  private camera8: FixedCamera | null = null;
-  private camera9: FixedCamera | null = null;
-  private camera10: FixedCamera | null = null;
-  private activeCamera: 1 | 3 | 6 | 7 | 8 | 9 | 10 = 1;
+  private camera1b: FixedCamera | null = null; // sub-camera of 1.1, W/S to enter/exit
+  private camera1c: FixedCamera | null = null; // sub-camera of 1.3, W/S to enter/exit
+  private camera1d: FixedCamera | null = null; // sub-camera of 1.2 (1.2b), W/S to enter/exit
+  private camera2: FixedCamera | null = null; // dolly (was cam3)
+  private camera3: FixedCamera | null = null; // 4-position cycling (was cam6)
+  private camera4: FixedCamera | null = null; // animated drone (was cam7)
+  private camera5: FixedCamera | null = null; // external (was cam8)
+  private camera6: FixedCamera | null = null; // internal/yaw (was cam9)
+  private camera7: FixedCamera | null = null; // focal toggle (was cam10)
+  private activeCamera: 1 | 2 | 3 | 4 | 5 | 6 | 7 = 1;
 
   // Camera 1 - 3 positions; position 1.1 tracks Stan actor
   private readonly CAMERA1_POSITIONS = [
@@ -32,58 +35,61 @@ class MyGame extends ENGINE.BaseGameLoop {
   ];
   private camera1StanTarget: THREE.Vector3 | ENGINE.Actor = new THREE.Vector3(1.43, 2.15, -3.97);
   private activeCamera1Position: number = 0;
+  private isCamera1b: boolean = false; // true when sub-camera 1.1b is active
+  private isCamera1c: boolean = false; // true when sub-camera 1.3b is active
+  private isCamera1d: boolean = false; // true when sub-camera 1.2b is active
 
-  // Camera 6 - single camera cycling through 4 positions with arrow keys
-  private readonly CAMERA6_POSITIONS = [
+  // Camera 3 - single camera cycling through 4 positions (was cam6)
+  private readonly CAMERA3_POSITIONS = [
     new THREE.Vector3(2.3, 10.39, -4.1),
     new THREE.Vector3(9.05, 3.04, -14.35),
     new THREE.Vector3(9.07, 3.14, -8.48),
     new THREE.Vector3(9.12, 3.13, -20.79),
   ];
-  private readonly CAMERA6_TARGETS = [
+  private readonly CAMERA3_TARGETS = [
     new THREE.Vector3(9.5, 3.57, -11.46),
     new THREE.Vector3(11.08, 2.29, -14.91),
     new THREE.Vector3(10.85, 2.3, -8.48),
     new THREE.Vector3(11.14, 1.98, -20.79),
   ];
-  // FOV per position: 40mm≈39° for pos 6.1, 20mm=70° for the rest
-  private readonly CAMERA6_FOVS = [39, 70, 70, 70];
-  private activeCamera6Position: number = 0;
+  // FOV per position: 40mm≈39° for pos 3.1, 20mm=70° for the rest
+  private readonly CAMERA3_FOVS = [39, 70, 70, 70];
+  private activeCamera3Position: number = 0;
 
-  // Camera 8 (external) - 4 fixed positions, all pointing at the same target
-  private readonly CAMERA8_TARGET = new THREE.Vector3(-0.28, 7.49, -3.57);
-  private readonly CAMERA8_POSITIONS = [
+  // Camera 5 (external) - 4 fixed positions, all pointing at the same target (was cam8)
+  private readonly CAMERA5_TARGET = new THREE.Vector3(-0.28, 7.49, -3.57);
+  private readonly CAMERA5_POSITIONS = [
     new THREE.Vector3(-45.33, 5.25, -8),
     new THREE.Vector3(-15.92, 1.05, 15.96),
     new THREE.Vector3(21.74, 0.8, 29.1),
     new THREE.Vector3(1.37, 13.38, -3.49),
   ];
-  private activeCamera8Position: number = 0;
-  // Focal length steps for camera 8: 20mm=70°, 50mm=31°, 80mm=20°
-  private readonly CAMERA8_FOCAL_STEPS: Array<{ label: string; fov: number }> = [
+  private activeCamera5Position: number = 0;
+  // Focal length steps for camera 5: 20mm=70°, 50mm=31°, 80mm=20°
+  private readonly CAMERA5_FOCAL_STEPS: Array<{ label: string; fov: number }> = [
     { label: '20mm', fov: 70 },
     { label: '50mm', fov: 31 },
     { label: '80mm', fov: 20 },
   ];
-  private camera8FocalIndex: number = 0;
+  private camera5FocalIndex: number = 0;
 
-  // Camera 9 (internal) - 4 fixed positions, each with its own target; W/S rotate yaw
-  private readonly CAMERA9_POSITIONS = [
+  // Camera 6 (internal) - 4 fixed positions, each with its own target; arrow keys rotate yaw (was cam9)
+  private readonly CAMERA6_POSITIONS = [
     new THREE.Vector3(-1.65, 5.41, 2.22),
     new THREE.Vector3(-1.16, 4.75, -6.51),
     new THREE.Vector3(0.04, 4.77, -5.98),
     new THREE.Vector3(3.53, 5.79, -5.16),
   ];
-  private readonly CAMERA9_TARGETS = [
+  private readonly CAMERA6_TARGETS = [
     new THREE.Vector3(0.03, 4.81, 1.35),
     new THREE.Vector3(0.85, 4.35, -8.07),
     new THREE.Vector3(0.04, 3.2, -3.58),
     new THREE.Vector3(3.53, 5.79, -2.14),
   ];
-  private activeCamera9Position: number = 0;
+  private activeCamera6Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
 
-  private lastKeyPressTime: { '1': number; '3': number; '6': number; '7': number; '8': number; '9': number; '0': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '3': 0, '6': 0, '7': 0, '8': 0, '9': 0, '0': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
   // H key: move all hills to their target X over 30 seconds
   private readonly HILLS_MOVE_DURATION = 240;
@@ -219,30 +225,30 @@ class MyGame extends ENGINE.BaseGameLoop {
   private genDoorCloseProgress = 0;
   private genDoorCloseStartPos = new THREE.Vector3();
 
-  // Camera 10 focal length toggle
-  private camera10FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
+  // Camera 7 focal length toggle (was cam10)
+  private camera7FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
   
-  // Camera 3 dolly (forward/backward movement)
-  private camera3BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
-  private camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
-  private camera3DollyOffset = 0; // Forward/backward offset
-  private readonly CAMERA3_DOLLY_SPEED = 2; // Units per second
-  private readonly CAMERA3_MAX_DOLLY = 2; // Maximum dolly distance (reduced for closer range)
+  // Camera 2 dolly (forward/backward movement) (was cam3)
+  private camera2BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
+  private camera2Target = new THREE.Vector3(0.74, 3.93, -8.82);
+  private camera2DollyOffset = 0; // Forward/backward offset
+  private readonly CAMERA2_DOLLY_SPEED = 2; // Units per second
+  private readonly CAMERA2_MAX_DOLLY = 2; // Maximum dolly distance
   
-  // Camera 7 animation
-  private camera7StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
-  private camera7EndPos = new THREE.Vector3(-2.46, 25.83, 7.05); // Raised by 5 units from 20.83
-  private camera7Target = new THREE.Vector3(-2.46, 6.22, -1.71);
-  private camera7IsAnimating = false;
-  private camera7AnimationProgress = 0; // 0 = start, 1 = end
-  private readonly CAMERA7_ANIMATION_SPEED = 0.5; // Speed of movement (0.5 = 2 seconds)
-  private camera7SideOffset = 0; // Left/right offset in units
-  private readonly CAMERA7_SIDE_SPEED = 2; // Units per second for side movement
-  private readonly CAMERA7_MAX_SIDE_OFFSET = 3; // Maximum offset in units
+  // Camera 4 animation (was cam7)
+  private camera4StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
+  private camera4EndPos = new THREE.Vector3(-2.46, 25.83, 7.05);
+  private camera4Target = new THREE.Vector3(-2.46, 6.22, -1.71);
+  private camera4IsAnimating = false;
+  private camera4AnimationProgress = 0; // 0 = start, 1 = end
+  private readonly CAMERA4_ANIMATION_SPEED = 0.5; // Speed of movement (0.5 = 2 seconds)
+  private camera4SideOffset = 0; // Left/right offset in units
+  private readonly CAMERA4_SIDE_SPEED = 2; // Units per second for side movement
+  private readonly CAMERA4_MAX_SIDE_OFFSET = 3; // Maximum offset in units
   // Drone-like hovering oscillation
-  private camera7HoverTime = 0; // Time counter for hover oscillation
-  private readonly CAMERA7_HOVER_AMPLITUDE = 0.3; // How much to move up/down
-  private readonly CAMERA7_HOVER_SPEED = 1.5; // Speed of oscillation
+  private camera4HoverTime = 0; // Time counter for hover oscillation
+  private readonly CAMERA4_HOVER_AMPLITUDE = 0.3; // How much to move up/down
+  private readonly CAMERA4_HOVER_SPEED = 1.5; // Speed of oscillation
 
   protected override createLoadingScreen(): ENGINE.ILoadingScreen | null {
     // enable the default loading screen
@@ -250,86 +256,109 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   protected override async preStart(): Promise<void> {
-    // Create first camera at position (x:8.37, y:2.73, z:11.28)
-    // pointing at Stan model at (x:1.43, y:2.15, z:-3.97)
+    // Camera 1 - position 1.1: (x:8.37, y:2.73, z:11.28) pointing at Stan
     const camera1Position = new THREE.Vector3(8.37, 2.73, 11.28);
     const stanPosition = new THREE.Vector3(1.43, 2.15, -3.97);
     this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true });
-    
-    // Create third camera at position (x:0.71, y:4.71, z:-8.82) - raised back by 0.05 from previous
-    // pointing at position (x:0.74, y:3.93, z:-8.82)
-    // with 15mm focal length (approximately 94° FOV) and 90° roll rotation
-    // Arrow keys: rotate camera, W/S keys: dolly in/out (limited range)
-    const camera3Position = new THREE.Vector3(0.71, 4.71, -8.82);
-    const camera3Target = new THREE.Vector3(0.74, 3.93, -8.82);
-    this.camera3 = FixedCamera.create({ 
-      position: camera3Position, 
-      startActive: false, 
-      fov: 94, 
-      rollDegrees: 90,
-      enableRotationControl: true // Enable arrow key rotation
-    });
-    this.camera3.setTarget(camera3Target);
-    
-    // Camera 6 - single camera cycling through 4 positions with arrow keys
-    this.camera6 = FixedCamera.create({
-      position: this.CAMERA6_POSITIONS[0].clone(),
+
+    // Camera 1.1b - sub-camera of 1.1, enter with W, exit with S
+    // Position: (10.27, 2.44, 2.44), target: (10.27, 1.78, 9.31), 22mm ≈ 65° FOV
+    this.camera1b = FixedCamera.create({
+      position: new THREE.Vector3(10.22, 2.3, 9.35),
       startActive: false,
-      fov: this.CAMERA6_FOVS[0],
+      fov: 65,
       enableRotationControl: false,
+      enableWSYawControl: true,
     });
-    this.camera6.setTarget(this.CAMERA6_TARGETS[0]);
-    
-    // Camera 7 - animated camera that moves from start to end position with drone-like hover
-    // Starts at (x:-2.46, y:6.38, z:-1.73)
-    // Ends at (x:-2.46, y:20.83, z:7.05) - lowered by 2 units
-    // Always points at (x:-2.46, y:6.22, z:-1.71)
-    // Has hovering oscillation when at end position to simulate drone movement
-    this.camera7 = FixedCamera.create({ 
-      position: this.camera7StartPos.clone(), 
+    this.camera1b.setTarget(new THREE.Vector3(10.22, 1.82, 9.33));
+
+    // Camera 1.3b - sub-camera of 1.3, enter with W, exit with S
+    // Position: (-13.54, 0.7, -36.93), target: (-6.22, 2.3, -29.61), 22mm ≈ 65° FOV
+    this.camera1c = FixedCamera.create({
+      position: new THREE.Vector3(-13.54, 0.7, -36.93),
       startActive: false,
-      fov: 70, // 20mm
-      enableRotationControl: false // Will handle movement manually
+      fov: 65,
+      enableRotationControl: false,
+      enableWSYawControl: true,
     });
-    this.camera7.setTarget(this.camera7Target);
-    
-    // Camera 8 (zewnętrzna) - cycles through 4 fixed positions with arrow keys
-    // All positions point at the same fixed target
-    this.camera8 = FixedCamera.create({ 
-      position: this.CAMERA8_POSITIONS[0].clone(), 
-      startActive: false,
-      fov: 70,
-      enableRotationControl: false
-    });
-    this.camera8.setTarget(this.CAMERA8_TARGET);
-    
-    // Camera 9 (wewnętrzna) - cycles through 4 positions with arrow keys; W/S rotate yaw
-    this.camera9 = FixedCamera.create({
-      position: this.CAMERA9_POSITIONS[0].clone(),
+    this.camera1c.setTarget(new THREE.Vector3(-6.22, 2.3, -29.61));
+
+    // Camera 1.2b - sub-camera of 1.2, enter with W, exit with S
+    // Position: (1.11, 8.42, -7.97), target: (-5.54, 4.01, -16.04), 20mm = 70° FOV, yaw rotation
+    this.camera1d = FixedCamera.create({
+      position: new THREE.Vector3(1.11, 8.42, -7.97),
       startActive: false,
       fov: 70,
       enableRotationControl: false,
       enableWSYawControl: true,
     });
-    this.camera9.setTarget(this.CAMERA9_TARGETS[0]);
+    this.camera1d.setTarget(new THREE.Vector3(-5.54, 4.01, -16.04));
     
-    // Camera 10 - focal length toggle camera with W/S keys
-    // Position: (x:0.11, y:5.16, z:0.86)
-    // Points at: (x:0.11, y:4.34, z:2.46)
-    // W/S keys toggle between 20mm (FOV 70°) and 120mm (FOV 11.5°)
-    const camera10Position = new THREE.Vector3(0.11, 5.16, 0.86);
-    const camera10Target = new THREE.Vector3(0.11, 4.34, 2.46);
-    this.camera10 = FixedCamera.create({ 
-      position: camera10Position, 
-      startActive: false,
-      fov: 70, // Start at 20mm (70° FOV)
-      enableRotationControl: false,
-      enableZoom: false // Will handle focal length toggle manually
+    // Camera 2 (was 3) - dolly camera at (x:0.71, y:4.71, z:-8.82)
+    // pointing at (x:0.74, y:3.93, z:-8.82), 15mm (94° FOV), 90° roll
+    const camera2Position = new THREE.Vector3(0.71, 4.71, -8.82);
+    const camera2TargetVec = new THREE.Vector3(0.74, 3.93, -8.82);
+    this.camera2 = FixedCamera.create({ 
+      position: camera2Position, 
+      startActive: false, 
+      fov: 94, 
+      rollDegrees: 90,
+      enableRotationControl: true
     });
-    this.camera10.setTarget(camera10Target);
+    this.camera2.setTarget(camera2TargetVec);
+    
+    // Camera 3 (was 6) - single camera cycling through 4 positions
+    this.camera3 = FixedCamera.create({
+      position: this.CAMERA3_POSITIONS[0].clone(),
+      startActive: false,
+      fov: this.CAMERA3_FOVS[0],
+      enableRotationControl: false,
+    });
+    this.camera3.setTarget(this.CAMERA3_TARGETS[0]);
+    
+    // Camera 4 (was 7) - animated drone camera
+    this.camera4 = FixedCamera.create({ 
+      position: this.camera4StartPos.clone(), 
+      startActive: false,
+      fov: 70,
+      enableRotationControl: false
+    });
+    this.camera4.setTarget(this.camera4Target);
+    
+    // Camera 5 (was 8, zewnętrzna) - cycles through 4 fixed positions
+    this.camera5 = FixedCamera.create({ 
+      position: this.CAMERA5_POSITIONS[0].clone(), 
+      startActive: false,
+      fov: 70,
+      enableRotationControl: false
+    });
+    this.camera5.setTarget(this.CAMERA5_TARGET);
+    
+    // Camera 6 (was 9, wewnętrzna) - cycles through 4 positions; arrow keys rotate yaw
+    this.camera6 = FixedCamera.create({
+      position: this.CAMERA6_POSITIONS[0].clone(),
+      startActive: false,
+      fov: 70,
+      enableRotationControl: false,
+      enableWSYawControl: true,
+    });
+    this.camera6.setTarget(this.CAMERA6_TARGETS[0]);
+    
+    // Camera 7 (was 10) - focal length toggle camera
+    // Position: (x:0.11, y:5.16, z:0.86), Points at: (x:0.11, y:4.34, z:2.46)
+    const camera7Position = new THREE.Vector3(0.11, 5.16, 0.86);
+    const camera7TargetVec = new THREE.Vector3(0.11, 4.34, 2.46);
+    this.camera7 = FixedCamera.create({ 
+      position: camera7Position, 
+      startActive: false,
+      fov: 70,
+      enableRotationControl: false,
+      enableZoom: false
+    });
+    this.camera7.setTarget(camera7TargetVec);
     
     // Add all cameras to the world
-    this.world.addActors(this.camera1, this.camera3, this.camera6, this.camera7, this.camera8, this.camera9, this.camera10);
+    this.world.addActors(this.camera1, this.camera1b, this.camera1c, this.camera1d, this.camera2, this.camera3, this.camera4, this.camera5, this.camera6, this.camera7);
     
     // Wait for the level to load completely
     this.createCameraPositionLabel();
@@ -423,10 +452,11 @@ class MyGame extends ENGINE.BaseGameLoop {
   protected override tick(tickTime: ENGINE.TickTime): void {
     super.tick(tickTime);
     this.handleCameraSwitching();
-    this.handleCamera7Animation(tickTime.deltaTimeMS / 1000);
-    this.handleCamera3Dolly(tickTime.deltaTimeMS / 1000);
-    this.handleCamera8FocalSwitch();
-    this.handleCamera10FocalToggle();
+    this.handleCamera1bSwitch();
+    this.handleCamera4Animation(tickTime.deltaTimeMS / 1000);
+    this.handleCamera2Dolly(tickTime.deltaTimeMS / 1000);
+    this.handleCamera5FocalSwitch();
+    this.handleCamera7FocalToggle();
     this.handleHillsMove(tickTime.deltaTimeMS / 1000);
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
     this.handlePrintScale(tickTime.deltaTimeMS / 1000);
@@ -436,13 +466,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Handle camera switching based on keyboard input (keys 1, 2, 3, 4, 5, 6, and 7)
+   * Handle camera switching based on keyboard input (keys 1–7)
    */
   private handleCameraSwitching(): void {
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
 
-    // Check for key '1' press
     if (inputManager.isKeyDown('1') && this.activeCamera !== 1) {
       if (currentTime - this.lastKeyPressTime['1'] > this.KEY_PRESS_COOLDOWN) {
         this.switchToCamera(1);
@@ -450,7 +479,13 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Check for key '3' press
+    if (inputManager.isKeyDown('2') && this.activeCamera !== 2) {
+      if (currentTime - this.lastKeyPressTime['2'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(2);
+        this.lastKeyPressTime['2'] = currentTime;
+      }
+    }
+
     if (inputManager.isKeyDown('3') && this.activeCamera !== 3) {
       if (currentTime - this.lastKeyPressTime['3'] > this.KEY_PRESS_COOLDOWN) {
         this.switchToCamera(3);
@@ -458,7 +493,20 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Check for key '6' press
+    if (inputManager.isKeyDown('4') && this.activeCamera !== 4) {
+      if (currentTime - this.lastKeyPressTime['4'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(4);
+        this.lastKeyPressTime['4'] = currentTime;
+      }
+    }
+
+    if (inputManager.isKeyDown('5') && this.activeCamera !== 5) {
+      if (currentTime - this.lastKeyPressTime['5'] > this.KEY_PRESS_COOLDOWN) {
+        this.switchToCamera(5);
+        this.lastKeyPressTime['5'] = currentTime;
+      }
+    }
+
     if (inputManager.isKeyDown('6') && this.activeCamera !== 6) {
       if (currentTime - this.lastKeyPressTime['6'] > this.KEY_PRESS_COOLDOWN) {
         this.switchToCamera(6);
@@ -466,7 +514,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Check for key '7' press
     if (inputManager.isKeyDown('7') && this.activeCamera !== 7) {
       if (currentTime - this.lastKeyPressTime['7'] > this.KEY_PRESS_COOLDOWN) {
         this.switchToCamera(7);
@@ -474,31 +521,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       }
     }
 
-    // Check for key '8' press
-    if (inputManager.isKeyDown('8') && this.activeCamera !== 8) {
-      if (currentTime - this.lastKeyPressTime['8'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(8);
-        this.lastKeyPressTime['8'] = currentTime;
-      }
-    }
-
-    // Check for key '9' press
-    if (inputManager.isKeyDown('9') && this.activeCamera !== 9) {
-      if (currentTime - this.lastKeyPressTime['9'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(9);
-        this.lastKeyPressTime['9'] = currentTime;
-      }
-    }
-
-    // Check for key '0' press
-    if (inputManager.isKeyDown('0') && this.activeCamera !== 10) {
-      if (currentTime - this.lastKeyPressTime['0'] > this.KEY_PRESS_COOLDOWN) {
-        this.switchToCamera(10);
-        this.lastKeyPressTime['0'] = currentTime;
-      }
-    }
-
-    // Handle A/D keys for position cycling across cameras 1, 6, 8, 9
+    // Handle A/D keys for position cycling across cameras 1, 3, 5, 6
     const switchLeft =
       (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) &&
       currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
@@ -511,89 +534,218 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (switchLeft) this.lastKeyPressTime['a'] = currentTime;
       if (switchRight) this.lastKeyPressTime['d'] = currentTime;
 
-      if (this.activeCamera === 1) this.switchCamera1Position(dir);
+      if (this.activeCamera === 1 && !this.isCamera1b && !this.isCamera1c && !this.isCamera1d) this.switchCamera1Position(dir);
+      else if (this.activeCamera === 3) this.switchCamera3Position(dir);
+      else if (this.activeCamera === 5) this.switchCamera5Position(dir);
       else if (this.activeCamera === 6) this.switchCamera6Position(dir);
-      else if (this.activeCamera === 8) this.switchCamera8Position(dir);
-      else if (this.activeCamera === 9) this.switchCamera9Position(dir);
     }
   }
 
   /**
    * Switch to the specified camera
    */
-  private switchToCamera(cameraNumber: 1 | 3 | 6 | 7 | 8 | 9 | 10): void {
+  private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7): void {
     // Deactivate all cameras first
     if (this.camera1) this.camera1.setActive(false);
+    if (this.camera1b) this.camera1b.setActive(false);
+    this.isCamera1b = false;
+    if (this.camera1c) this.camera1c.setActive(false);
+    this.isCamera1c = false;
+    if (this.camera1d) this.camera1d.setActive(false);
+    this.isCamera1d = false;
+    if (this.camera2) this.camera2.setActive(false);
     if (this.camera3) this.camera3.setActive(false);
+    if (this.camera4) this.camera4.setActive(false);
+    if (this.camera5) this.camera5.setActive(false);
     if (this.camera6) this.camera6.setActive(false);
     if (this.camera7) this.camera7.setActive(false);
-    if (this.camera8) this.camera8.setActive(false);
-    if (this.camera9) this.camera9.setActive(false);
-    if (this.camera10) this.camera10.setActive(false);
 
-    // Activate the selected camera
     if (cameraNumber === 1 && this.camera1) {
       this.camera1.setActive(true);
       this.activeCamera = 1;
       this.activeCamera1Position = 0;
       this.camera1.setWorldPosition(this.CAMERA1_POSITIONS[0].clone());
       this.camera1.setTarget(this.camera1StanTarget);
-      console.log('Switched to Camera 1 - position 1.1 - Use A/D to cycle positions');
+      console.log('Switched to CAM 1 - position 1.1 - Use A/D to cycle positions');
+    } else if (cameraNumber === 2 && this.camera2) {
+      this.camera2.setActive(true);
+      this.activeCamera = 2;
+      this.camera2DollyOffset = 0;
+      this.camera2.setWorldPosition(this.camera2BasePosition.clone());
+      this.camera2.setTarget(this.camera2Target);
+      console.log('Switched to CAM 2 - Use W/S to dolly in/out');
     } else if (cameraNumber === 3 && this.camera3) {
       this.camera3.setActive(true);
       this.activeCamera = 3;
-      this.camera3DollyOffset = 0;
-      this.camera3.setWorldPosition(this.camera3BasePosition.clone());
-      this.camera3.setTarget(this.camera3Target);
-      console.log('Switched to Camera 3 - Use W/S to dolly in/out');
+      this.activeCamera3Position = 0;
+      this.camera3.setWorldPosition(this.CAMERA3_POSITIONS[0].clone());
+      this.camera3.setTarget(this.CAMERA3_TARGETS[0]);
+      this.camera3.setFOV(this.CAMERA3_FOVS[0]);
+      console.log('Switched to CAM 3 - position 3.1 - Use A/D to cycle positions');
+    } else if (cameraNumber === 4 && this.camera4) {
+      this.camera4.setActive(true);
+      this.activeCamera = 4;
+      this.camera4IsAnimating = true;
+      this.camera4AnimationProgress = 0;
+      this.camera4SideOffset = 0;
+      this.camera4HoverTime = 0;
+      this.camera4.setWorldPosition(this.camera4StartPos.clone());
+      this.camera4.setTarget(this.camera4Target);
+      console.log('Switched to CAM 4 - Animation started');
+    } else if (cameraNumber === 5 && this.camera5) {
+      this.camera5.setActive(true);
+      this.activeCamera = 5;
+      this.activeCamera5Position = 0;
+      this.camera5FocalIndex = 0;
+      this.camera5.setWorldPosition(this.CAMERA5_POSITIONS[0].clone());
+      this.camera5.setTarget(this.CAMERA5_TARGET);
+      this.camera5.setFOV(this.CAMERA5_FOCAL_STEPS[0].fov);
+      console.log('Switched to CAM 5 (zewnętrzna) - position 5.1 - A/D: cycle positions, W/S: focal length');
     } else if (cameraNumber === 6 && this.camera6) {
       this.camera6.setActive(true);
       this.activeCamera = 6;
       this.activeCamera6Position = 0;
       this.camera6.setWorldPosition(this.CAMERA6_POSITIONS[0].clone());
       this.camera6.setTarget(this.CAMERA6_TARGETS[0]);
-      this.camera6.setFOV(this.CAMERA6_FOVS[0]);
-      console.log('Switched to Camera 6 - position 6.1 - Use arrows to cycle positions');
+      this.camera6.resetRotationOffsets();
+      console.log('Switched to CAM 6 (wewnętrzna) - position 6.1 - A/D: cycle, arrows: rotate');
     } else if (cameraNumber === 7 && this.camera7) {
-      // Activate camera 7 and start animation
       this.camera7.setActive(true);
       this.activeCamera = 7;
-      this.camera7IsAnimating = true;
-      this.camera7AnimationProgress = 0;
-      this.camera7SideOffset = 0;
-      this.camera7HoverTime = 0; // Reset hover time
-      // Reset to start position
-      this.camera7.setWorldPosition(this.camera7StartPos.clone());
-      this.camera7.setTarget(this.camera7Target);
-      console.log('Switched to Camera 7 - Animation started');
-    } else if (cameraNumber === 8 && this.camera8) {
-      this.camera8.setActive(true);
-      this.activeCamera = 8;
-      this.activeCamera8Position = 0;
-      this.camera8FocalIndex = 0;
-      this.camera8.setWorldPosition(this.CAMERA8_POSITIONS[0].clone());
-      this.camera8.setTarget(this.CAMERA8_TARGET);
-      this.camera8.setFOV(this.CAMERA8_FOCAL_STEPS[0].fov);
-      console.log('Switched to Camera 8 (zewnętrzna) - position 8.1 - arrows: cycle positions, W/S: focal length');
-    } else if (cameraNumber === 9 && this.camera9) {
-      this.camera9.setActive(true);
-      this.activeCamera = 9;
-      this.activeCamera9Position = 0;
-      this.camera9.setWorldPosition(this.CAMERA9_POSITIONS[0].clone());
-      this.camera9.setTarget(this.CAMERA9_TARGETS[0]);
-      this.camera9.resetRotationOffsets();
-      console.log('Switched to Camera 9 (wewnętrzna) - position 9.1 - Use arrows to cycle, A/D to rotate');
-    } else if (cameraNumber === 10 && this.camera10) {
-      this.camera10.setActive(true);
-      this.activeCamera = 10;
-      console.log('Switched to Camera 10 - Use W/S to toggle focal length (20mm/120mm)');
+      console.log('Switched to CAM 7 - Use W/S to toggle focal length (20mm/120mm)');
     }
 
     this.updateCameraPositionLabel();
   }
 
   /**
-   * Cycle camera 1 through its 3 fixed positions using arrow keys.
+   * W key: enter sub-camera (1.1b from 1.1, 1.3b from 1.3). S key: return to parent position.
+   * Only active while activeCamera === 1.
+   */
+  private handleCamera1bSwitch(): void {
+    if (this.activeCamera !== 1 || !this.camera1) return;
+
+    const inputManager = this.world.inputManager;
+    const currentTime = performance.now();
+
+    const wDown = (inputManager.isKeyDown('w') || inputManager.isKeyDown('W'))
+      && currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN;
+    const sDown = (inputManager.isKeyDown('s') || inputManager.isKeyDown('S'))
+      && currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN;
+    const aDown = (inputManager.isKeyDown('a') || inputManager.isKeyDown('A'))
+      && currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
+    const dDown = (inputManager.isKeyDown('d') || inputManager.isKeyDown('D'))
+      && currentTime - this.lastKeyPressTime['d'] > this.KEY_PRESS_COOLDOWN;
+
+    // A/D while in any sub-camera: cycle directly to adjacent sub-camera
+    // Sub-camera order mirrors main positions: index 0=1.1b, 1=1.2b, 2=1.3b
+    const subCameras = [this.camera1b, this.camera1d, this.camera1c]; // order: 1.1b, 1.2b, 1.3b
+    const subLabels = ['CAM 1.1b', 'CAM 1.2b', 'CAM 1.3b'];
+    const inSub = this.isCamera1b || this.isCamera1c || this.isCamera1d;
+
+    if (inSub && (aDown || dDown)) {
+      if (aDown) this.lastKeyPressTime['a'] = currentTime;
+      if (dDown) this.lastKeyPressTime['d'] = currentTime;
+
+      // Determine current sub-camera index
+      const currentSubIdx = this.isCamera1b ? 0 : this.isCamera1d ? 1 : 2;
+      const count = subCameras.length;
+      const nextSubIdx = aDown
+        ? (currentSubIdx - 1 + count) % count
+        : (currentSubIdx + 1) % count;
+
+      // Deactivate current sub-camera
+      subCameras[currentSubIdx]?.setActive(false);
+      this.isCamera1b = false;
+      this.isCamera1c = false;
+      this.isCamera1d = false;
+
+      // Update main position index to match the new sub-camera
+      // subIdx 0→pos 0, subIdx 1→pos 1, subIdx 2→pos 2
+      this.activeCamera1Position = nextSubIdx;
+
+      // Activate next sub-camera
+      const nextCam = subCameras[nextSubIdx];
+      if (nextCam) {
+        nextCam.resetRotationOffsets();
+        nextCam.setActive(true);
+      }
+      if (nextSubIdx === 0) this.isCamera1b = true;
+      else if (nextSubIdx === 1) this.isCamera1d = true;
+      else this.isCamera1c = true;
+
+      this.updateCameraPositionLabel();
+      console.log(`${subLabels[nextSubIdx]} - Switched via A/D`);
+      return;
+    }
+
+    // W — enter sub-camera from a supported main position
+    if (!this.isCamera1b && !this.isCamera1c && !this.isCamera1d && wDown) {
+      // Position 1.1 → 1.1b
+      if (this.activeCamera1Position === 0 && this.camera1b) {
+        this.lastKeyPressTime['w'] = currentTime;
+        this.camera1.setActive(false);
+        this.camera1b.resetRotationOffsets();
+        this.camera1b.setActive(true);
+        this.isCamera1b = true;
+        this.updateCameraPositionLabel();
+        console.log('CAM 1.1b - Enter sub-camera (S to return)');
+      }
+      // Position 1.2 → 1.2b
+      else if (this.activeCamera1Position === 1 && this.camera1d) {
+        this.lastKeyPressTime['w'] = currentTime;
+        this.camera1.setActive(false);
+        this.camera1d.resetRotationOffsets();
+        this.camera1d.setActive(true);
+        this.isCamera1d = true;
+        this.updateCameraPositionLabel();
+        console.log('CAM 1.2b - Enter sub-camera (S to return)');
+      }
+      // Position 1.3 → 1.3b
+      else if (this.activeCamera1Position === 2 && this.camera1c) {
+        this.lastKeyPressTime['w'] = currentTime;
+        this.camera1.setActive(false);
+        this.camera1c.resetRotationOffsets();
+        this.camera1c.setActive(true);
+        this.isCamera1c = true;
+        this.updateCameraPositionLabel();
+        console.log('CAM 1.3b - Enter sub-camera (S to return)');
+      }
+    }
+
+    // S — return to parent position from 1.1b
+    if (this.isCamera1b && this.camera1b && sDown) {
+      this.lastKeyPressTime['s'] = currentTime;
+      this.camera1b.setActive(false);
+      this.camera1.setActive(true);
+      this.isCamera1b = false;
+      this.updateCameraPositionLabel();
+      console.log('CAM 1.1 - Returned from sub-camera');
+    }
+
+    // S — return to parent position from 1.2b
+    if (this.isCamera1d && this.camera1d && sDown) {
+      this.lastKeyPressTime['s'] = currentTime;
+      this.camera1d.setActive(false);
+      this.camera1.setActive(true);
+      this.isCamera1d = false;
+      this.updateCameraPositionLabel();
+      console.log('CAM 1.2 - Returned from sub-camera');
+    }
+
+    // S — return to parent position from 1.3b
+    if (this.isCamera1c && this.camera1c && sDown) {
+      this.lastKeyPressTime['s'] = currentTime;
+      this.camera1c.setActive(false);
+      this.camera1.setActive(true);
+      this.isCamera1c = false;
+      this.updateCameraPositionLabel();
+      console.log('CAM 1.3 - Returned from sub-camera');
+    }
+  }
+
+  /**
+   * Cycle camera 1 through its 3 fixed positions using A/D keys.
    * Position 1.1 uses the Stan actor as target (or fallback Vector3).
    */
   private switchCamera1Position(direction: 'left' | 'right'): void {
@@ -614,11 +766,55 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.camera1.setWorldPosition(pos.clone());
     this.camera1.setTarget(target);
     this.updateCameraPositionLabel();
-    console.log(`Camera 1 - position 1.${this.activeCamera1Position + 1}`);
+    console.log(`CAM 1 - position 1.${this.activeCamera1Position + 1}`);
   }
 
   /**
-   * Cycle camera 6 through its 4 fixed positions using arrow keys
+   * Cycle camera 3 through its 4 fixed positions using A/D keys (was cam6)
+   */
+  private switchCamera3Position(direction: 'left' | 'right'): void {
+    if (!this.camera3) return;
+
+    const count = this.CAMERA3_POSITIONS.length;
+    if (direction === 'left') {
+      this.activeCamera3Position = (this.activeCamera3Position - 1 + count) % count;
+    } else {
+      this.activeCamera3Position = (this.activeCamera3Position + 1) % count;
+    }
+
+    const pos = this.CAMERA3_POSITIONS[this.activeCamera3Position];
+    const target = this.CAMERA3_TARGETS[this.activeCamera3Position];
+    const fov = this.CAMERA3_FOVS[this.activeCamera3Position];
+    this.camera3.setWorldPosition(pos.clone());
+    this.camera3.setTarget(target);
+    this.camera3.setFOV(fov);
+    this.updateCameraPositionLabel();
+    console.log(`CAM 3 - position 3.${this.activeCamera3Position + 1}`);
+  }
+
+  /**
+   * Cycle camera 5 (external) through its 4 fixed positions using A/D keys (was cam8)
+   */
+  private switchCamera5Position(direction: 'left' | 'right'): void {
+    if (!this.camera5) return;
+
+    const count = this.CAMERA5_POSITIONS.length;
+    if (direction === 'left') {
+      this.activeCamera5Position = (this.activeCamera5Position - 1 + count) % count;
+    } else {
+      this.activeCamera5Position = (this.activeCamera5Position + 1) % count;
+    }
+
+    const pos = this.CAMERA5_POSITIONS[this.activeCamera5Position];
+    this.camera5.setWorldPosition(pos.clone());
+    this.camera5.setTarget(this.CAMERA5_TARGET);
+    this.updateCameraPositionLabel();
+    console.log(`CAM 5 (zewnętrzna) - position 5.${this.activeCamera5Position + 1}`);
+  }
+
+  /**
+   * Cycle camera 6 (internal) through its 4 fixed positions using A/D keys.
+   * Resets yaw rotation on each position change. (was cam9)
    */
   private switchCamera6Position(direction: 'left' | 'right'): void {
     if (!this.camera6) return;
@@ -632,55 +828,11 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     const pos = this.CAMERA6_POSITIONS[this.activeCamera6Position];
     const target = this.CAMERA6_TARGETS[this.activeCamera6Position];
-    const fov = this.CAMERA6_FOVS[this.activeCamera6Position];
     this.camera6.setWorldPosition(pos.clone());
     this.camera6.setTarget(target);
-    this.camera6.setFOV(fov);
+    this.camera6.resetRotationOffsets();
     this.updateCameraPositionLabel();
-    console.log(`Camera 6 - position 6.${this.activeCamera6Position + 1}`);
-  }
-
-  /**
-   * Cycle camera 8 (external) through its 4 fixed positions using arrow keys
-   */
-  private switchCamera8Position(direction: 'left' | 'right'): void {
-    if (!this.camera8) return;
-
-    const count = this.CAMERA8_POSITIONS.length;
-    if (direction === 'left') {
-      this.activeCamera8Position = (this.activeCamera8Position - 1 + count) % count;
-    } else {
-      this.activeCamera8Position = (this.activeCamera8Position + 1) % count;
-    }
-
-    const pos = this.CAMERA8_POSITIONS[this.activeCamera8Position];
-    this.camera8.setWorldPosition(pos.clone());
-    this.camera8.setTarget(this.CAMERA8_TARGET);
-    this.updateCameraPositionLabel();
-    console.log(`Camera 8 (zewnętrzna) - position 8.${this.activeCamera8Position + 1}`);
-  }
-
-  /**
-   * Cycle camera 9 (internal) through its 4 fixed positions using arrow keys.
-   * Resets yaw rotation on each position change.
-   */
-  private switchCamera9Position(direction: 'left' | 'right'): void {
-    if (!this.camera9) return;
-
-    const count = this.CAMERA9_POSITIONS.length;
-    if (direction === 'left') {
-      this.activeCamera9Position = (this.activeCamera9Position - 1 + count) % count;
-    } else {
-      this.activeCamera9Position = (this.activeCamera9Position + 1) % count;
-    }
-
-    const pos = this.CAMERA9_POSITIONS[this.activeCamera9Position];
-    const target = this.CAMERA9_TARGETS[this.activeCamera9Position];
-    this.camera9.setWorldPosition(pos.clone());
-    this.camera9.setTarget(target);
-    this.camera9.resetRotationOffsets();
-    this.updateCameraPositionLabel();
-    console.log(`Camera 9 (wewnętrzna) - position 9.${this.activeCamera9Position + 1}`);
+    console.log(`CAM 6 (wewnętrzna) - position 6.${this.activeCamera6Position + 1}`);
   }
 
   /**
@@ -714,13 +866,18 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     let text = '';
     switch (this.activeCamera) {
-      case 1:  text = `1.${this.activeCamera1Position + 1}`;  break;
-      case 3:  text = '3';  break;
-      case 6:  text = `6.${this.activeCamera6Position + 1}`;  break;
-      case 7:  text = '7';  break;
-      case 8:  text = `8.${this.activeCamera8Position + 1}`;  break;
-      case 9:  text = `9.${this.activeCamera9Position + 1}`;  break;
-      case 10: text = '10'; break;
+      case 1:
+        if (this.isCamera1b) text = 'CAM 1.1b';
+        else if (this.isCamera1d) text = 'CAM 1.2b';
+        else if (this.isCamera1c) text = 'CAM 1.3b';
+        else text = `CAM 1.${this.activeCamera1Position + 1}`;
+        break;
+      case 2:  text = 'CAM 2';  break;
+      case 3:  text = `CAM 3.${this.activeCamera3Position + 1}`;  break;
+      case 4:  text = 'CAM 4';  break;
+      case 5:  text = `CAM 5.${this.activeCamera5Position + 1}`;  break;
+      case 6:  text = `CAM 6.${this.activeCamera6Position + 1}`;  break;
+      case 7:  text = 'CAM 7';  break;
     }
 
     this.cameraPositionLabel.textContent = text;
@@ -790,179 +947,160 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Handle camera 7 animation and side movement with drone-like hovering
+   * Handle camera 4 animation and side movement with drone-like hovering (was cam7)
    */
-  private handleCamera7Animation(deltaTime: number): void {
-    if (this.activeCamera !== 7 || !this.camera7) return;
+  private handleCamera4Animation(deltaTime: number): void {
+    if (this.activeCamera !== 4 || !this.camera4) return;
 
     const inputManager = this.world.inputManager;
 
-    // Handle initial animation from start to end position
-    if (this.camera7IsAnimating) {
-      this.camera7AnimationProgress += this.CAMERA7_ANIMATION_SPEED * deltaTime;
+    if (this.camera4IsAnimating) {
+      this.camera4AnimationProgress += this.CAMERA4_ANIMATION_SPEED * deltaTime;
       
-      if (this.camera7AnimationProgress >= 1.0) {
-        this.camera7AnimationProgress = 1.0;
-        this.camera7IsAnimating = false;
-        console.log('Camera 7 reached end position - hovering mode activated');
+      if (this.camera4AnimationProgress >= 1.0) {
+        this.camera4AnimationProgress = 1.0;
+        this.camera4IsAnimating = false;
+        console.log('CAM 4 reached end position - hovering mode activated');
       }
 
-      // Interpolate between start and end positions
       const basePosition = new THREE.Vector3().lerpVectors(
-        this.camera7StartPos,
-        this.camera7EndPos,
-        this.camera7AnimationProgress
+        this.camera4StartPos,
+        this.camera4EndPos,
+        this.camera4AnimationProgress
       );
 
-      // Apply side offset
-      basePosition.x += this.camera7SideOffset;
+      basePosition.x += this.camera4SideOffset;
 
-      this.camera7.setWorldPosition(basePosition);
-      this.camera7.setTarget(this.camera7Target);
+      this.camera4.setWorldPosition(basePosition);
+      this.camera4.setTarget(this.camera4Target);
     } else {
-      // After animation is complete, handle side movement and hovering
+      this.camera4HoverTime += deltaTime;
       
-      // Update hover time
-      this.camera7HoverTime += deltaTime;
+      const hoverOffset = Math.sin(this.camera4HoverTime * this.CAMERA4_HOVER_SPEED) * this.CAMERA4_HOVER_AMPLITUDE;
       
-      // Calculate hover offset (sine wave for smooth up/down motion)
-      const hoverOffset = Math.sin(this.camera7HoverTime * this.CAMERA7_HOVER_SPEED) * this.CAMERA7_HOVER_AMPLITUDE;
-      
-      // Handle side movement with arrow keys
       let sideMovement = 0;
 
       if (inputManager.isKeyDown('ArrowLeft')) {
-        sideMovement = -this.CAMERA7_SIDE_SPEED * deltaTime;
+        sideMovement = -this.CAMERA4_SIDE_SPEED * deltaTime;
       }
       if (inputManager.isKeyDown('ArrowRight')) {
-        sideMovement = this.CAMERA7_SIDE_SPEED * deltaTime;
+        sideMovement = this.CAMERA4_SIDE_SPEED * deltaTime;
       }
 
-      // Update side offset with clamping
-      this.camera7SideOffset = THREE.MathUtils.clamp(
-        this.camera7SideOffset + sideMovement,
-        -this.CAMERA7_MAX_SIDE_OFFSET,
-        this.CAMERA7_MAX_SIDE_OFFSET
+      this.camera4SideOffset = THREE.MathUtils.clamp(
+        this.camera4SideOffset + sideMovement,
+        -this.CAMERA4_MAX_SIDE_OFFSET,
+        this.CAMERA4_MAX_SIDE_OFFSET
       );
 
-      // Apply side offset and hover offset to current position
-      const currentPos = this.camera7EndPos.clone();
-      currentPos.x += this.camera7SideOffset;
-      currentPos.y += hoverOffset; // Add hovering motion
+      const currentPos = this.camera4EndPos.clone();
+      currentPos.x += this.camera4SideOffset;
+      currentPos.y += hoverOffset;
       
-      this.camera7.setWorldPosition(currentPos);
-      this.camera7.setTarget(this.camera7Target);
+      this.camera4.setWorldPosition(currentPos);
+      this.camera4.setTarget(this.camera4Target);
     }
   }
 
   /**
-   * Handle camera 3 dolly movement (forward/backward with W/S keys)
+   * Handle camera 2 dolly movement (forward/backward with W/S keys) (was cam3)
    */
-  private handleCamera3Dolly(deltaTime: number): void {
-    if (this.activeCamera !== 3 || !this.camera3) return;
+  private handleCamera2Dolly(deltaTime: number): void {
+    if (this.activeCamera !== 2 || !this.camera2) return;
 
     const inputManager = this.world.inputManager;
     let dollyMovement = 0;
 
-    // W key - move forward (toward target)
     if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
-      dollyMovement = this.CAMERA3_DOLLY_SPEED * deltaTime;
+      dollyMovement = this.CAMERA2_DOLLY_SPEED * deltaTime;
     }
 
-    // S key - move backward (away from target)
     if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
-      dollyMovement = -this.CAMERA3_DOLLY_SPEED * deltaTime;
+      dollyMovement = -this.CAMERA2_DOLLY_SPEED * deltaTime;
     }
 
     if (dollyMovement !== 0) {
-      // Update dolly offset with clamping
-      this.camera3DollyOffset = THREE.MathUtils.clamp(
-        this.camera3DollyOffset + dollyMovement,
-        -this.CAMERA3_MAX_DOLLY,
-        this.CAMERA3_MAX_DOLLY
+      this.camera2DollyOffset = THREE.MathUtils.clamp(
+        this.camera2DollyOffset + dollyMovement,
+        -this.CAMERA2_MAX_DOLLY,
+        this.CAMERA2_MAX_DOLLY
       );
 
-      // Calculate direction from camera to target
       const direction = new THREE.Vector3()
-        .subVectors(this.camera3Target, this.camera3BasePosition)
+        .subVectors(this.camera2Target, this.camera2BasePosition)
         .normalize();
 
-      // Apply dolly offset along the direction
-      const newPosition = this.camera3BasePosition.clone();
-      newPosition.addScaledVector(direction, this.camera3DollyOffset);
+      const newPosition = this.camera2BasePosition.clone();
+      newPosition.addScaledVector(direction, this.camera2DollyOffset);
 
-      this.camera3.setWorldPosition(newPosition);
-      this.camera3.setTarget(this.camera3Target);
+      this.camera2.setWorldPosition(newPosition);
+      this.camera2.setTarget(this.camera2Target);
     }
   }
 
   /**
-   * Handle camera 8 focal length stepping: W = longer focal (narrower), S = shorter focal (wider)
-   * Steps: 20mm (70°) → 50mm (31°) → 80mm (20°)
+   * Handle camera 5 focal length stepping: W = longer focal (narrower), S = shorter focal (wider)
+   * Steps: 20mm (70°) → 50mm (31°) → 80mm (20°) (was cam8)
    */
-  private handleCamera8FocalSwitch(): void {
-    if (!this.camera8 || this.activeCamera !== 8) return;
+  private handleCamera5FocalSwitch(): void {
+    if (!this.camera5 || this.activeCamera !== 5) return;
 
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
 
-    // W key - step to longer focal length (narrower FOV)
     if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
       if (currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN) {
         this.lastKeyPressTime['w'] = currentTime;
-        const next = Math.min(this.camera8FocalIndex + 1, this.CAMERA8_FOCAL_STEPS.length - 1);
-        if (next !== this.camera8FocalIndex) {
-          this.camera8FocalIndex = next;
-          const step = this.CAMERA8_FOCAL_STEPS[this.camera8FocalIndex];
-          this.camera8.setFOV(step.fov);
-          console.log(`Camera 8: ${step.label} (FOV ${step.fov}°)`);
+        const next = Math.min(this.camera5FocalIndex + 1, this.CAMERA5_FOCAL_STEPS.length - 1);
+        if (next !== this.camera5FocalIndex) {
+          this.camera5FocalIndex = next;
+          const step = this.CAMERA5_FOCAL_STEPS[this.camera5FocalIndex];
+          this.camera5.setFOV(step.fov);
+          console.log(`CAM 5: ${step.label} (FOV ${step.fov}°)`);
         }
       }
     }
 
-    // S key - step to shorter focal length (wider FOV)
     if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
       if (currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN) {
         this.lastKeyPressTime['s'] = currentTime;
-        const prev = Math.max(this.camera8FocalIndex - 1, 0);
-        if (prev !== this.camera8FocalIndex) {
-          this.camera8FocalIndex = prev;
-          const step = this.CAMERA8_FOCAL_STEPS[this.camera8FocalIndex];
-          this.camera8.setFOV(step.fov);
-          console.log(`Camera 8: ${step.label} (FOV ${step.fov}°)`);
+        const prev = Math.max(this.camera5FocalIndex - 1, 0);
+        if (prev !== this.camera5FocalIndex) {
+          this.camera5FocalIndex = prev;
+          const step = this.CAMERA5_FOCAL_STEPS[this.camera5FocalIndex];
+          this.camera5.setFOV(step.fov);
+          console.log(`CAM 5: ${step.label} (FOV ${step.fov}°)`);
         }
       }
     }
   }
 
   /**
-   * Handle camera 10 focal length toggle (W/S keys for instant switch between 20mm and 70mm)
+   * Handle camera 7 focal length toggle (W/S keys for instant switch between 20mm and 120mm) (was cam10)
    */
-  private handleCamera10FocalToggle(): void {
-    if (!this.camera10 || this.activeCamera !== 10) return;
+  private handleCamera7FocalToggle(): void {
+    if (!this.camera7 || this.activeCamera !== 7) return;
 
     const inputManager = this.world.inputManager;
     const currentTime = performance.now();
 
-    // W key - switch to 120mm (FOV 11.5°)
     if (inputManager.isKeyDown('w') || inputManager.isKeyDown('W')) {
       if (currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN) {
-        if (this.camera10FocalLength !== '120mm') {
-          this.camera10FocalLength = '120mm';
-          this.camera10.setFOV(11.5); // 120mm focal length ≈ 11.5° FOV
-          console.log('Camera 10: Switched to 120mm (FOV 11.5°)');
+        if (this.camera7FocalLength !== '120mm') {
+          this.camera7FocalLength = '120mm';
+          this.camera7.setFOV(11.5);
+          console.log('CAM 7: Switched to 120mm (FOV 11.5°)');
         }
         this.lastKeyPressTime['w'] = currentTime;
       }
     }
 
-    // S key - switch to 20mm (FOV 70°)
     if (inputManager.isKeyDown('s') || inputManager.isKeyDown('S')) {
       if (currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN) {
-        if (this.camera10FocalLength !== '20mm') {
-          this.camera10FocalLength = '20mm';
-          this.camera10.setFOV(70); // 20mm focal length = 70° FOV
-          console.log('Camera 10: Switched to 20mm (FOV 70°)');
+        if (this.camera7FocalLength !== '20mm') {
+          this.camera7FocalLength = '20mm';
+          this.camera7.setFOV(70);
+          console.log('CAM 7: Switched to 20mm (FOV 70°)');
         }
         this.lastKeyPressTime['s'] = currentTime;
       }
@@ -1189,11 +1327,9 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.lastKeyPressTime['k'] = currentTime;
 
       if (!this.genActive) {
-        // Start looping sequence
         this.genActive = true;
         this.genStartLoop();
       } else {
-        // Stop sequence and reset
         this.genActive = false;
         this.genStep = 0;
         this.genProgress = 0;

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gnsx/genesys.js':
-        specifier: 6.0.4
-        version: 6.0.4
+        specifier: 6.0.6
+        version: 6.0.6
       three:
         specifier: 0.182.0
         version: 0.182.0
@@ -63,6 +63,9 @@ importers:
       tsx:
         specifier: 4.20.3
         version: 4.20.3
+      turbo:
+        specifier: 2.8.11
+        version: 2.8.11
       typescript:
         specifier: 5.8.3
         version: 5.8.3
@@ -334,8 +337,8 @@ packages:
   '@gltf-transform/functions@4.3.0':
     resolution: {integrity: sha512-FZggHVgt3DHOezgESBrf2vDzuD2FYQYaNT2sT/aP316SIwhuiIwby3z7rhV9joDvWqqUaPkf1UmkjlOaY9riSQ==}
 
-  '@gnsx/genesys.js@6.0.4':
-    resolution: {integrity: sha512-A7L3eM/Uj29fy8rnEKTtrcpCC/2TRRWYDOLes91Od+1afhLK8/n+4zeWsuN2J1Xsa2pg/+uqIaMx/2+OP0sIyw==}
+  '@gnsx/genesys.js@6.0.6':
+    resolution: {integrity: sha512-QkrllvcRnGIsZX+LGPz1ttKazJodSfEgiG8XXNxz+F5QAvoPjoZg1y1abgxlo/UPaCtx+HqoNqBMkSti8+2BtQ==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2126,6 +2129,40 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
+  turbo-darwin-64@2.8.11:
+    resolution: {integrity: sha512-XKaCWaz4OCt77oYYvGCIRpvYD4c/aNaKjRkUpv+e8rN3RZb+5Xsyew4yRO+gaHdMIUhQznXNXfHlhs+/p7lIhA==}
+    cpu: [x64]
+    os: [darwin]
+
+  turbo-darwin-arm64@2.8.11:
+    resolution: {integrity: sha512-VvynLHGUNvQ9k7GZjRPSsRcK4VkioTfFb7O7liAk4nHKjEcMdls7GqxzjVWgJiKz3hWmQGaP9hRa9UUnhVWCxA==}
+    cpu: [arm64]
+    os: [darwin]
+
+  turbo-linux-64@2.8.11:
+    resolution: {integrity: sha512-cbSn37dcm+EmkQ7DD0euy7xV7o2el4GAOr1XujvkAyKjjNvQ+6QIUeDgQcwAx3D17zPpDvfDMJY2dLQadWnkmQ==}
+    cpu: [x64]
+    os: [linux]
+
+  turbo-linux-arm64@2.8.11:
+    resolution: {integrity: sha512-+trymp2s2aBrhS04l6qFxcExzZ8ffndevuUB9c5RCeqsVpZeiWuGQlWNm5XjOmzoMayxRARZ5ma7yiWbGMiLqQ==}
+    cpu: [arm64]
+    os: [linux]
+
+  turbo-windows-64@2.8.11:
+    resolution: {integrity: sha512-3kJjFSM4yw1n9Uzmi+XkAUgCae19l/bH6RJ442xo7mnZm0tpOjo33F+FYHoSVpIWVMd0HG0LDccyafPSdylQbA==}
+    cpu: [x64]
+    os: [win32]
+
+  turbo-windows-arm64@2.8.11:
+    resolution: {integrity: sha512-JOM4uF2vuLsJUvibdR6X9QqdZr6BhC6Nhlrw4LKFPsXZZI/9HHLoqAiYRpE4MuzIwldCH/jVySnWXrI1SKto0g==}
+    cpu: [arm64]
+    os: [win32]
+
+  turbo@2.8.11:
+    resolution: {integrity: sha512-H+rwSHHPLoyPOSoHdmI1zY0zy0GGj1Dmr7SeJW+nZiWLz2nex8EJ+fkdVabxXFMNEux+aywI4Sae8EqhmnOv4A==}
+    hasBin: true
+
   tweakpane@4.0.5:
     resolution: {integrity: sha512-rxEXdSI+ArlG1RyO6FghC4ZUX8JkEfz8F3v1JuteXSV0pEtHJzyo07fcDG+NsJfN5L39kSbCYbB9cBGHyuI/tQ==}
 
@@ -2495,7 +2532,7 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@gnsx/genesys.js@6.0.4':
+  '@gnsx/genesys.js@6.0.6':
     dependencies:
       '@dimforge/rapier3d-compat': 0.18.2
       '@recast-navigation/three': 0.39.0(@types/three@0.182.0)(three@0.182.0)
@@ -4509,6 +4546,33 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
+
+  turbo-darwin-64@2.8.11:
+    optional: true
+
+  turbo-darwin-arm64@2.8.11:
+    optional: true
+
+  turbo-linux-64@2.8.11:
+    optional: true
+
+  turbo-linux-arm64@2.8.11:
+    optional: true
+
+  turbo-windows-64@2.8.11:
+    optional: true
+
+  turbo-windows-arm64@2.8.11:
+    optional: true
+
+  turbo@2.8.11:
+    optionalDependencies:
+      turbo-darwin-64: 2.8.11
+      turbo-darwin-arm64: 2.8.11
+      turbo-linux-64: 2.8.11
+      turbo-linux-arm64: 2.8.11
+      turbo-windows-64: 2.8.11
+      turbo-windows-arm64: 2.8.11
 
   tweakpane@4.0.5: {}
 

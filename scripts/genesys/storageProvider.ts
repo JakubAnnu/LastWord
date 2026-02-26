@@ -77,7 +77,7 @@ export class StorageProvider implements ENGINE.IStorageProvider {
     return fs.existsSync(fullPath);
   }
 
-  public async buildCurrentProject(runTsc: boolean): Promise<boolean> {
+  public async buildCurrentProject(): Promise<boolean> {
     throw new Error('Not implemented');
   }
 
