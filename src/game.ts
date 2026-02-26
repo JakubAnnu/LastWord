@@ -444,7 +444,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
 
     this.elevatorActor     = this.findActorByDisplayName('elevator')      ?? this.findActorByName('elevator');
-    this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
+    this.stanElevatorActor = this.findActorByDisplayName('stan_elevator_2') ?? this.findActorByName('stan_elevator_2');
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
   }
@@ -1540,7 +1540,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.elevatorActor = this.findActorByDisplayName('elevator') ?? this.findActorByName('elevator');
     }
     if (!this.stanElevatorActor) {
-      this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
+      this.stanElevatorActor = this.findActorByDisplayName('stan_elevator_2') ?? this.findActorByName('stan_elevator_2');
     }
 
     const inputManager = this.world.inputManager;

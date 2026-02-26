@@ -67024,36 +67024,6 @@
       },
       "1620": {
         "rootComponent": {
-          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-25_13-47-08.glb",
-          "uuid": "f86b2328-7d92-4823-8397-1eaa731ae3b3",
-          "name": "GLTFMeshComponent",
-          "position": {
-            "_": [
-              0.08,
-              1.95,
-              -4.04
-            ],
-            "$bc": "v3"
-          },
-          "rotation": {
-            "_": [
-              -3.141593,
-              0.05236,
-              -3.141593
-            ],
-            "$bc": "e"
-          },
-          "castShadow": true,
-          "$bc": "ENGINE.GLTFMeshComponent"
-        },
-        "editorData": {
-          "displayName": "stan_elevator"
-        },
-        "uuid": "867d84ecf0996d6f",
-        "$bc": "ENGINE.GLTFMeshActor"
-      },
-      "1621": {
-        "rootComponent": {
           "children": {
             "$length": 1
           },
@@ -67086,7 +67056,7 @@
         "uuid": "b5426cb6a52aedd6",
         "$bc": "ENGINE.Actor"
       },
-      "1622": {
+      "1621": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67120,7 +67090,7 @@
         "uuid": "35f95256114de0e8",
         "$bc": "ENGINE.Actor"
       },
-      "1623": {
+      "1622": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67154,7 +67124,7 @@
         "uuid": "2f615c4f5f077e53",
         "$bc": "ENGINE.Actor"
       },
-      "1624": {
+      "1623": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67188,7 +67158,7 @@
         "uuid": "410024d1eadfc684",
         "$bc": "ENGINE.Actor"
       },
-      "1625": {
+      "1624": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67230,7 +67200,7 @@
         "uuid": "faec1c392b453012",
         "$bc": "ENGINE.Actor"
       },
-      "1626": {
+      "1625": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67272,7 +67242,7 @@
         "uuid": "5737ccb92447f74e",
         "$bc": "ENGINE.Actor"
       },
-      "1627": {
+      "1626": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67306,7 +67276,7 @@
         "uuid": "e908b8be88bfae5e",
         "$bc": "ENGINE.Actor"
       },
-      "1628": {
+      "1627": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67340,7 +67310,7 @@
         "uuid": "d750f04b52362c3f",
         "$bc": "ENGINE.Actor"
       },
-      "1629": {
+      "1628": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67374,7 +67344,7 @@
         "uuid": "8d8eb963dcb0d7da",
         "$bc": "ENGINE.Actor"
       },
-      "1630": {
+      "1629": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67416,7 +67386,7 @@
         "uuid": "d295835151f0a7b9",
         "$bc": "ENGINE.Actor"
       },
-      "1631": {
+      "1630": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67450,7 +67420,7 @@
         "uuid": "5fa7e1a32b0a01a5",
         "$bc": "ENGINE.Actor"
       },
-      "1632": {
+      "1631": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67484,7 +67454,7 @@
         "uuid": "47bf29c129590269",
         "$bc": "ENGINE.Actor"
       },
-      "1633": {
+      "1632": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67518,7 +67488,7 @@
         "uuid": "6109aa3faafd786e",
         "$bc": "ENGINE.Actor"
       },
-      "1634": {
+      "1633": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67560,7 +67530,7 @@
         "uuid": "23b5d347156201bf",
         "$bc": "ENGINE.Actor"
       },
-      "1635": {
+      "1634": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67602,7 +67572,7 @@
         "uuid": "e60d2ee3be45c988",
         "$bc": "ENGINE.Actor"
       },
-      "1636": {
+      "1635": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67636,7 +67606,7 @@
         "uuid": "b759605ec7e490b9",
         "$bc": "ENGINE.Actor"
       },
-      "1637": {
+      "1636": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67678,7 +67648,7 @@
         "uuid": "60188f6c319aa761",
         "$bc": "ENGINE.Actor"
       },
-      "1638": {
+      "1637": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67720,7 +67690,7 @@
         "uuid": "340b37153d9ffe9d",
         "$bc": "ENGINE.Actor"
       },
-      "1639": {
+      "1638": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67754,7 +67724,7 @@
         "uuid": "d492254d0bbb0ced",
         "$bc": "ENGINE.Actor"
       },
-      "1640": {
+      "1639": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67788,7 +67758,7 @@
         "uuid": "b6a0037ce32421f3",
         "$bc": "ENGINE.Actor"
       },
-      "1641": {
+      "1640": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67822,7 +67792,7 @@
         "uuid": "4f845f32a7e29d35",
         "$bc": "ENGINE.Actor"
       },
-      "1642": {
+      "1641": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67856,7 +67826,7 @@
         "uuid": "d2d71639d11028ba",
         "$bc": "ENGINE.Actor"
       },
-      "1643": {
+      "1642": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67890,7 +67860,7 @@
         "uuid": "912e279712305458",
         "$bc": "ENGINE.Actor"
       },
-      "1644": {
+      "1643": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67932,7 +67902,7 @@
         "uuid": "27ee24b89e07a825",
         "$bc": "ENGINE.Actor"
       },
-      "1645": {
+      "1644": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -67974,7 +67944,7 @@
         "uuid": "94876ef6647282e8",
         "$bc": "ENGINE.Actor"
       },
-      "1646": {
+      "1645": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68016,7 +67986,7 @@
         "uuid": "63881043d9b2bf04",
         "$bc": "ENGINE.Actor"
       },
-      "1647": {
+      "1646": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68058,7 +68028,7 @@
         "uuid": "36157e39ff8954ce",
         "$bc": "ENGINE.Actor"
       },
-      "1648": {
+      "1647": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68100,7 +68070,7 @@
         "uuid": "a84c0e2006a02886",
         "$bc": "ENGINE.Actor"
       },
-      "1649": {
+      "1648": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68142,7 +68112,7 @@
         "uuid": "ffd2d2ed1dafec64",
         "$bc": "ENGINE.Actor"
       },
-      "1650": {
+      "1649": {
         "rootComponent": {
           "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-25_14-06-04.glb",
           "uuid": "ce5ca810-9edc-47a6-88cc-7ef2254916c7",
@@ -68170,7 +68140,7 @@
         "uuid": "b1491fbbf02822ca",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "1651": {
+      "1650": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68204,7 +68174,7 @@
         "uuid": "7791bccb87ca561b",
         "$bc": "ENGINE.Actor"
       },
-      "1652": {
+      "1651": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68238,7 +68208,7 @@
         "uuid": "38e1532d87884dcc",
         "$bc": "ENGINE.Actor"
       },
-      "1653": {
+      "1652": {
         "rootComponent": {
           "children": [
             {
@@ -68288,7 +68258,7 @@
         "uuid": "c8ae3cb772120155",
         "$bc": "ENGINE.Actor"
       },
-      "1654": {
+      "1653": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68322,7 +68292,7 @@
         "uuid": "dd13a3e3b543d059",
         "$bc": "ENGINE.Actor"
       },
-      "1655": {
+      "1654": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68356,7 +68326,7 @@
         "uuid": "0b6c5bf77859d814",
         "$bc": "ENGINE.Actor"
       },
-      "1656": {
+      "1655": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68390,7 +68360,7 @@
         "uuid": "9a5a17c699edd1b1",
         "$bc": "ENGINE.Actor"
       },
-      "1657": {
+      "1656": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68432,7 +68402,7 @@
         "uuid": "d4048197022a7513",
         "$bc": "ENGINE.Actor"
       },
-      "1658": {
+      "1657": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68466,7 +68436,7 @@
         "uuid": "c8c56c664d3ab0b6",
         "$bc": "ENGINE.Actor"
       },
-      "1659": {
+      "1658": {
         "rootComponent": {
           "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-25_14-06-04.glb",
           "uuid": "e088059856708b08",
@@ -68497,7 +68467,7 @@
         "uuid": "c0141690810b5a8e",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "1660": {
+      "1659": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68539,7 +68509,7 @@
         "uuid": "80e377f4b2fd0ab4",
         "$bc": "ENGINE.Actor"
       },
-      "1661": {
+      "1660": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68581,7 +68551,7 @@
         "uuid": "29132764e1cc2d53",
         "$bc": "ENGINE.Actor"
       },
-      "1662": {
+      "1661": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68623,7 +68593,7 @@
         "uuid": "fa0681c0d42053a6",
         "$bc": "ENGINE.Actor"
       },
-      "1663": {
+      "1662": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68665,7 +68635,7 @@
         "uuid": "8b27e576f9276c36",
         "$bc": "ENGINE.Actor"
       },
-      "1664": {
+      "1663": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68707,7 +68677,7 @@
         "uuid": "6a2677eaef3df6af",
         "$bc": "ENGINE.Actor"
       },
-      "1665": {
+      "1664": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68747,7 +68717,7 @@
         "uuid": "386055201153b47b",
         "$bc": "ENGINE.Actor"
       },
-      "1666": {
+      "1665": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68787,7 +68757,7 @@
         "uuid": "d999b18eec28aec4",
         "$bc": "ENGINE.Actor"
       },
-      "1667": {
+      "1666": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68829,7 +68799,7 @@
         "uuid": "795bb993932d9a94",
         "$bc": "ENGINE.Actor"
       },
-      "1668": {
+      "1667": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68871,7 +68841,7 @@
         "uuid": "76542234dde25a5b",
         "$bc": "ENGINE.Actor"
       },
-      "1669": {
+      "1668": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68909,7 +68879,7 @@
         "uuid": "23611d6dc7b6a083",
         "$bc": "ENGINE.Actor"
       },
-      "1670": {
+      "1669": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68951,7 +68921,7 @@
         "uuid": "8be230c7a41f8d88",
         "$bc": "ENGINE.Actor"
       },
-      "1671": {
+      "1670": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -68991,7 +68961,7 @@
         "uuid": "9b371d25e862d0cc",
         "$bc": "ENGINE.Actor"
       },
-      "1672": {
+      "1671": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -69031,7 +69001,7 @@
         "uuid": "24eeb1b01476d5e9",
         "$bc": "ENGINE.Actor"
       },
-      "1673": {
+      "1672": {
         "rootComponent": {
           "children": {
             "$length": 1
@@ -69070,6 +69040,35 @@
         },
         "uuid": "6a72043d053f4f72",
         "$bc": "ENGINE.Actor"
+      },
+      "1673": {
+        "rootComponent": {
+          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-26_17-11-02.glb",
+          "uuid": "68546306-8873-4b5c-a15f-788ba61c5084",
+          "name": "GLTFMeshComponent",
+          "position": {
+            "_": [
+              0.06,
+              1.96,
+              -4.07
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -3.141593,
+              0,
+              -3.141593
+            ],
+            "$bc": "e"
+          },
+          "$bc": "ENGINE.GLTFMeshComponent"
+        },
+        "editorData": {
+          "displayName": "stan_elevator_2"
+        },
+        "uuid": "3e9241dc9c110a96",
+        "$bc": "ENGINE.GLTFMeshActor"
       },
       "$length": 1674
     },
@@ -75712,10 +75711,6 @@
             "nodeType": "actor"
           },
           {
-            "id": "867d84ecf0996d6f",
-            "nodeType": "actor"
-          },
-          {
             "id": "b759605ec7e490b9",
             "nodeType": "actor"
           },
@@ -75769,6 +75764,10 @@
           },
           {
             "id": "6a72043d053f4f72",
+            "nodeType": "actor"
+          },
+          {
+            "id": "3e9241dc9c110a96",
             "nodeType": "actor"
           }
         ]
