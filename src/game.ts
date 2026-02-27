@@ -88,6 +88,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   ];
   private activeCamera6Position: number = 0;
   private cameraPositionLabel: HTMLElement | null = null;
+  private cameraHintLabel: HTMLElement | null = null;
+  private currentCameraState: string = ''; // tracks state for auto-animation triggers
 
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200; // milliseconds
@@ -227,6 +229,12 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // Camera 7 focal length toggle (was cam10)
   private camera7FocalLength: '20mm' | '120mm' = '20mm'; // Start at 20mm (FOV 70°)
+
+  // Audio
+  private soundtrackHandle: ENGINE.SoundHandle | null = null;
+  private ambientSoundHandle: ENGINE.SoundHandle | null = null;
+  private readonly DESERT_STATES = new Set(['1.2b', '1.3b', '3.1', '4', '5.1', '5.2', '5.3', '5.4', '6.4']);
+  private readonly HOWLING_STATES = new Set(['1.1', '1.1b', '1.2', '1.3', '2', '3.2', '3.3', '3.4', '6.1', '6.2', '6.3', '7']);
   
   // Camera 2 dolly (forward/backward movement) (was cam3)
   private camera2BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
@@ -362,6 +370,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     
     // Wait for the level to load completely
     this.createCameraPositionLabel();
+    this.updateCameraPositionLabel();
     await this.waitForLevelLoad();
     
     // Try to find Stan actor for camera 1
@@ -447,6 +456,14 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.stanElevatorActor = this.findActorByDisplayName('stan_elevator_2') ?? this.findActorByName('stan_elevator_2');
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
+
+    // Trigger camera-based animations now that all scene actors are loaded
+    this.currentCameraState = '';
+    this.onCameraStateChanged(this.computeCameraState());
+
+    // Start looping soundtrack from the beginning of the game
+    this.world.globalAudioManager.playGlobalSound('@project/assets/sounds/soundtrack.mp3', { volume: 1.0, loop: true })
+      .then(handle => { this.soundtrackHandle = handle; });
   }
 
   protected override tick(tickTime: ENGINE.TickTime): void {
@@ -836,7 +853,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   /**
-   * Create the bottom-left camera position label UI element
+   * Create the bottom-left camera position label and bottom-right hints UI elements
    */
   private createCameraPositionLabel(): void {
     const label = document.createElement('div');
@@ -856,33 +873,217 @@ class MyGame extends ENGINE.BaseGameLoop {
     ].join(';');
     this.world.gameContainer?.appendChild(label);
     this.cameraPositionLabel = label;
+
+    const hint = document.createElement('div');
+    hint.style.cssText = [
+      'position: absolute',
+      'bottom: 24px',
+      'right: 24px',
+      'color: rgba(255,255,255,0.85)',
+      'font-family: monospace',
+      'font-size: 16px',
+      'font-weight: normal',
+      'letter-spacing: 1px',
+      'line-height: 1.8',
+      'text-align: right',
+      'text-shadow: 0 1px 6px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,1)',
+      'display: none',
+      'pointer-events: none',
+      'user-select: none',
+    ].join(';');
+    this.world.gameContainer?.appendChild(hint);
+    this.cameraHintLabel = hint;
   }
 
   /**
-   * Update the camera position label text and visibility
+   * Compute a short state key for the current camera (e.g. '1.1', '1.2b', '5.1', '6.3').
+   */
+  private computeCameraState(): string {
+    switch (this.activeCamera) {
+      case 1:
+        if (this.isCamera1b) return '1.1b';
+        if (this.isCamera1d) return '1.2b';
+        if (this.isCamera1c) return '1.3b';
+        return `1.${this.activeCamera1Position + 1}`;
+      case 2: return '2';
+      case 3: return `3.${this.activeCamera3Position + 1}`;
+      case 4: return '4';
+      case 5: return `5.${this.activeCamera5Position + 1}`;
+      case 6: return `6.${this.activeCamera6Position + 1}`;
+      case 7: return '7';
+    }
+  }
+
+  /**
+   * Update the camera position label and control hints, then trigger animation changes.
    */
   private updateCameraPositionLabel(): void {
     if (!this.cameraPositionLabel) return;
 
-    let text = '';
-    switch (this.activeCamera) {
-      case 1:
-        if (this.isCamera1b) text = 'CAM 1.1b';
-        else if (this.isCamera1d) text = 'CAM 1.2b';
-        else if (this.isCamera1c) text = 'CAM 1.3b';
-        else text = `CAM 1.${this.activeCamera1Position + 1}`;
+    const state = this.computeCameraState();
+    const text = state ? `CAM ${state}` : '';
+
+    let hints: string[] = [];
+    switch (state) {
+      case '1.1': case '1.2': case '1.3':
+        hints = ['A / D  —  change position', 'W  —  enter sub-camera'];
         break;
-      case 2:  text = 'CAM 2';  break;
-      case 3:  text = `CAM 3.${this.activeCamera3Position + 1}`;  break;
-      case 4:  text = 'CAM 4';  break;
-      case 5:  text = `CAM 5.${this.activeCamera5Position + 1}`;  break;
-      case 6:  text = `CAM 6.${this.activeCamera6Position + 1}`;  break;
-      case 7:  text = 'CAM 7';  break;
+      case '1.1b': case '1.2b': case '1.3b':
+        hints = ['A / D  —  switch sub-camera', 'S  —  exit', '← →  —  rotate'];
+        break;
+      case '2':
+        hints = ['← →  —  rotate'];
+        break;
+      case '3.1': case '3.2': case '3.3': case '3.4':
+        hints = ['A / D  —  change position'];
+        break;
+      case '5.1': case '5.2': case '5.3': case '5.4':
+        hints = ['A / D  —  change position'];
+        break;
+      case '6.1': case '6.2': case '6.3': case '6.4':
+        hints = ['A / D  —  change position', '← →  —  rotate'];
+        break;
     }
 
     this.cameraPositionLabel.textContent = text;
     this.cameraPositionLabel.style.display = text ? 'block' : 'none';
+
+    if (this.cameraHintLabel) {
+      const allHints = ['1 – 7  —  change main camera', 'H  —  hills animation', 'B  —  barrier animation', ...hints];
+      this.cameraHintLabel.innerHTML = allHints.join('<br>');
+      this.cameraHintLabel.style.display = 'block';
+    }
+
+    this.onCameraStateChanged(state);
   }
+
+  // ─── Animation state helpers ────────────────────────────────────────────────
+
+  private startBubbleAnimation(): void {
+    if (this.bubbleActive) return;
+    const actors = this.findActorsByDisplayNamePrefix('bubb');
+    if (actors.length === 0) return;
+    this.bubbleStates = actors.map(actor => {
+      actor.setHidden(false);
+      const originY = actor.getWorldPosition().y;
+      return { actor, originY, startY: originY, delay: Math.random() * this.BUBBLE_MAX_DELAY, elapsed: 0, done: false };
+    });
+    this.bubbleActive = true;
+  }
+
+  private stopBubbleAnimation(): void {
+    if (!this.bubbleActive) return;
+    this.bubbleActive = false;
+    for (const state of this.bubbleStates) {
+      const pos = state.actor.getWorldPosition();
+      pos.y = state.originY;
+      state.actor.setWorldPosition(pos);
+      state.actor.setHidden(false);
+    }
+    this.bubbleStates = [];
+  }
+
+  private startPrintAnimation(): void {
+    if (this.printScaleActive) return;
+    this.printScaleActive = true;
+    this.pickNewPrintScaleTarget(this.printCurrentScale, this.printScaleTarget);
+    this.pickNewPrintScaleTarget(this.print2CurrentScale, this.print2ScaleTarget);
+  }
+
+  private stopPrintAnimation(): void {
+    if (!this.printScaleActive) return;
+    this.printScaleActive = false;
+    // Reset to original scale
+    this.printCurrentScale.set(0.41, 0.18, 0.3);
+    this.print2CurrentScale.set(0.41, 0.18, 0.3);
+    if (this.printActor) this.printActor.setWorldScale(this.printCurrentScale.clone());
+    if (this.print2Actor) this.print2Actor.setWorldScale(this.print2CurrentScale.clone());
+  }
+
+  private startGeneratorAnimation(): void {
+    if (this.genActive) return;
+    this.genActive = true;
+    this.genStartLoop();
+  }
+
+  private stopGeneratorAnimation(): void {
+    if (!this.genActive) return;
+    this.genActive = false;
+    this.genStep = 0;
+    this.genProgress = 0;
+    this.genSliderReturnActive = false;
+    this.genSliderReturnProgress = 0;
+    this.genDoorClosing = false;
+    this.genDoorCloseProgress = 0;
+    if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
+    if (this.genCoalActor)   this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
+    if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
+  }
+
+  private startElevatorAnimation(): void {
+    if (this.elevatorActivated) return; // plays once, never restarts
+    this.elevatorActivated = true;
+    this.elevatorProgress = 0;
+    this.elevatorIsMoving = true;
+  }
+
+  /**
+   * Reacts to camera state changes and starts/stops Y, P, K, E animations automatically.
+   *  Y (bubbles)  : CAM 1.1, 1.1b
+   *  P (print)    : CAM 1.2
+   *  K (generator): CAM 1.3, 1.3b, 5.1
+   *  E (elevator) : CAM 6.3  — plays once, stays at final position
+   */
+  private onCameraStateChanged(newState: string): void {
+    const prev = this.currentCameraState;
+    if (prev === newState) return;
+    this.currentCameraState = newState;
+
+    const yStates = ['1.1', '1.1b'];
+    const pStates = ['1.2'];
+    const kStates = ['1.3', '1.3b', '5.1'];
+    const eStates = ['6.3'];
+
+    // Y — bubbles
+    if (yStates.includes(prev) && !yStates.includes(newState)) this.stopBubbleAnimation();
+    if (!yStates.includes(prev) && yStates.includes(newState)) this.startBubbleAnimation();
+
+    // P — print scale
+    if (pStates.includes(prev) && !pStates.includes(newState)) this.stopPrintAnimation();
+    if (!pStates.includes(prev) && pStates.includes(newState)) this.startPrintAnimation();
+
+    // K — generator
+    if (kStates.includes(prev) && !kStates.includes(newState)) this.stopGeneratorAnimation();
+    if (!kStates.includes(prev) && kStates.includes(newState)) this.startGeneratorAnimation();
+
+    // E — elevator (one-time)
+    if (eStates.includes(newState)) this.startElevatorAnimation();
+
+    this.updateAmbientAudio(newState);
+  }
+
+  private updateAmbientAudio(cameraState: string): void {
+    const audioManager = this.world.globalAudioManager;
+
+    let newAmbientUrl: string | null = null;
+    if (this.DESERT_STATES.has(cameraState)) {
+      newAmbientUrl = '@project/assets/sounds/desert.mp3';
+    } else if (this.HOWLING_STATES.has(cameraState)) {
+      newAmbientUrl = '@project/assets/sounds/howling.mp3';
+    }
+
+    if (this.ambientSoundHandle) {
+      audioManager.stopSound(this.ambientSoundHandle);
+      this.ambientSoundHandle = null;
+    }
+
+    if (newAmbientUrl) {
+      audioManager.playGlobalSound(newAmbientUrl, { volume: 1.0, loop: true })
+        .then(handle => { this.ambientSoundHandle = handle; });
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
 
   /**
    * Wait for the level to finish loading
@@ -1247,18 +1448,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.print2Actor = this.findActorByDisplayName('print_02') ?? this.findActorByName('print_02');
     }
 
-    const inputManager = this.world.inputManager;
-    const currentTime = performance.now();
-    if ((inputManager.isKeyDown('p') || inputManager.isKeyDown('P'))
-      && currentTime - this.lastKeyPressTime['p'] > this.KEY_PRESS_COOLDOWN) {
-      this.lastKeyPressTime['p'] = currentTime;
-      this.printScaleActive = !this.printScaleActive;
-      if (this.printScaleActive) {
-        this.pickNewPrintScaleTarget(this.printCurrentScale, this.printScaleTarget);
-        this.pickNewPrintScaleTarget(this.print2CurrentScale, this.print2ScaleTarget);
-      }
-    }
-
     if (!this.printScaleActive) return;
 
     const move = this.PRINT_SCALE_SPEED * deltaTime;
@@ -1319,30 +1508,6 @@ class MyGame extends ENGINE.BaseGameLoop {
    * Step 4: coal moves out, door opens, slider returns — simultaneously.
    */
   private handleGeneratorSequence(deltaTime: number): void {
-    const inputManager = this.world.inputManager;
-    const currentTime = performance.now();
-
-    if ((inputManager.isKeyDown('k') || inputManager.isKeyDown('K'))
-      && currentTime - this.lastKeyPressTime['k'] > this.KEY_PRESS_COOLDOWN) {
-      this.lastKeyPressTime['k'] = currentTime;
-
-      if (!this.genActive) {
-        this.genActive = true;
-        this.genStartLoop();
-      } else {
-        this.genActive = false;
-        this.genStep = 0;
-        this.genProgress = 0;
-        this.genSliderReturnActive = false;
-        this.genSliderReturnProgress = 0;
-        this.genDoorClosing = false;
-        this.genDoorCloseProgress = 0;
-        if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
-        if (this.genCoalActor)   this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
-        if (this.genDoorActor)   this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
-      }
-    }
-
     if (!this.genActive || this.genStep === 0) return;
 
     this.genProgress += deltaTime / this.genCurrentDuration();
@@ -1495,44 +1660,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       return;
     }
 
-    const inputManager = this.world.inputManager;
-    const currentTime = performance.now();
-
-    if ((inputManager.isKeyDown('y') || inputManager.isKeyDown('Y'))
-      && currentTime - this.lastKeyPressTime['y'] > this.KEY_PRESS_COOLDOWN) {
-      this.lastKeyPressTime['y'] = currentTime;
-
-      if (this.bubbleActive) {
-        // Stop loop — reset do pozycji startowych
-        this.bubbleActive = false;
-        for (const state of this.bubbleStates) {
-          const pos = state.actor.getWorldPosition();
-          pos.y = state.originY;
-          state.actor.setWorldPosition(pos);
-          state.actor.setHidden(false);
-        }
-        return;
-      }
-
-      // Prefiks "bubb" — łapie zarówno "bubble" jak i "bubbel"
-      const actors = this.findActorsByDisplayNamePrefix('bubb');
-      if (actors.length === 0) return;
-
-      this.bubbleStates = actors.map(actor => {
-        actor.setHidden(false);
-        const originY = actor.getWorldPosition().y;
-        return {
-          actor,
-          originY,
-          startY: originY,
-          delay: Math.random() * this.BUBBLE_MAX_DELAY,
-          elapsed: 0,
-          done: false,
-        };
-      });
-
-      this.bubbleActive = true;
-    }
   }
 
   private handleElevator(deltaTime: number): void {
@@ -1541,28 +1668,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
     if (!this.stanElevatorActor) {
       this.stanElevatorActor = this.findActorByDisplayName('stan_elevator_2') ?? this.findActorByName('stan_elevator_2');
-    }
-
-    const inputManager = this.world.inputManager;
-    const currentTime = performance.now();
-    const ePressed = (inputManager.isKeyDown('e') || inputManager.isKeyDown('E'))
-      && currentTime - this.lastKeyPressTime['e'] > this.KEY_PRESS_COOLDOWN;
-
-    if (ePressed) {
-      this.lastKeyPressTime['e'] = currentTime;
-
-      if (!this.elevatorActivated) {
-        this.elevatorActivated = true;
-        this.elevatorProgress = 0;
-        this.elevatorIsMoving = true;
-      } else {
-        // Reset do pozycji startowej
-        this.elevatorActivated = false;
-        this.elevatorIsMoving = false;
-        this.elevatorProgress = 0;
-        if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
-        if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
-      }
     }
 
     if (!this.elevatorIsMoving) return;
@@ -1619,6 +1724,9 @@ class MyGame extends ENGINE.BaseGameLoop {
 }
 
 export function main(container: HTMLElement, options?: Partial<ENGINE.BaseGameLoopOptions>): ENGINE.IGameLoop {
-  const game = new MyGame(container, options);
+  const game = new MyGame(container, {
+    rendererOptions: { rendererType: 'webgl' },
+    ...options,
+  });
   return game;
 }

@@ -2,7 +2,7 @@
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
     "build": {
-      "outputs": ["dist/**", ".tsbuildinfo"],
+      "outputs": ["dist/**"],
       "inputs": ["src/**", "tsconfig*.json", "vite.config.*", "package.json"]
     }
   }

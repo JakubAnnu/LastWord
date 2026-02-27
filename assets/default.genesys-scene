@@ -75781,9 +75781,7 @@
         }
       ]
     },
-    "settings": {
-      "gameMode": null
-    },
+    "settings": {},
     "$bc": "ENGINE.World"
   }
 }
