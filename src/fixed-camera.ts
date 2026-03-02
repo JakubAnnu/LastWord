@@ -150,6 +150,22 @@ export class FixedCamera extends ENGINE.Actor {
     this.cameraComponent.setFOV(fov);
   }
 
+  /** Enable or disable full 4-direction arrow-key rotation */
+  public setRotationControl(enabled: boolean): void {
+    this.enableRotationControl = enabled;
+  }
+
+  /** Enable or disable left/right arrow-key yaw rotation */
+  public setWSYawControl(enabled: boolean): void {
+    this.enableWSYawControl = enabled;
+  }
+
+  /** Set roll rotation in degrees and recompute camera direction */
+  public setRoll(degrees: number): void {
+    this.rollDegrees = degrees;
+    this.updateCameraDirection();
+  }
+
   /**
    * Updates the camera direction to look at the target
    */
