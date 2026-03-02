@@ -267,7 +267,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     // Camera 1 - position 1.1: (x:8.37, y:2.73, z:11.28) pointing at Stan
     const camera1Position = new THREE.Vector3(8.37, 2.73, 11.28);
     const stanPosition = new THREE.Vector3(1.43, 2.15, -3.97);
-    this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true });
+    this.camera1 = FixedCamera.create({ position: camera1Position, startActive: true, enableRotationControl: true });
 
     // Camera 1.1b - sub-camera of 1.1, enter with W, exit with S
     // Position: (10.27, 2.44, 2.44), target: (10.27, 1.78, 9.31), 22mm ≈ 65° FOV
@@ -583,6 +583,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.activeCamera1Position = 0;
       this.camera1.setWorldPosition(this.CAMERA1_POSITIONS[0].clone());
       this.camera1.setTarget(this.camera1StanTarget);
+      this.camera1.resetRotationOffsets();
       console.log('Switched to CAM 1 - position 1.1 - Use A/D to cycle positions');
     } else if (cameraNumber === 2 && this.camera2) {
       this.camera2.setActive(true);
@@ -782,6 +783,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     this.camera1.setWorldPosition(pos.clone());
     this.camera1.setTarget(target);
+    this.camera1.resetRotationOffsets();
     this.updateCameraPositionLabel();
     console.log(`CAM 1 - position 1.${this.activeCamera1Position + 1}`);
   }
@@ -926,16 +928,19 @@ class MyGame extends ENGINE.BaseGameLoop {
     let hints: string[] = [];
     switch (state) {
       case '1.1': case '1.2': case '1.3':
-        hints = ['A / D  —  change position', 'W  —  enter sub-camera'];
+        hints = ['A / D  —  change position', 'W  —  enter sub-camera', '← → ↑ ↓  —  rotate'];
         break;
       case '1.1b': case '1.2b': case '1.3b':
         hints = ['A / D  —  switch sub-camera', 'S  —  exit', '← →  —  rotate'];
         break;
       case '2':
-        hints = ['← →  —  rotate'];
+        hints = ['← → ↑ ↓  —  rotate'];
         break;
       case '3.1': case '3.2': case '3.3': case '3.4':
         hints = ['A / D  —  change position'];
+        break;
+      case '4':
+        hints = ['← →  —  rotate'];
         break;
       case '5.1': case '5.2': case '5.3': case '5.4':
         hints = ['A / D  —  change position'];
