@@ -1,9 +1,4 @@
-import { mockBrowserEnvironment } from '../mock.js';
-
 import { loadWorld } from './utils.js';
-
-
-mockBrowserEnvironment();
 
 export async function getSceneState(sceneName: string, specifiedActors?: string[], getDetailedComponentsInfo?: boolean) {
   using worldResource = await loadWorld(sceneName, { readonly: true, skipLoadingGLTF: false });

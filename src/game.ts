@@ -36,10 +36,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   private isCamera1d: boolean = false;
   private readonly CAM1B_POSITION = new THREE.Vector3(10.22, 2.3, 9.35);
   private readonly CAM1B_TARGET   = new THREE.Vector3(10.22, 1.82, 9.33);
-  private readonly CAM1C_POSITION = new THREE.Vector3(-13.54, 0.7, -36.93);
-  private readonly CAM1C_TARGET   = new THREE.Vector3(-6.22, 2.3, -29.61);
-  private readonly CAM1D_POSITION = new THREE.Vector3(1.11, 8.42, -7.97);
-  private readonly CAM1D_TARGET   = new THREE.Vector3(-5.54, 4.01, -16.04);
+  private readonly CAM1C_POSITION = new THREE.Vector3(-6.17, 4.18, -31.58);
+  private readonly CAM1C_TARGET   = new THREE.Vector3(2.79, 4.18, -19.52);
+  private readonly CAM1D_POSITION = new THREE.Vector3(-4.21, 2.88, -2.71);
+  private readonly CAM1D_TARGET   = new THREE.Vector3(-7.223333, 1.44, -13.417);
 
   // ─── Camera 3 (4-position cycling) ──────────────────────────────────────────
   private readonly CAMERA3_POSITIONS = [
@@ -859,7 +859,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.currentCameraState = newState;
 
     const yStates = ['1.1', '1.1b'];
-    const pStates = ['1.2'];
+    const pStates = ['1.2', '1.2b'];
     const kStates = ['1.3', '1.3b', '5.1'];
     const eStates = ['6.3'];
 
@@ -940,20 +940,75 @@ class MyGame extends ENGINE.BaseGameLoop {
     ) ?? null;
   }
 
+  /**
+   * Traverses the Three.js scene graph inside an actor's root component looking for
+   * any Object3D whose name contains `pattern`. Works in both editor and published builds.
+   */
+  private findActorByMeshName(pattern: string): ENGINE.Actor | null {
+    const key = pattern.toLowerCase();
+    for (const actor of this.world.getActors()) {
+      const root = actor.rootComponent as unknown as THREE.Object3D;
+      if (!root) continue;
+      let found = false;
+      root.traverse((obj: THREE.Object3D) => {
+        if (!found && obj.name.toLowerCase().includes(key)) found = true;
+      });
+      if (found) return actor;
+    }
+    return null;
+  }
+
+  /**
+   * Like findActorByMeshName but returns all actors that have at least one
+   * Object3D node whose name STARTS WITH `prefix`.
+   */
+  private findActorsByMeshNamePrefix(prefix: string): ENGINE.Actor[] {
+    const key = prefix.toLowerCase();
+    const result: ENGINE.Actor[] = [];
+    for (const actor of this.world.getActors()) {
+      const root = actor.rootComponent as unknown as THREE.Object3D;
+      if (!root) continue;
+      let found = false;
+      root.traverse((obj: THREE.Object3D) => {
+        if (!found && obj.name.toLowerCase().startsWith(key)) found = true;
+      });
+      if (found) result.push(actor);
+    }
+    return result;
+  }
+
   private findActorsByDisplayNamePrefix(prefix: string): ENGINE.Actor[] {
     const key = prefix.toLowerCase();
-    return this.world.getActors().filter(actor => {
+    // editor / dev builds: editorData.displayName is populated
+    const byEditorData = this.world.getActors().filter(actor => {
       const ed = (actor as unknown as { editorData?: { displayName?: string } }).editorData;
       return ed?.displayName?.toLowerCase().startsWith(key);
     });
+    if (byEditorData.length > 0) return byEditorData;
+
+    // actor.name fallback (may contain the name if serialized)
+    const byName = this.world.getActors().filter(a => a.name.toLowerCase().startsWith(key));
+    if (byName.length > 0) return byName;
+
+    // published builds: traverse the Three.js hierarchy for mesh names
+    return this.findActorsByMeshNamePrefix(key);
   }
 
   private findActorByDisplayName(displayName: string): ENGINE.Actor | null {
     const key = displayName.toLowerCase();
-    return this.world.getActors().find(actor => {
+    // editor / dev builds
+    const byEditorData = this.world.getActors().find(actor => {
       const ed = (actor as unknown as { editorData?: { displayName?: string } }).editorData;
       return ed?.displayName?.toLowerCase() === key;
     }) ?? null;
+    if (byEditorData) return byEditorData;
+
+    // actor.name fallback
+    const byName = this.findActorByName(key);
+    if (byName) return byName;
+
+    // published builds: traverse Three.js hierarchy
+    return this.findActorByMeshName(key);
   }
 
   private findActorNearPosition(position: THREE.Vector3, threshold: number): ENGINE.Actor | null {
@@ -969,6 +1024,24 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Hills ───────────────────────────────────────────────────────────────────
 
   private handleHillsMove(deltaTime: number): void {
+    // Lazy-init: keep retrying until found (works when Three.js meshes finish loading after preStart)
+    if (!this.hill1Actor) {
+      this.hill1Actor = this.findActorByDisplayName('hill1');
+      if (this.hill1Actor) { const p = this.hill1Actor.getWorldPosition(); p.x = this.HILL1_START_X; this.hill1Actor.setWorldPosition(p); }
+    }
+    if (!this.hill2Actor) {
+      this.hill2Actor = this.findActorByDisplayName('hill2');
+      if (this.hill2Actor) { const p = this.hill2Actor.getWorldPosition(); p.x = this.HILL2_START_X; p.y = this.HILL2_START_Y; this.hill2Actor.setWorldPosition(p); }
+    }
+    if (!this.hill3Actor) {
+      this.hill3Actor = this.findActorByDisplayName('hill3');
+      if (this.hill3Actor) { const p = this.hill3Actor.getWorldPosition(); p.x = this.HILL3_START_X; this.hill3Actor.setWorldPosition(p); }
+    }
+    if (!this.hill4Actor) {
+      this.hill4Actor = this.findActorByDisplayName('hill4');
+      if (this.hill4Actor) { const p = this.hill4Actor.getWorldPosition(); p.x = this.HILL4_START_X; this.hill4Actor.setWorldPosition(p); }
+    }
+
     const inputManager = this.world.inputManager;
     const currentTime  = performance.now();
     const hPressed = (inputManager.isKeyDown('h') || inputManager.isKeyDown('H'))
@@ -1013,7 +1086,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Barriers ────────────────────────────────────────────────────────────────
 
   private handleBarrierRise(deltaTime: number): void {
-    if (this.barrierActors.length === 0) this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
+    if (this.barrierActors.length === 0) {
+      this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
+      if (this.barrierActors.length > 0) {
+        for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+      }
+    }
     if (this.barrierActors.length === 0) return;
 
     const inputManager = this.world.inputManager;
@@ -1047,8 +1125,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Print scale ─────────────────────────────────────────────────────────────
 
   private handlePrintScale(deltaTime: number): void {
-    if (!this.printActor)  this.printActor  = this.findActorByDisplayName('print')    ?? this.findActorByName('print');
-    if (!this.print2Actor) this.print2Actor = this.findActorByDisplayName('print_02') ?? this.findActorByName('print_02');
+    if (!this.printActor) {
+      this.printActor = this.findActorByDisplayName('print');
+      if (this.printActor) this.printActor.setWorldScale(this.printCurrentScale.clone());
+    }
+    if (!this.print2Actor) {
+      this.print2Actor = this.findActorByDisplayName('print_02');
+      if (this.print2Actor) this.print2Actor.setWorldScale(this.print2CurrentScale.clone());
+    }
 
     if (!this.printScaleActive) return;
     const move = this.PRINT_SCALE_SPEED * deltaTime;
@@ -1087,6 +1171,20 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Generator ───────────────────────────────────────────────────────────────
 
   private handleGeneratorSequence(deltaTime: number): void {
+    // Lazy-init generator actors
+    if (!this.genSliderActor) {
+      this.genSliderActor = this.findActorByDisplayName('slider') ?? this.findActorByDisplayName('slider_02');
+      if (this.genSliderActor) this.genSliderActor.setWorldPosition(this.GEN_SLIDER_STEP1_START.clone());
+    }
+    if (!this.genCoalActor) {
+      this.genCoalActor = this.findActorByDisplayName('coal');
+      if (this.genCoalActor) this.genCoalActor.setWorldPosition(this.GEN_COAL_STEP2_START.clone());
+    }
+    if (!this.genDoorActor) {
+      this.genDoorActor = this.findActorByDisplayName('door');
+      if (this.genDoorActor) this.genDoorActor.setWorldPosition(this.GEN_DOOR_STEP3_START.clone());
+    }
+
     if (!this.genActive || this.genStep === 0) return;
 
     this.genProgress += deltaTime / this.genCurrentDuration();
@@ -1186,8 +1284,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Elevator ────────────────────────────────────────────────────────────────
 
   private handleElevator(deltaTime: number): void {
-    if (!this.elevatorActor)     this.elevatorActor     = this.findActorByDisplayName('elevator')      ?? this.findActorByName('elevator');
-    if (!this.stanElevatorActor) this.stanElevatorActor = this.findActorByDisplayName('stan_elevator') ?? this.findActorByName('stan_elevator');
+    if (!this.elevatorActor) {
+      this.elevatorActor = this.findActorByDisplayName('elevator');
+      if (this.elevatorActor) this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
+    }
+    if (!this.stanElevatorActor) {
+      this.stanElevatorActor = this.findActorByDisplayName('stan_elevator');
+      if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
+    }
 
     if (!this.elevatorIsMoving) return;
     this.elevatorProgress = Math.min(this.elevatorProgress + deltaTime / this.ELEVATOR_DURATION, 1);

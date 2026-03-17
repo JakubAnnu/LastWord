@@ -136,6 +136,13 @@ export async function generateManifest(): Promise<void> {
 
   // Write manifest to public directory so it's accessible to the dev server
   const manifestPath = path.join(projectRoot, ManifestPath);
+  const manifestDir = path.dirname(manifestPath);
+
+  // Ensure target directory exists
+  if (!fs.existsSync(manifestDir)) {
+    fs.mkdirSync(manifestDir, { recursive: true });
+  }
+
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
   console.log(`File manifest generated: ${manifestPath}`);

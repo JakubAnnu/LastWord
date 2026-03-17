@@ -7,6 +7,7 @@ import noDeprecatedConstructor from './node_modules/@gnsx/genesys.js/eslint-rule
 import sceneComponentMaterialType from './node_modules/@gnsx/genesys.js/eslint-rules/scene-component-material-type.js';
 import tweenTimeArgument from './node_modules/@gnsx/genesys.js/eslint-rules/tween-time-argument.js';
 import requireCreateMethod from './node_modules/@gnsx/genesys.js/eslint-rules/require-create-method.js';
+import classRegistrationDecoratorOnly from './node_modules/@gnsx/genesys.js/eslint-rules/class-registration-decorator-only.js';
 
 
 export default [
@@ -31,7 +32,8 @@ export default [
           'no-deprecated-constructor': noDeprecatedConstructor,
           'scene-component-material-type': sceneComponentMaterialType,
           'tween-time-argument': tweenTimeArgument,
-          'require-create-method': requireCreateMethod
+          'require-create-method': requireCreateMethod,
+          'class-registration-decorator-only': classRegistrationDecoratorOnly
         }
       }
     },
@@ -43,7 +45,8 @@ export default [
       'custom/no-deprecated-constructor': 'error',
       'custom/scene-component-material-type': 'error',
       'custom/tween-time-argument': 'error',
-      'custom/require-create-method': 'error'
+      'custom/require-create-method': 'error',
+      'custom/class-registration-decorator-only': 'error'
     }
   },
   {

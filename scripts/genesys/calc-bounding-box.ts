@@ -7,11 +7,7 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import { mockBrowserEnvironment } from './mock.js';
-
 import type { Transform } from './common.js';
-
-mockBrowserEnvironment();
 
 // Custom error types for better error handling
 class GLBLoadError extends Error {

@@ -19,14 +19,10 @@ import path from 'path';
 import * as ENGINE from '@gnsx/genesys.js';
 
 import { getProjectRoot } from './common.js';
-import { mockBrowserEnvironment } from './mock.js';
 import { StorageProvider } from './storageProvider.js';
 
 // Import game module to register game classes (tsx compiles TypeScript on the fly)
 import '../../src/game.js';
-
-// Set up browser environment for Node.js (provides document, window, etc.)
-mockBrowserEnvironment();
 
 // Set up storage provider for file operations
 const storageProvider = new StorageProvider();
@@ -38,9 +34,8 @@ interface FileInfo {
   type: 'scene' | 'prefab' | 'material';
 }
 
-const defaultWorldOptions = {
-  rendererDomElement: document.createElement('div'),
-  gameContainer: document.createElement('div'),
+const defaultWorldOptions: ENGINE.WorldOptions = {
+  headless: true,
   backgroundColor: 0x2E2E2E,
   physicsOptions: {
     engine: ENGINE.PhysicsEngine.Rapier,

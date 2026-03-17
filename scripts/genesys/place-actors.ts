@@ -3,12 +3,8 @@ import * as THREE from 'three';
 
 import { ThreeEulerSchema, ThreeVector3Schema } from './mcp/search-actors.js';
 import { loadWorld, registerGameClassesIfAnyNotRegistered } from './mcp/utils.js';
-import { mockBrowserEnvironment } from './mock.js';
 
 import '../src/game.js';
-
-
-mockBrowserEnvironment();
 
 function convertConstructorParams(value: any): any {
   // If not an object, return as is

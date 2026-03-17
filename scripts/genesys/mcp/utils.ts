@@ -6,14 +6,11 @@ import * as THREE from 'three';
 import { type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { isDev } from '../common.js';
-import { mockBrowserEnvironment } from '../mock.js';
 import { getResolvedPath, StorageProvider } from '../storageProvider.js';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 const fileServerPort = !isDev ? 4000 : 4001;
-
-mockBrowserEnvironment();
 
 class ResourceManagerSkippingLoadingGLTF extends ENGINE.ResourceManager {
   public override async loadModel(path: ENGINE.AssetPath): Promise<GLTF | null> {
@@ -91,9 +88,8 @@ export async function loadWorld(scenePath: string, options: LoadWorldOptions = {
   };
 }
 
-export const defaultWorldOptions = {
-  rendererDomElement: document.createElement('div'),
-  gameContainer: document.createElement('div'),
+export const defaultWorldOptions: ENGINE.WorldOptions = {
+  headless: true,
   backgroundColor: 0x2E2E2E,
   physicsOptions: {
     engine: ENGINE.PhysicsEngine.Rapier,
@@ -194,7 +190,7 @@ export async function registerGameClasses(): Promise<void> {
 
     // Apply any exports to the global scope if needed
     if (moduleObj.exports && typeof moduleObj.exports === 'object') {
-      Object.assign(window, moduleObj.exports);
+      Object.assign(globalThis as Record<string, unknown>, moduleObj.exports);
     }
   } catch (error) {
     console.error('Error registering game classes', error);
