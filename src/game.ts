@@ -109,14 +109,14 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Camera 4 (animated drone) ───────────────────────────────────────────────
   private camera4StartPos = new THREE.Vector3(-2.46, 6.38, -1.73);
-  private camera4EndPos   = new THREE.Vector3(-2.46, 25.83, 7.05);
-  private camera4Target   = new THREE.Vector3(-2.46, 6.22, -1.71);
+  private camera4EndPos   = new THREE.Vector3(-2.46, 45.83, 20.67);
+  private camera4Target   = new THREE.Vector3(1.667, 10.34, -3.459);
   private camera4IsAnimating       = false;
   private camera4AnimationProgress = 0;
   private readonly CAMERA4_ANIMATION_SPEED    = 0.5;
   private camera4SideOffset                   = 0;
-  private readonly CAMERA4_SIDE_SPEED         = 2;
-  private readonly CAMERA4_MAX_SIDE_OFFSET    = 3;
+  private readonly CAMERA4_SIDE_SPEED         = 3.6;
+  private readonly CAMERA4_MAX_SIDE_OFFSET    = 5.4;
   private camera4HoverTime                    = 0;
   private readonly CAMERA4_HOVER_AMPLITUDE    = 0.3;
   private readonly CAMERA4_HOVER_SPEED        = 1.5;
@@ -126,7 +126,17 @@ class MyGame extends ENGINE.BaseGameLoop {
   private cameraHintLabel: HTMLElement | null = null;
   private currentCameraState: string = '';
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  // ─── Camera groups ───────────────────────────────────────────────────────────
+  private readonly CAMERA_GROUPS: Array<{ label: string; states: string[] }> = [
+    { label: 'OUTDOOR CAM', states: ['5.1', '5.2', '5.3', '1.2b', '1.3b', '4'] },
+    { label: 'BASE CAM',    states: ['6.1', '6.2', '6.3', '6.4'] },
+    { label: 'RECOURCES',   states: ['1.1', '1.1b', '1.2', '1.3', '3.1', '3.2', '3.3', '3.4'] },
+    { label: 'FUNCTIONAL',  states: ['2', '7'] },
+  ];
+  private groupButtonElements: HTMLElement[] = [];
+  private activeGroupIndex: number | null = null;
+
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
 
   // ─── Hills ───────────────────────────────────────────────────────────────────
@@ -210,6 +220,15 @@ class MyGame extends ENGINE.BaseGameLoop {
   private elevatorProgress             = 0;
   private elevatorIsMoving             = false;
   private elevatorActivated            = false;
+
+  // ─── Directional Light 02 ────────────────────────────────────────────────────
+  private dirLight02Actor: ENGINE.Actor | null = null;
+  private readonly DIR_LIGHT02_START   = new THREE.Vector3(2.34, 20.99, -99.96);
+  private readonly DIR_LIGHT02_END     = new THREE.Vector3(2.34, 20.99, 80.09);
+  private readonly DIR_LIGHT02_DURATION = 3;
+  private dirLight02Progress           = 0;
+  private dirLight02IsMoving           = false;
+  private dirLight02Activated          = false;
 
   // ─── Generator ───────────────────────────────────────────────────────────────
   private genSliderActor: ENGINE.Actor | null = null;
@@ -315,6 +334,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
 
+    this.dirLight02Actor = this.findActorByDisplayName('Directional Light_02') ?? this.findActorByDisplayName('directional light_02') ?? this.findActorByName('Directional Light_02');
+    if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
+
     // Trigger camera-based animations now that all scene actors are loaded
     this.currentCameraState = '';
     this.onCameraStateChanged(this.computeCameraState());
@@ -326,8 +348,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   protected override tick(tickTime: ENGINE.TickTime): void {
     super.tick(tickTime);
     this.handleCameraSwitching();
-    this.handleCamera1bSwitch();
-    this.handleCamera4Animation(tickTime.deltaTimeMS / 1000);
+    this.handleCamera4Hover(tickTime.deltaTimeMS / 1000);
     this.handleCamera2Dolly(tickTime.deltaTimeMS / 1000);
     this.handleCamera5FocalSwitch();
     this.handleCamera7FocalToggle();
@@ -337,6 +358,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
     this.handleElevator(tickTime.deltaTimeMS / 1000);
+    this.handleDirLight02(tickTime.deltaTimeMS / 1000);
   }
 
   // ─── Camera configuration helper ─────────────────────────────────────────────
@@ -369,25 +391,20 @@ class MyGame extends ENGINE.BaseGameLoop {
     const inputManager = this.world.inputManager;
     const currentTime  = performance.now();
 
-    const trySwitch = (key: string, cam: 1 | 2 | 3 | 4 | 5 | 6 | 7) => {
-      if (inputManager.isKeyDown(key) && this.activeCamera !== cam) {
-        const k = key as keyof typeof this.lastKeyPressTime;
-        if (currentTime - this.lastKeyPressTime[k] > this.KEY_PRESS_COOLDOWN) {
-          this.switchToCamera(cam);
+    if (this.activeGroupIndex !== null) {
+      // ── Group mode: keys 1–8 jump to the Nth camera in the active group ──────
+      const group = this.CAMERA_GROUPS[this.activeGroupIndex];
+      for (let i = 0; i < group.states.length && i < 8; i++) {
+        const k = String(i + 1) as keyof typeof this.lastKeyPressTime;
+        if (inputManager.isKeyDown(k) && currentTime - this.lastKeyPressTime[k] > this.KEY_PRESS_COOLDOWN) {
           this.lastKeyPressTime[k] = currentTime;
+          this.switchToState(group.states[i]);
+          return;
         }
       }
-    };
+    }
 
-    trySwitch('1', 1);
-    trySwitch('2', 2);
-    trySwitch('3', 3);
-    trySwitch('4', 4);
-    trySwitch('5', 5);
-    trySwitch('6', 6);
-    trySwitch('7', 7);
-
-    // A/D: cycle positions (blocked while in sub-camera)
+    // ── A/D: cycle camera groups ──────────────────────────────────────────────
     const switchLeft =
       (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) &&
       currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
@@ -396,15 +413,16 @@ class MyGame extends ENGINE.BaseGameLoop {
       currentTime - this.lastKeyPressTime['d'] > this.KEY_PRESS_COOLDOWN;
 
     if (switchLeft || switchRight) {
-      const dir = switchLeft ? 'left' : 'right';
       if (switchLeft)  this.lastKeyPressTime['a'] = currentTime;
       if (switchRight) this.lastKeyPressTime['d'] = currentTime;
 
-      const inSub = this.isCamera1b || this.isCamera1c || this.isCamera1d;
-      if (this.activeCamera === 1 && !inSub) this.switchCamera1Position(dir);
-      else if (this.activeCamera === 3)       this.switchCamera3Position(dir);
-      else if (this.activeCamera === 5)       this.switchCamera5Position(dir);
-      else if (this.activeCamera === 6)       this.switchCamera6Position(dir);
+      const current = this.activeGroupIndex ?? 0;
+      const next = switchLeft
+        ? (current - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
+        : (current + 1) % this.CAMERA_GROUPS.length;
+      this.activeGroupIndex = next;
+      this.switchToState(this.CAMERA_GROUPS[next].states[0]);
+      this.updateGroupButtonHighlights();
     }
   }
 
@@ -437,12 +455,10 @@ class MyGame extends ENGINE.BaseGameLoop {
       console.log('Switched to CAM 3 - position 3.1');
     } else if (cameraNumber === 4) {
       this.activeCamera = 4;
-      this.camera4IsAnimating       = true;
-      this.camera4AnimationProgress = 0;
-      this.camera4SideOffset        = 0;
-      this.camera4HoverTime         = 0;
-      this.configureCam(this.camera4StartPos, this.camera4Target, 70, 0, false, false);
-      console.log('Switched to CAM 4 - Animation started');
+      this.camera4SideOffset = 0;
+      this.camera4HoverTime  = 0;
+      this.configureCam(this.camera4EndPos, this.camera4Target, 70, 0, false, false);
+      console.log('Switched to CAM 4');
     } else if (cameraNumber === 5) {
       this.activeCamera = 5;
       this.activeCamera5Position = 0;
@@ -468,85 +484,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
 
     this.updateCameraPositionLabel();
-  }
-
-  // ─── Camera 1 sub-camera switch ──────────────────────────────────────────────
-
-  private handleCamera1bSwitch(): void {
-    if (this.activeCamera !== 1 || !this.mainCamera) return;
-
-    const inputManager = this.world.inputManager;
-    const currentTime  = performance.now();
-
-    const wDown = (inputManager.isKeyDown('w') || inputManager.isKeyDown('W'))
-      && currentTime - this.lastKeyPressTime['w'] > this.KEY_PRESS_COOLDOWN;
-    const sDown = (inputManager.isKeyDown('s') || inputManager.isKeyDown('S'))
-      && currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN;
-    const aDown = (inputManager.isKeyDown('a') || inputManager.isKeyDown('A'))
-      && currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
-    const dDown = (inputManager.isKeyDown('d') || inputManager.isKeyDown('D'))
-      && currentTime - this.lastKeyPressTime['d'] > this.KEY_PRESS_COOLDOWN;
-
-    const inSub = this.isCamera1b || this.isCamera1c || this.isCamera1d;
-
-    // A/D in sub-camera → cycle directly between sub-cameras
-    if (inSub && (aDown || dDown)) {
-      if (aDown) this.lastKeyPressTime['a'] = currentTime;
-      if (dDown) this.lastKeyPressTime['d'] = currentTime;
-
-      // Sub-camera order: 0=1.1b, 1=1.2b, 2=1.3b
-      const currentSubIdx = this.isCamera1b ? 0 : this.isCamera1d ? 1 : 2;
-      const count         = 3;
-      const nextSubIdx    = aDown
-        ? (currentSubIdx - 1 + count) % count
-        : (currentSubIdx + 1) % count;
-
-      this.isCamera1b = false; this.isCamera1c = false; this.isCamera1d = false;
-      this.activeCamera1Position = nextSubIdx;
-
-      if (nextSubIdx === 0) { this.isCamera1b = true; this.configureCam(this.CAM1B_POSITION, this.CAM1B_TARGET, 65, 0, false, true); }
-      else if (nextSubIdx === 1) { this.isCamera1d = true; this.configureCam(this.CAM1D_POSITION, this.CAM1D_TARGET, 70, 0, false, true); }
-      else { this.isCamera1c = true; this.configureCam(this.CAM1C_POSITION, this.CAM1C_TARGET, 65, 0, false, true); }
-
-      this.updateCameraPositionLabel();
-      return;
-    }
-
-    // W → enter sub-camera from supported main positions
-    if (!inSub && wDown) {
-      if (this.activeCamera1Position === 0) {
-        this.lastKeyPressTime['w'] = currentTime;
-        this.isCamera1b = true;
-        this.configureCam(this.CAM1B_POSITION, this.CAM1B_TARGET, 65, 0, false, true);
-        this.updateCameraPositionLabel();
-        console.log('CAM 1.1b');
-      } else if (this.activeCamera1Position === 1) {
-        this.lastKeyPressTime['w'] = currentTime;
-        this.isCamera1d = true;
-        this.configureCam(this.CAM1D_POSITION, this.CAM1D_TARGET, 70, 0, false, true);
-        this.updateCameraPositionLabel();
-        console.log('CAM 1.2b');
-      } else if (this.activeCamera1Position === 2) {
-        this.lastKeyPressTime['w'] = currentTime;
-        this.isCamera1c = true;
-        this.configureCam(this.CAM1C_POSITION, this.CAM1C_TARGET, 65, 0, false, true);
-        this.updateCameraPositionLabel();
-        console.log('CAM 1.3b');
-      }
-    }
-
-    // S → exit sub-camera back to parent main position
-    if (inSub && sDown) {
-      this.lastKeyPressTime['s'] = currentTime;
-      const pos    = this.CAMERA1_POSITIONS[this.activeCamera1Position];
-      const target = this.activeCamera1Position === 0
-        ? this.camera1StanTarget
-        : this.CAMERA1_TARGETS_FIXED[this.activeCamera1Position];
-      this.isCamera1b = false; this.isCamera1c = false; this.isCamera1d = false;
-      this.configureCam(pos, target, 70, 0, true, false);
-      this.updateCameraPositionLabel();
-      console.log(`CAM 1.${this.activeCamera1Position + 1} - Returned from sub-camera`);
-    }
   }
 
   // ─── Position cycling ────────────────────────────────────────────────────────
@@ -615,38 +552,26 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Per-frame camera handlers ───────────────────────────────────────────────
 
-  private handleCamera4Animation(deltaTime: number): void {
+  private handleCamera4Hover(deltaTime: number): void {
     if (this.activeCamera !== 4 || !this.mainCamera) return;
     const inputManager = this.world.inputManager;
 
-    if (this.camera4IsAnimating) {
-      this.camera4AnimationProgress += this.CAMERA4_ANIMATION_SPEED * deltaTime;
-      if (this.camera4AnimationProgress >= 1.0) {
-        this.camera4AnimationProgress = 1.0;
-        this.camera4IsAnimating = false;
-      }
-      const basePos = new THREE.Vector3().lerpVectors(
-        this.camera4StartPos, this.camera4EndPos, this.camera4AnimationProgress,
-      );
-      basePos.x += this.camera4SideOffset;
-      this.mainCamera.setWorldPosition(basePos);
-      this.mainCamera.setTarget(this.camera4Target);
-    } else {
-      this.camera4HoverTime += deltaTime;
-      const hoverOffset = Math.sin(this.camera4HoverTime * this.CAMERA4_HOVER_SPEED) * this.CAMERA4_HOVER_AMPLITUDE;
-      let sideMovement = 0;
-      if (inputManager.isKeyDown('ArrowLeft'))  sideMovement = -this.CAMERA4_SIDE_SPEED * deltaTime;
-      if (inputManager.isKeyDown('ArrowRight')) sideMovement =  this.CAMERA4_SIDE_SPEED * deltaTime;
-      this.camera4SideOffset = THREE.MathUtils.clamp(
-        this.camera4SideOffset + sideMovement,
-        -this.CAMERA4_MAX_SIDE_OFFSET, this.CAMERA4_MAX_SIDE_OFFSET,
-      );
-      const currentPos = this.camera4EndPos.clone();
-      currentPos.x += this.camera4SideOffset;
-      currentPos.y += hoverOffset;
-      this.mainCamera.setWorldPosition(currentPos);
-      this.mainCamera.setTarget(this.camera4Target);
-    }
+    this.camera4HoverTime += deltaTime;
+    const hoverOffset = Math.sin(this.camera4HoverTime * this.CAMERA4_HOVER_SPEED) * this.CAMERA4_HOVER_AMPLITUDE;
+
+    let sideMovement = 0;
+    if (inputManager.isKeyDown('ArrowLeft'))  sideMovement = -this.CAMERA4_SIDE_SPEED * deltaTime;
+    if (inputManager.isKeyDown('ArrowRight')) sideMovement =  this.CAMERA4_SIDE_SPEED * deltaTime;
+    this.camera4SideOffset = THREE.MathUtils.clamp(
+      this.camera4SideOffset + sideMovement,
+      -this.CAMERA4_MAX_SIDE_OFFSET, this.CAMERA4_MAX_SIDE_OFFSET,
+    );
+
+    const pos = this.camera4EndPos.clone();
+    pos.x += this.camera4SideOffset;
+    pos.y += hoverOffset;
+    this.mainCamera.setWorldPosition(pos);
+    this.mainCamera.setTarget(this.camera4Target);
   }
 
   private handleCamera2Dolly(deltaTime: number): void {
@@ -735,6 +660,140 @@ class MyGame extends ENGINE.BaseGameLoop {
     ].join(';');
     this.world.gameContainer?.appendChild(hint);
     this.cameraHintLabel = hint;
+
+    this.createCameraGroupButtons();
+  }
+
+  private createCameraGroupButtons(): void {
+    const container = document.createElement('div');
+    container.style.cssText = [
+      'position: absolute', 'bottom: 24px', 'left: 50%',
+      'transform: translateX(-50%)',
+      'display: flex', 'gap: 6px',
+      'pointer-events: auto', 'user-select: none',
+    ].join(';');
+
+    this.CAMERA_GROUPS.forEach((group, index) => {
+      const btn = document.createElement('button');
+      btn.textContent = group.label;
+      btn.style.cssText = [
+        'background: rgba(0,0,0,0.6)',
+        'color: rgba(255,255,255,0.7)',
+        'border: 1px solid rgba(255,255,255,0.25)',
+        'font-family: monospace', 'font-size: 12px', 'font-weight: bold',
+        'letter-spacing: 1.5px', 'padding: 7px 14px',
+        'cursor: pointer', 'outline: none',
+        'text-shadow: 0 1px 4px rgba(0,0,0,0.9)',
+      ].join(';');
+
+      btn.addEventListener('mouseenter', () => {
+        if (!btn.dataset.active) btn.style.background = 'rgba(255,255,255,0.12)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        if (!btn.dataset.active) btn.style.background = 'rgba(0,0,0,0.6)';
+      });
+      btn.addEventListener('click', () => this.onGroupButtonClick(index));
+
+      container.appendChild(btn);
+      this.groupButtonElements.push(btn);
+    });
+
+    this.world.gameContainer?.appendChild(container);
+  }
+
+  private onGroupButtonClick(groupIndex: number): void {
+    const group  = this.CAMERA_GROUPS[groupIndex];
+    const current = this.computeCameraState();
+    const idxInGroup = group.states.indexOf(current);
+    const nextState = idxInGroup >= 0
+      ? group.states[(idxInGroup + 1) % group.states.length]
+      : group.states[0];
+    this.activeGroupIndex = groupIndex;
+    this.switchToState(nextState);
+  }
+
+  private updateGroupButtonHighlights(): void {
+    const current = this.computeCameraState();
+    this.CAMERA_GROUPS.forEach((group, i) => {
+      const btn = this.groupButtonElements[i];
+      if (!btn) return;
+      // Highlight if this group is the explicitly active one OR if the current camera belongs here
+      const active = i === this.activeGroupIndex || group.states.includes(current);
+      btn.style.background    = active ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.6)';
+      btn.style.borderColor   = active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.25)';
+      btn.style.color         = active ? 'white' : 'rgba(255,255,255,0.7)';
+      if (active) btn.dataset.active = '1'; else delete btn.dataset.active;
+    });
+  }
+
+  private switchToState(state: string): void {
+    this.isCamera1b = false; this.isCamera1c = false; this.isCamera1d = false;
+    switch (state) {
+      case '1.1':
+        this.activeCamera = 1; this.activeCamera1Position = 0;
+        this.configureCam(this.CAMERA1_POSITIONS[0], this.camera1StanTarget, 70, 0, true, false); break;
+      case '1.2':
+        this.activeCamera = 1; this.activeCamera1Position = 1;
+        this.configureCam(this.CAMERA1_POSITIONS[1], this.CAMERA1_TARGETS_FIXED[1], 70, 0, true, false); break;
+      case '1.3':
+        this.activeCamera = 1; this.activeCamera1Position = 2;
+        this.configureCam(this.CAMERA1_POSITIONS[2], this.CAMERA1_TARGETS_FIXED[2], 70, 0, true, false); break;
+      case '1.1b':
+        this.activeCamera = 1; this.activeCamera1Position = 0; this.isCamera1b = true;
+        this.configureCam(this.CAM1B_POSITION, this.CAM1B_TARGET, 65, 0, false, true); break;
+      case '1.2b':
+        this.activeCamera = 1; this.activeCamera1Position = 1; this.isCamera1d = true;
+        this.configureCam(this.CAM1D_POSITION, this.CAM1D_TARGET, 70, 0, false, true); break;
+      case '1.3b':
+        this.activeCamera = 1; this.activeCamera1Position = 2; this.isCamera1c = true;
+        this.configureCam(this.CAM1C_POSITION, this.CAM1C_TARGET, 65, 0, false, true); break;
+      case '2':
+        this.activeCamera = 2; this.camera2DollyOffset = 0;
+        this.configureCam(this.camera2BasePosition, this.camera2Target, 94, 90, true, false); break;
+      case '3.1':
+        this.activeCamera = 3; this.activeCamera3Position = 0;
+        this.configureCam(this.CAMERA3_POSITIONS[0], this.CAMERA3_TARGETS[0], this.CAMERA3_FOVS[0], 0, false, false); break;
+      case '3.2':
+        this.activeCamera = 3; this.activeCamera3Position = 1;
+        this.configureCam(this.CAMERA3_POSITIONS[1], this.CAMERA3_TARGETS[1], this.CAMERA3_FOVS[1], 0, false, false); break;
+      case '3.3':
+        this.activeCamera = 3; this.activeCamera3Position = 2;
+        this.configureCam(this.CAMERA3_POSITIONS[2], this.CAMERA3_TARGETS[2], this.CAMERA3_FOVS[2], 0, false, false); break;
+      case '3.4':
+        this.activeCamera = 3; this.activeCamera3Position = 3;
+        this.configureCam(this.CAMERA3_POSITIONS[3], this.CAMERA3_TARGETS[3], this.CAMERA3_FOVS[3], 0, false, false); break;
+      case '4':
+        this.activeCamera = 4;
+        this.camera4SideOffset = 0;
+        this.camera4HoverTime  = 0;
+        this.configureCam(this.camera4EndPos, this.camera4Target, 70, 0, false, false); break;
+      case '5.1':
+        this.activeCamera = 5; this.activeCamera5Position = 0; this.camera5FocalIndex = 0;
+        this.configureCam(this.CAMERA5_POSITIONS[0], this.CAMERA5_TARGET, this.CAMERA5_FOCAL_STEPS[0].fov, 0, false, false); break;
+      case '5.2':
+        this.activeCamera = 5; this.activeCamera5Position = 1; this.camera5FocalIndex = 0;
+        this.configureCam(this.CAMERA5_POSITIONS[1], this.CAMERA5_TARGET, this.CAMERA5_FOCAL_STEPS[0].fov, 0, false, false); break;
+      case '5.3':
+        this.activeCamera = 5; this.activeCamera5Position = 2; this.camera5FocalIndex = 0;
+        this.configureCam(this.CAMERA5_POSITIONS[2], this.CAMERA5_TARGET, this.CAMERA5_FOCAL_STEPS[0].fov, 0, false, false); break;
+      case '6.1':
+        this.activeCamera = 6; this.activeCamera6Position = 0;
+        this.configureCam(this.CAMERA6_POSITIONS[0], this.CAMERA6_TARGETS[0], 70, 0, false, true); break;
+      case '6.2':
+        this.activeCamera = 6; this.activeCamera6Position = 1;
+        this.configureCam(this.CAMERA6_POSITIONS[1], this.CAMERA6_TARGETS[1], 70, 0, false, true); break;
+      case '6.3':
+        this.activeCamera = 6; this.activeCamera6Position = 2;
+        this.configureCam(this.CAMERA6_POSITIONS[2], this.CAMERA6_TARGETS[2], 70, 0, false, true); break;
+      case '6.4':
+        this.activeCamera = 6; this.activeCamera6Position = 3;
+        this.configureCam(this.CAMERA6_POSITIONS[3], this.CAMERA6_TARGETS[3], 70, 0, false, true); break;
+      case '7':
+        this.activeCamera = 7; this.camera7FocalLength = '20mm';
+        this.configureCam(this.CAM7_POSITION, this.CAM7_TARGET, 70, 0, false, false); break;
+      default: return;
+    }
+    this.updateCameraPositionLabel();
   }
 
   private computeCameraState(): string {
@@ -753,39 +812,51 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
   }
 
+  private getStateDisplayName(state: string): string {
+    const prefixes = ['OUTDOOR', 'BASE CAM', 'RESOURCES', 'FUNCTIONAL'];
+    for (let g = 0; g < this.CAMERA_GROUPS.length; g++) {
+      const idx = this.CAMERA_GROUPS[g].states.indexOf(state);
+      if (idx >= 0) return `${prefixes[g]} ${idx + 1}`;
+    }
+    return `CAM ${state}`;
+  }
+
   private updateCameraPositionLabel(): void {
     if (!this.cameraPositionLabel) return;
 
     const state = this.computeCameraState();
-    const text  = state ? `CAM ${state}` : '';
+    const text  = state ? this.getStateDisplayName(state) : '';
 
-    let hints: string[] = [];
+    let rotateHint = '';
     switch (state) {
       case '1.1': case '1.2': case '1.3':
-        hints = ['A / D  —  change position', 'W  —  enter sub-camera', '← → ↑ ↓  —  rotate']; break;
-      case '1.1b': case '1.2b': case '1.3b':
-        hints = ['A / D  —  switch sub-camera', 'S  —  exit', '← →  —  rotate']; break;
       case '2':
-        hints = ['← → ↑ ↓  —  rotate']; break;
-      case '3.1': case '3.2': case '3.3': case '3.4':
-        hints = ['A / D  —  change position']; break;
+        rotateHint = '← → ↑ ↓  —  rotate camera'; break;
+      case '1.1b': case '1.2b': case '1.3b':
       case '4':
-        hints = ['← →  —  rotate']; break;
-      case '5.1': case '5.2': case '5.3': case '5.4':
-        hints = ['A / D  —  change position']; break;
       case '6.1': case '6.2': case '6.3': case '6.4':
-        hints = ['A / D  —  change position', '← →  —  rotate']; break;
+        rotateHint = '← →  —  rotate camera'; break;
     }
 
     this.cameraPositionLabel.textContent = text;
     this.cameraPositionLabel.style.display = text ? 'block' : 'none';
 
     if (this.cameraHintLabel) {
-      const allHints = ['1 – 7  —  change main camera', 'H  —  hills animation', 'B  —  barrier animation', ...hints];
-      this.cameraHintLabel.innerHTML = allHints.join('<br>');
+      const bold = (s: string) => `<span style="font-weight:bold">${s}</span>`;
+      const thin = (s: string) => `<span style="font-weight:300;opacity:0.65">${s}</span>`;
+
+      const lines: string[] = [
+        bold('A / D  —  change camera group'),
+        bold('1 – 8  —  change camera'),
+        ...(rotateHint ? [bold(rotateHint)] : []),
+        thin('H  —  hills animation'),
+        thin('B  —  barrier animation'),
+      ];
+      this.cameraHintLabel.innerHTML = lines.join('<br>');
       this.cameraHintLabel.style.display = 'block';
     }
 
+    this.updateGroupButtonHighlights();
     this.onCameraStateChanged(state);
   }
 
@@ -1299,6 +1370,40 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.ELEVATOR_START, this.ELEVATOR_END, t));
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.STAN_ELEVATOR_START, this.STAN_ELEVATOR_END, t));
     if (this.elevatorProgress >= 1) this.elevatorIsMoving = false;
+  }
+
+  // ─── Directional Light 02 ────────────────────────────────────────────────────
+
+  private handleDirLight02(deltaTime: number): void {
+    if (!this.dirLight02Actor) {
+      this.dirLight02Actor = this.findActorByDisplayName('Directional Light_02') ?? this.findActorByDisplayName('directional light_02') ?? this.findActorByName('Directional Light_02');
+      if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
+    }
+
+    const inputManager = this.world.inputManager;
+    const currentTime  = performance.now();
+    const oPressed = (inputManager.isKeyDown('o') || inputManager.isKeyDown('O'))
+      && currentTime - this.lastKeyPressTime['o'] > this.KEY_PRESS_COOLDOWN;
+
+    if (oPressed) {
+      this.lastKeyPressTime['o'] = currentTime;
+      if (!this.dirLight02Activated) {
+        this.dirLight02Activated = true;
+        this.dirLight02Progress  = 0;
+        this.dirLight02IsMoving  = true;
+        if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
+      } else {
+        this.dirLight02Activated = false;
+        this.dirLight02IsMoving  = false;
+        this.dirLight02Progress  = 0;
+        if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
+      }
+    }
+
+    if (!this.dirLight02IsMoving || !this.dirLight02Actor) return;
+    this.dirLight02Progress = Math.min(this.dirLight02Progress + deltaTime / this.DIR_LIGHT02_DURATION, 1);
+    this.dirLight02Actor.setWorldPosition(new THREE.Vector3().lerpVectors(this.DIR_LIGHT02_START, this.DIR_LIGHT02_END, this.dirLight02Progress));
+    if (this.dirLight02Progress >= 1) this.dirLight02IsMoving = false;
   }
 
   // ─── tickHill ────────────────────────────────────────────────────────────────

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gnsx/genesys.js':
-        specifier: 7.1.11
-        version: 7.1.11
+        specifier: 7.2.6
+        version: 7.2.6(@types/three@0.183.1)
       three:
         specifier: 0.183.2
         version: 0.183.2
@@ -337,8 +337,8 @@ packages:
   '@gltf-transform/functions@4.3.0':
     resolution: {integrity: sha512-FZggHVgt3DHOezgESBrf2vDzuD2FYQYaNT2sT/aP316SIwhuiIwby3z7rhV9joDvWqqUaPkf1UmkjlOaY9riSQ==}
 
-  '@gnsx/genesys.js@7.1.11':
-    resolution: {integrity: sha512-B0fc3w08pO/f0i0BZSaUuhXQu4nf31Mp1SPVeVN7yWvV91d1pL32XpNH7T5ID7/5cqRVyftx/kMm7GkdJWazXQ==}
+  '@gnsx/genesys.js@7.2.6':
+    resolution: {integrity: sha512-Ii5S2wGZLhEAFv2V3U84+q48bDfkJr+qAgNdT1+mnUQil+4XVCoEjD4mMwfO4PeMA/omjjiUau/0EOBlfH2Zkg==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -695,6 +695,9 @@ packages:
 
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
+
+  '@ts-morph/common@0.28.1':
+    resolution: {integrity: sha512-W74iWf7ILp1ZKNYXY5qbddNaml7e9Sedv5lvU1V8lftlitkc9Pq1A+jlH23ltDgWYeZFFEqGCD1Ies9hqu3O+g==}
 
   '@tweakpane/core@2.0.5':
     resolution: {integrity: sha512-punBgD5rKCF5vcNo6BsSOXiDR/NSs9VM7SG65QSLJIxfRaGgj54ree9zQW6bO3pNFf3AogiGgaNODUVQRk9YqQ==}
@@ -2116,6 +2119,9 @@ packages:
   ts-morph@26.0.0:
     resolution: {integrity: sha512-ztMO++owQnz8c/gIENcM9XfCEzgoGphTv+nKpYNM1bgsdOVC/jRZuEBf6N+mLLDNg68Kl+GgUZfOySaRiG1/Ug==}
 
+  ts-morph@27.0.2:
+    resolution: {integrity: sha512-fhUhgeljcrdZ+9DZND1De1029PrE+cMkIP7ooqkLRTrRLTqcki2AstsyJm0vRNbTbVCNJ0idGlbBrfqc7/nA8w==}
+
   ts-replace-all@1.0.0:
     resolution: {integrity: sha512-6uBtdkw3jHXkPtx/e9xB/5vcngMm17CyJYsS2YZeQ+9FdRnt6Ev5g931Sg2p+dxbtMGoCm13m3ax/obicTZIkQ==}
 
@@ -2549,13 +2555,12 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@gnsx/genesys.js@7.1.11':
+  '@gnsx/genesys.js@7.2.6(@types/three@0.183.1)':
     dependencies:
       '@dimforge/rapier3d-compat': 0.18.2
       '@recast-navigation/three': 0.39.0(@types/three@0.183.1)(three@0.183.2)
       '@tweakpane/core': 2.0.5
       '@tweenjs/tween.js': 25.0.0
-      '@types/three': 0.183.1
       '@webxr-input-profiles/assets': 1.0.20
       '@webxr-input-profiles/motion-controllers': 1.0.0
       dat.gui: 0.7.9
@@ -2571,8 +2576,7 @@ snapshots:
       three: 0.183.2
       three-mesh-bvh: 0.9.8(three@0.183.2)
       three-pathfinding: 1.3.0(three@0.183.2)
-      ts-morph: 26.0.0
-      tsx: 4.20.3
+      ts-morph: 27.0.2
       tweakpane: 4.0.5
       xatlas-three: 0.2.1
       yaml: 2.8.2
@@ -2580,6 +2584,7 @@ snapshots:
       zustand: 5.0.11
     transitivePeerDependencies:
       - '@types/react'
+      - '@types/three'
       - immer
       - react
       - use-sync-external-store
@@ -2852,6 +2857,12 @@ snapshots:
       fast-glob: 3.3.3
       minimatch: 10.1.2
       path-browserify: 1.0.1
+
+  '@ts-morph/common@0.28.1':
+    dependencies:
+      minimatch: 10.1.2
+      path-browserify: 1.0.1
+      tinyglobby: 0.2.15
 
   '@tweakpane/core@2.0.5': {}
 
@@ -4552,6 +4563,11 @@ snapshots:
   ts-morph@26.0.0:
     dependencies:
       '@ts-morph/common': 0.27.0
+      code-block-writer: 13.0.3
+
+  ts-morph@27.0.2:
+    dependencies:
+      '@ts-morph/common': 0.28.1
       code-block-writer: 13.0.3
 
   ts-replace-all@1.0.0:

@@ -87,7 +87,7 @@ server.registerTool(
           sceneName,
           primitiveActors: primitiveActors.map(primitiveActor => ({
             miscInfo: {
-              displayName: primitiveActor.info.displayName,
+              name: primitiveActor.info.name,
               description: primitiveActor.info.description ?? '',
             },
             transform: {
@@ -190,7 +190,7 @@ Never make up a relative path to a file, because that won't be resolved by the e
             scale: new THREE.Vector3(...(gltf.transform?.scale ?? [1, 1, 1])),
           },
           miscInfo: {
-            displayName: gltf.info.displayName,
+            name: gltf.info.name,
             description: gltf.info.description ?? '',
           },
         }))
@@ -240,7 +240,7 @@ server.registerTool(
             scale: new THREE.Vector3(...(prefab.transform?.scale ?? [1, 1, 1])),
           },
           miscInfo: {
-            displayName: prefab.info.displayName,
+            name: prefab.info.name,
             description: prefab.info.description ?? '',
           },
         }))
@@ -494,8 +494,8 @@ server.registerTool(
       }
       if (actor.info) {
         args.actorInfo = {};
-        if (actor.info.displayName) {
-          args.actorInfo.displayName = actor.info.displayName;
+        if (actor.info.name) {
+          args.actorInfo.name = actor.info.name;
         }
         if (actor.info.description) {
           args.actorInfo.description = actor.info.description;

@@ -11,7 +11,7 @@ async function main() {
   }
   const copiedEngineFolder = path.join(getProjectRoot(), '.engine');
   if (fs.existsSync(copiedEngineFolder)) {
-    fs.rmdirSync(copiedEngineFolder, { recursive: true });
+    fs.rmSync(copiedEngineFolder, { recursive: true });
   }
   fs.mkdirSync(copiedEngineFolder, { recursive: true });
 

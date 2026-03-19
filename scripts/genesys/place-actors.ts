@@ -124,7 +124,9 @@ export async function placeJsClassActor(args: {
 
       const actor = ENGINE.ClassRegistry.constructObject(className, false, ...convertedParams);
       if (actorInfo) {
-        Object.assign(actor.editorData, actorInfo);
+        const { name, ...rest } = actorInfo;
+        if (name) actor.setName(name);
+        Object.assign(actor.editorData, rest);
       }
       actors.push(actor);
     } catch (e) {
@@ -165,7 +167,9 @@ export async function updateActors(args: {
         actor.setWorldScale(transform.scale);
       }
       if (actorInfo) {
-        Object.assign(actor.editorData, actorInfo);
+        const { name, ...rest } = actorInfo;
+        if (name) actor.setName(name);
+        Object.assign(actor.editorData, rest);
       }
     }
     count += 1;

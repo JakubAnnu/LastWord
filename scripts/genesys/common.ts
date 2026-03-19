@@ -40,7 +40,7 @@ export const TransformSchema = z.object({
 export type Transform = z.infer<typeof TransformSchema>;
 
 export const ActorInfoSchema = z.object({
-  displayName: z.string().describe('Display name of the actor'),
+  name: z.string().describe('Name of the actor'),
   description: z.string().optional().describe('Description of the actor, including its purpose, how to use it, etc.'),
 });
 
