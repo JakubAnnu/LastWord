@@ -187,6 +187,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   private barrierIsRising               = false;
   private barrierActivated              = false;
 
+  private fuelActor: ENGINE.Actor | null       = null;
+  private readonly FUEL_START_POS              = new THREE.Vector3(10.97, 1.65, -8.67);
+  private readonly FUEL_END_Y                  = 10.97;
+
   // ─── Print scale ─────────────────────────────────────────────────────────────
   private printActor: ENGINE.Actor | null  = null;
   private printScaleActive                 = false;
@@ -1163,6 +1167,13 @@ class MyGame extends ENGINE.BaseGameLoop {
         for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
       }
     }
+    if (!this.fuelActor) {
+      this.fuelActor = this.findActorByDisplayName('fuel');
+      if (this.fuelActor) {
+        const pos = this.FUEL_START_POS.clone();
+        this.fuelActor.setWorldPosition(pos);
+      }
+    }
     if (this.barrierActors.length === 0) return;
 
     const inputManager = this.world.inputManager;
@@ -1179,6 +1190,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       } else {
         this.barrierActivated = false; this.barrierIsRising = false; this.barrierRiseProgress = 0;
         for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+        if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
       }
     }
 
@@ -1189,6 +1201,11 @@ class MyGame extends ENGINE.BaseGameLoop {
       const pos = this.barrierActors[i].getWorldPosition();
       pos.y = this.barrierRiseStartY[i] + (this.BARRIER_TARGET_Y - this.barrierRiseStartY[i]) * t;
       this.barrierActors[i].setWorldPosition(pos);
+    }
+    if (this.fuelActor) {
+      const fuelPos = this.FUEL_START_POS.clone();
+      fuelPos.y = this.FUEL_START_POS.y + (this.FUEL_END_Y - this.FUEL_START_POS.y) * t;
+      this.fuelActor.setWorldPosition(fuelPos);
     }
     if (this.barrierRiseProgress >= 1) this.barrierIsRising = false;
   }
