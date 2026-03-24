@@ -4,6 +4,7 @@ import * as THREE from 'three';
 
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
+import { playIntroVideo } from './intro-video.js';
 import './auto-imports.js';
 import './stan-blended-actor.js';
 
@@ -347,6 +348,15 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     // Audio starts on first user interaction (browser autoplay policy)
     this.registerAudioOnInteraction();
+  }
+
+  protected override postStart(): void {
+    const container = this.world.gameContainer;
+    if (!container) return;
+    this.setInputEnabled(false);
+    playIntroVideo(container).then(() => {
+      this.setInputEnabled(true);
+    });
   }
 
   protected override tick(tickTime: ENGINE.TickTime): void {
