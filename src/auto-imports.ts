@@ -1,5 +1,6 @@
 import './fixed-camera.ts';
 import './game-data.ts';
+import './intro-sequence.ts';
 import './intro-video.ts';
 import './player.ts';
 import './stan-blended-actor.ts';

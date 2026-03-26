@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
 import { playIntroVideo } from './intro-video.js';
+import { IntroSequence } from './intro-sequence.js';
 import './auto-imports.js';
 import './stan-blended-actor.js';
 
@@ -139,7 +140,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private cameraNumbersContainer: HTMLElement | null = null;
   private cameraNumberElements: HTMLElement[]        = [];
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
 
   // ─── Hills ───────────────────────────────────────────────────────────────────
@@ -227,6 +228,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private elevatorProgress             = 0;
   private elevatorIsMoving             = false;
   private elevatorActivated            = false;
+
+  // ─── Intro sequence ──────────────────────────────────────────────────────────
+  private introSequence: IntroSequence | null = null;
+
+  // ─── Point Light 16 ──────────────────────────────────────────────────────────
+  private pointLight16Actor: ENGINE.Actor | null = null;
 
   // ─── Directional Light 02 ────────────────────────────────────────────────────
   private dirLight02Actor: ENGINE.Actor | null = null;
@@ -344,6 +351,8 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.dirLight02Actor = this.findActorByDisplayName('Directional Light_02') ?? this.findActorByDisplayName('directional light_02') ?? this.findActorByName('Directional Light_02');
     if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
 
+    this.pointLight16Actor = this.findActorByDisplayName('PointLight_16') ?? this.findActorByName('PointLight_16');
+
     // Trigger camera-based animations now that all scene actors are loaded
     this.currentCameraState = '';
     this.onCameraStateChanged(this.computeCameraState());
@@ -358,6 +367,32 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.setInputEnabled(false);
     playIntroVideo(container).then(() => {
       this.setInputEnabled(true);
+      this.startIntroSequence();
+    });
+  }
+
+  private startIntroSequence(): void {
+    this.introSequence = new IntroSequence({
+      playGlobalSound: (url) =>
+        this.world.globalAudioManager.playGlobalSound(url, {
+          volume: 1.0,
+          loop: false,
+          bus: 'Voice',
+        }),
+      isSoundPlaying: (handle) =>
+        this.world.globalAudioManager.isSoundPlaying(handle),
+      resumeAudioContext: async () => {
+        const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+        if (ctx && ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+      },
+      switchToState: (state) => this.switchToState(state),
+      setInputEnabled: (enabled) => this.setInputEnabled(enabled),
+      gameContainer: this.world.gameContainer ?? null,
+    });
+    this.introSequence.run().catch(err => {
+      console.error('[IntroSequence] Sequence error:', err);
     });
   }
 
@@ -375,6 +410,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
     this.handleElevator(tickTime.deltaTimeMS / 1000);
     this.handleDirLight02(tickTime.deltaTimeMS / 1000);
+    this.handlePointLight16Color();
   }
 
   // ─── Camera configuration helper ─────────────────────────────────────────────
@@ -649,6 +685,23 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (currentTime - this.lastKeyPressTime['s'] > this.KEY_PRESS_COOLDOWN) {
         if (this.camera7FocalLength !== '20mm') { this.camera7FocalLength = '20mm'; this.mainCamera.setFOV(70); }
         this.lastKeyPressTime['s'] = currentTime;
+      }
+    }
+  }
+
+  // ─── Point Light 16 color ────────────────────────────────────────────────────
+
+  private handlePointLight16Color(): void {
+    if (!this.pointLight16Actor) return;
+    const inputManager = this.world.inputManager;
+    const currentTime  = performance.now();
+
+    if ((inputManager.isKeyDown('l') || inputManager.isKeyDown('L')) &&
+        currentTime - this.lastKeyPressTime['l'] > this.KEY_PRESS_COOLDOWN) {
+      this.lastKeyPressTime['l'] = currentTime;
+      const lightComponents = this.pointLight16Actor.getComponents(ENGINE.PointLightComponent);
+      for (const light of lightComponents) {
+        light.setColor(0xff0000);
       }
     }
   }
