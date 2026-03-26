@@ -144,7 +144,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Functional group lock ────────────────────────────────────────────────────
   private readonly FUNCTIONAL_GROUP_INDEX        = 3;
-  private readonly FUNCTIONAL_GROUP_LOCK_S       = 40;
+  private readonly FUNCTIONAL_GROUP_LOCK_S       = 50;
   private functionalGroupLocked                  = true;
   private functionalGroupLockElapsed             = 0;
 
@@ -1237,6 +1237,8 @@ class MyGame extends ENGINE.BaseGameLoop {
           loop: false,
           bus: 'Voice',
         }),
+      isSoundPlaying: (handle) =>
+        this.world.globalAudioManager.isSoundPlaying(handle),
       resumeAudioContext: async () => {
         const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
         if (ctx && ctx.state === 'suspended') {
