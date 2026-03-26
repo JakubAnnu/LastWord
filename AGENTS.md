@@ -1,3 +1,4 @@
+# GENESYS-SDK-BEGIN
 # Assets
 
 ## Engine Assets
@@ -102,3 +103,7 @@ Before implementing any user request, you **must** interpret the prompt, identif
 4. **Confirm scope** — Specify what systems, assets, or files you will change.
 
 This process **prevents incorrect implementations** when user wording is incomplete or ambiguous.
+# GENESYS-SDK-END
+
+# Add your custom AI instructions below.
+

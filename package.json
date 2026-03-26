@@ -2,7 +2,7 @@
   "name": "Last_Word",
   "version": "0.0.1",
   "scripts": {
-    "build": "pnpm run generate-property-metadata && tsc",
+    "build": "pnpm run generate-property-metadata && tsc && pnpm exec tsx ./scripts/genesys/write-build-stamp.ts",
     "generate-property-metadata": "pnpm exec tsx node_modules/@gnsx/genesys.js/scripts/generate-property-metadata.ts src/game-data.ts",
     "build-project": "pnpm exec tsx ./scripts/genesys/build-project.ts",
     "postinstall": "pnpm exec tsx ./scripts/genesys/post-install.ts",
@@ -16,7 +16,7 @@
   "keywords": [],
   "type": "module",
   "dependencies": {
-    "@gnsx/genesys.js": "7.2.7",
+    "@gnsx/genesys.js": "7.3.4",
     "three": "0.183.2"
   },
   "devDependencies": {

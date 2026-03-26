@@ -3,7 +3,7 @@
 // open cursor settings - MCP servers, refresh and make sure "genesys" is connected
 // and you're good to go with asking cursor to place primitives in a specified project
 //
-// for another MCP client (e.g. cline) that wants to use this, the command is: `pnpm exec tsc ./scripts/genesys/genesys-mcp.ts`
+// for another MCP client (e.g. cline) that wants to use this, the command is: `pnpm exec tsx ./scripts/genesys/genesys-mcp.ts`
 import pathlib from 'path';
 
 import * as ENGINE from '@gnsx/genesys.js';

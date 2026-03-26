@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gnsx/genesys.js':
-        specifier: 7.2.7
-        version: 7.2.7(@types/three@0.183.1)
+        specifier: 7.3.4
+        version: 7.3.4(@types/three@0.183.1)
       three:
         specifier: 0.183.2
         version: 0.183.2
@@ -337,8 +337,8 @@ packages:
   '@gltf-transform/functions@4.3.0':
     resolution: {integrity: sha512-FZggHVgt3DHOezgESBrf2vDzuD2FYQYaNT2sT/aP316SIwhuiIwby3z7rhV9joDvWqqUaPkf1UmkjlOaY9riSQ==}
 
-  '@gnsx/genesys.js@7.2.7':
-    resolution: {integrity: sha512-+0YMjh7EhBlnfCBwfhUtVcPcnlhX0lpWAbr2CDM7JCqAEq/HqhsU2/FrQl/3Fe5/l1YWfTUevFWma3aP6w/iJQ==}
+  '@gnsx/genesys.js@7.3.4':
+    resolution: {integrity: sha512-ROnc+VRQ4TBs3t75LEqcjcL0fTXd0QN6BKnqQL1iO69uifZZEfq8m2SGiE4kF6909acrSi0G9NM7qZUAw/ymYA==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -2555,7 +2555,7 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@gnsx/genesys.js@7.2.7(@types/three@0.183.1)':
+  '@gnsx/genesys.js@7.3.4(@types/three@0.183.1)':
     dependencies:
       '@dimforge/rapier3d-compat': 0.18.2
       '@recast-navigation/three': 0.39.0(@types/three@0.183.1)(three@0.183.2)

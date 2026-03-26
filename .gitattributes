@@ -1,3 +1,8 @@
+# GENESYS-SDK-BEGIN
+# The following section is managed by the Genesys SDK.
+# It will be updated when you update the SDK.
+# Add your custom attributes AFTER this section (below GENESYS-SDK-END).
+
 # Git LFS tracking for common large file types
 
 # 3D Models
@@ -87,3 +92,10 @@
 *.data filter=lfs diff=lfs merge=lfs -text
 *.cache filter=lfs diff=lfs merge=lfs -text
 *.tmp filter=lfs diff=lfs merge=lfs -text
+
+# GENESYS-SDK-END
+
+# ============================================
+# Add your custom gitattributes below
+# These will be preserved during SDK updates
+# ============================================

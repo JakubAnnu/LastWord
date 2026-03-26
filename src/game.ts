@@ -134,8 +134,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     { label: 'RECOURCES',   states: ['1.1', '1.1b', '1.2', '1.3', '3.1', '3.2', '3.3', '3.4'] },
     { label: 'FUNCTIONAL',  states: ['2', '7'] },
   ];
-  private groupButtonElements: HTMLElement[] = [];
-  private activeGroupIndex: number | null = null;
+  private groupButtonElements: HTMLElement[]        = [];
+  private activeGroupIndex: number | null           = null;
+  private cameraNumbersContainer: HTMLElement | null = null;
+  private cameraNumberElements: HTMLElement[]        = [];
 
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
@@ -675,7 +677,55 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.world.gameContainer?.appendChild(hint);
     this.cameraHintLabel = hint;
 
+    this.createCameraNumbersDisplay();
     this.createCameraGroupButtons();
+  }
+
+  private createCameraNumbersDisplay(): void {
+    const container = document.createElement('div');
+    container.style.cssText = [
+      'position: absolute', 'top: 24px', 'right: 24px',
+      'display: none', 'flex-direction: row', 'gap: 10px',
+      'pointer-events: none', 'user-select: none',
+    ].join(';');
+    this.world.gameContainer?.appendChild(container);
+    this.cameraNumbersContainer = container;
+  }
+
+  private updateCameraNumbers(): void {
+    if (!this.cameraNumbersContainer) return;
+    const currentState = this.computeCameraState();
+    let groupIndex = this.activeGroupIndex ?? this.CAMERA_GROUPS.findIndex(g => g.states.includes(currentState));
+    if (groupIndex < 0) {
+      this.cameraNumbersContainer.style.display = 'none';
+      return;
+    }
+
+    const group     = this.CAMERA_GROUPS[groupIndex];
+    const activeIdx = group.states.indexOf(currentState);
+    const count     = group.states.length;
+
+    if (this.cameraNumberElements.length !== count) {
+      this.cameraNumbersContainer.innerHTML = '';
+      this.cameraNumberElements = [];
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('span');
+        el.textContent = String(i + 1);
+        el.style.cssText = [
+          'font-family: monospace', 'font-weight: bold', 'letter-spacing: 1px',
+          'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+          'transition: color 0.15s, font-size 0.15s',
+        ].join(';');
+        this.cameraNumbersContainer.appendChild(el);
+        this.cameraNumberElements.push(el);
+      }
+    }
+
+    this.cameraNumbersContainer.style.display = 'flex';
+    this.cameraNumberElements.forEach((el, i) => {
+      el.style.color    = i === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.3)';
+      el.style.fontSize = i === activeIdx ? '34px'    : '28px';
+    });
   }
 
   private createCameraGroupButtons(): void {
@@ -871,6 +921,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
 
     this.updateGroupButtonHighlights();
+    this.updateCameraNumbers();
     this.onCameraStateChanged(state);
   }
 
