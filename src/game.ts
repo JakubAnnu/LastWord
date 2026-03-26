@@ -186,16 +186,33 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Barriers ────────────────────────────────────────────────────────────────
   private readonly BARRIER_START_Y      = -2.16;
   private readonly BARRIER_TARGET_Y     = 3;
-  private readonly BARRIER_RISE_DURATION = 10;
+  private readonly BARRIER_RISE_DURATION = 18;
   private barrierActors: ENGINE.Actor[] = [];
   private barrierRiseStartY: number[]   = [];
   private barrierRiseProgress           = 0;
   private barrierIsRising               = false;
   private barrierActivated              = false;
+  private barrierKeyPressTime           = 0;
 
   private fuelActor: ENGINE.Actor | null       = null;
   private readonly FUEL_START_POS              = new THREE.Vector3(10.97, 1.65, -8.67);
   private readonly FUEL_END_Y                  = 10.97;
+
+  // ─── Fuel cam 3.3 descent ─────────────────────────────────────────────────
+  private readonly FUEL_CAM33_START_Y  = 1.12;
+  private readonly FUEL_CAM33_END_Y    = 0.55;
+  private readonly FUEL_CAM33_DURATION = 25;
+  private fuelCam33Progress            = 0;
+  private fuelCam33IsMoving            = false;
+
+  // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
+  private mobileActor: ENGINE.Actor | null       = null;
+  private readonly MOBILE_START_POS              = new THREE.Vector3(-13.33, 0.43, 28.75);
+  private readonly MOBILE_END_POS                = new THREE.Vector3(-13.33, 0.43, -81.96);
+  private readonly MOBILE_MOVE_DURATION          = 10;
+  private readonly MOBILE_SOUND                  = '@project/assets/sounds/mobile.mp3';
+  private mobileMoveProgress                     = 0;
+  private mobileIsMoving                         = false;
 
   // ─── Print scale ─────────────────────────────────────────────────────────────
   private printActor: ENGINE.Actor | null  = null;
@@ -364,6 +381,8 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     this.pointLight16Actor = this.findActorByDisplayName('PointLight_16') ?? this.findActorByName('PointLight_16');
 
+    this.registerBarrierKeyListener();
+
     // Trigger camera-based animations now that all scene actors are loaded
     this.currentCameraState = '';
     this.onCameraStateChanged(this.computeCameraState());
@@ -425,6 +444,8 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
     this.handleElevator(tickTime.deltaTimeMS / 1000);
     this.handleDirLight02(tickTime.deltaTimeMS / 1000);
+    this.handleFuelCam33(tickTime.deltaTimeMS / 1000);
+    this.handleMobileMove(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -1137,6 +1158,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (!kStates.includes(prev) && kStates.includes(newState)) this.startGeneratorAnimation();
     if (eStates.includes(newState)) this.startElevatorAnimation();
 
+    if (newState === '3.3') this.startFuelCam33Animation();
+    if (prev === '3.3' && newState !== '3.3') this.stopFuelCam33Animation();
+
+
     if (newState === '2') this.triggerFunctionalCam1Sequence();
 
     this.updateAmbientAudio(newState);
@@ -1178,6 +1203,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         }
       },
       gameContainer: this.world.gameContainer ?? null,
+      startMobileAnimation: () => this.startMobileMove(),
     });
 
     this.functionalCam1Sequence.run().catch(err => {
@@ -1396,6 +1422,41 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Barriers ────────────────────────────────────────────────────────────────
 
+  private registerBarrierKeyListener(): void {
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key !== 'b' && e.key !== 'B') return;
+      const now = performance.now();
+      if (now - this.barrierKeyPressTime < this.KEY_PRESS_COOLDOWN) return;
+      this.barrierKeyPressTime = now;
+      this.toggleBarrier();
+    });
+  }
+
+  private toggleBarrier(): void {
+    if (this.barrierActors.length === 0) {
+      this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
+      for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+    }
+    if (!this.fuelActor) {
+      this.fuelActor = this.findActorByDisplayName('fuel');
+      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
+    }
+    if (this.barrierActors.length === 0) return;
+
+    if (!this.barrierActivated) {
+      this.barrierActivated    = true;
+      this.barrierRiseStartY   = this.barrierActors.map(a => a.getWorldPosition().y);
+      this.barrierRiseProgress = 0;
+      this.barrierIsRising     = true;
+    } else {
+      this.barrierActivated    = false;
+      this.barrierIsRising     = false;
+      this.barrierRiseProgress = 0;
+      for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
+    }
+  }
+
   private handleBarrierRise(deltaTime: number): void {
     if (this.barrierActors.length === 0) {
       this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
@@ -1405,32 +1466,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
     if (!this.fuelActor) {
       this.fuelActor = this.findActorByDisplayName('fuel');
-      if (this.fuelActor) {
-        const pos = this.FUEL_START_POS.clone();
-        this.fuelActor.setWorldPosition(pos);
-      }
+      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
     }
-    if (this.barrierActors.length === 0) return;
-
-    const inputManager = this.world.inputManager;
-    const currentTime  = performance.now();
-    const bPressed = (inputManager.isKeyDown('b') || inputManager.isKeyDown('B'))
-      && currentTime - this.lastKeyPressTime['b'] > this.KEY_PRESS_COOLDOWN;
-
-    if (bPressed) {
-      this.lastKeyPressTime['b'] = currentTime;
-      if (!this.barrierActivated) {
-        this.barrierActivated = true;
-        this.barrierRiseStartY = this.barrierActors.map(a => a.getWorldPosition().y);
-        this.barrierRiseProgress = 0; this.barrierIsRising = true;
-      } else {
-        this.barrierActivated = false; this.barrierIsRising = false; this.barrierRiseProgress = 0;
-        for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
-        if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
-      }
-    }
-
     if (!this.barrierIsRising) return;
+
     this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
     const t = this.barrierRiseProgress;
     for (let i = 0; i < this.barrierActors.length; i++) {
@@ -1623,6 +1662,56 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.ELEVATOR_START, this.ELEVATOR_END, t));
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.STAN_ELEVATOR_START, this.STAN_ELEVATOR_END, t));
     if (this.elevatorProgress >= 1) this.elevatorIsMoving = false;
+  }
+
+  // ─── Mobile move (OUTDOOR 1 / state '4') ─────────────────────────────────────
+
+  private startMobileMove(): void {
+    if (!this.mobileActor) this.mobileActor = this.findActorByDisplayName('mobile') ?? this.findActorByName('mobile');
+    if (!this.mobileActor) return;
+    this.mobileActor.setWorldPosition(this.MOBILE_START_POS.clone());
+    this.mobileMoveProgress = 0;
+    this.mobileIsMoving     = true;
+    void this.world.globalAudioManager.playGlobalSound(this.MOBILE_SOUND, { volume: 1.0, loop: false });
+  }
+
+  private stopMobileMove(): void {
+    this.mobileIsMoving     = false;
+    this.mobileMoveProgress = 0;
+    if (this.mobileActor) this.mobileActor.setWorldPosition(this.MOBILE_START_POS.clone());
+  }
+
+  private handleMobileMove(deltaTime: number): void {
+    if (!this.mobileIsMoving || !this.mobileActor) return;
+    this.mobileMoveProgress = Math.min(this.mobileMoveProgress + deltaTime / this.MOBILE_MOVE_DURATION, 1);
+    this.mobileActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.MOBILE_START_POS, this.MOBILE_END_POS, this.mobileMoveProgress));
+    if (this.mobileMoveProgress >= 1) this.mobileIsMoving = false;
+  }
+
+  // ─── Fuel cam 3.3 descent ────────────────────────────────────────────────────
+
+  private startFuelCam33Animation(): void {
+    if (!this.fuelActor) this.fuelActor = this.findActorByDisplayName('fuel');
+    if (!this.fuelActor) return;
+    const pos = this.fuelActor.getWorldPosition();
+    pos.y = this.FUEL_CAM33_START_Y;
+    this.fuelActor.setWorldPosition(pos);
+    this.fuelCam33Progress = 0;
+    this.fuelCam33IsMoving = true;
+  }
+
+  private stopFuelCam33Animation(): void {
+    this.fuelCam33IsMoving = false;
+    this.fuelCam33Progress = 0;
+  }
+
+  private handleFuelCam33(deltaTime: number): void {
+    if (!this.fuelCam33IsMoving || !this.fuelActor) return;
+    this.fuelCam33Progress = Math.min(this.fuelCam33Progress + deltaTime / this.FUEL_CAM33_DURATION, 1);
+    const pos = this.fuelActor.getWorldPosition();
+    pos.y = this.FUEL_CAM33_START_Y + (this.FUEL_CAM33_END_Y - this.FUEL_CAM33_START_Y) * this.fuelCam33Progress;
+    this.fuelActor.setWorldPosition(pos);
+    if (this.fuelCam33Progress >= 1) this.fuelCam33IsMoving = false;
   }
 
   // ─── Directional Light 02 ────────────────────────────────────────────────────

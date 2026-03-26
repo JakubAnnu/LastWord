@@ -16,6 +16,8 @@ export interface FunctionalCam1Callbacks {
   resumeAudioContext: () => Promise<void>;
   /** The DOM element used as the game UI container */
   gameContainer: HTMLElement | null;
+  /** Called when VO_8_route starts — triggers the mobile model animation */
+  startMobileAnimation: () => void;
 }
 
 // ─── Sequence ─────────────────────────────────────────────────────────────────
@@ -79,6 +81,7 @@ export class FunctionalCam1Sequence {
     // ── Step 5: switch to Outdoor 1 + VO_8_route ─────────────────────────
     this.cbs.switchToState(this.CAM_OUTDOOR_1);
     await this.cbs.resumeAudioContext();
+    this.cbs.startMobileAnimation();
     void this.cbs.playGlobalSound(this.VO8);
 
     // ── Step 6: 5 seconds then restore camera control ────────────────────
