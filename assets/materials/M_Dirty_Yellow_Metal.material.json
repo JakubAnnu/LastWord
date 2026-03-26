@@ -2,10 +2,9 @@
   "$version": 2,
   "$root": {
     "name": "M_Dirty_Yellow_Metal",
-    "userData": {},
     "color": {
       "_": [
-        1.0,
+        1,
         0.95,
         0.3
       ],

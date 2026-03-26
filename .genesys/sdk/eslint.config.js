@@ -1,13 +1,13 @@
 import tsParser from '@typescript-eslint/parser';
-import noDefaultClassFields from './node_modules/@gnsx/genesys.js/eslint-rules/no-default-class-fields.js';
-import defaultGetterReturnType from './node_modules/@gnsx/genesys.js/eslint-rules/default-getter-return-type.js';
-import noOverrideMethods from './node_modules/@gnsx/genesys.js/eslint-rules/no-override-methods.js';
-import noAsyncOverrideMismatch from './node_modules/@gnsx/genesys.js/eslint-rules/no-async-override-mismatch.js';
-import noDeprecatedConstructor from './node_modules/@gnsx/genesys.js/eslint-rules/no-deprecated-constructor.js';
-import sceneComponentMaterialType from './node_modules/@gnsx/genesys.js/eslint-rules/scene-component-material-type.js';
-import tweenTimeArgument from './node_modules/@gnsx/genesys.js/eslint-rules/tween-time-argument.js';
-import requireCreateMethod from './node_modules/@gnsx/genesys.js/eslint-rules/require-create-method.js';
-import classRegistrationDecoratorOnly from './node_modules/@gnsx/genesys.js/eslint-rules/class-registration-decorator-only.js';
+import noDefaultClassFields from '../../node_modules/@gnsx/genesys.js/eslint-rules/no-default-class-fields.js';
+import defaultGetterReturnType from '../../node_modules/@gnsx/genesys.js/eslint-rules/default-getter-return-type.js';
+import noOverrideMethods from '../../node_modules/@gnsx/genesys.js/eslint-rules/no-override-methods.js';
+import noAsyncOverrideMismatch from '../../node_modules/@gnsx/genesys.js/eslint-rules/no-async-override-mismatch.js';
+import noDeprecatedConstructor from '../../node_modules/@gnsx/genesys.js/eslint-rules/no-deprecated-constructor.js';
+import sceneComponentMaterialType from '../../node_modules/@gnsx/genesys.js/eslint-rules/scene-component-material-type.js';
+import tweenTimeArgument from '../../node_modules/@gnsx/genesys.js/eslint-rules/tween-time-argument.js';
+import requireCreateMethod from '../../node_modules/@gnsx/genesys.js/eslint-rules/require-create-method.js';
+import classRegistrationDecoratorOnly from '../../node_modules/@gnsx/genesys.js/eslint-rules/class-registration-decorator-only.js';
 
 
 export default [

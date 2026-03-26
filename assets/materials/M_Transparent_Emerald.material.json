@@ -2,7 +2,8 @@
   "$version": 2,
   "$root": {
     "name": "M_Transparent_Emerald",
-    "userData": {},
+    "opacity": 0.4,
+    "transparent": true,
     "color": {
       "_": [
         0.2,
@@ -11,8 +12,6 @@
       ],
       "$bc": "c"
     },
-    "transparent": true,
-    "opacity": 0.4,
     "roughness": 0.15,
     "metalness": 0.2,
     "envMapIntensity": 1.6,

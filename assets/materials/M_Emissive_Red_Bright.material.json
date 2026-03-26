@@ -2,26 +2,24 @@
   "$version": 2,
   "$root": {
     "name": "M_Emissive_Red_Bright",
-    "userData": {},
     "color": {
       "_": [
-        1.0,
+        1,
         0.3,
         0.3
       ],
       "$bc": "c"
     },
+    "roughness": 0.2,
     "emissive": {
       "_": [
-        1.0,
+        1,
         0.2,
-        0.0
+        0
       ],
       "$bc": "c"
     },
-    "emissiveIntensity": 3.0,
-    "roughness": 0.2,
-    "metalness": 0.0,
+    "emissiveIntensity": 3,
     "envMapIntensity": 0.3,
     "$bc": "THREE.MeshStandardMaterial"
   }

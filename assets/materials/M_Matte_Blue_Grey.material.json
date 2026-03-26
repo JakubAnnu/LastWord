@@ -2,17 +2,15 @@
   "$version": 2,
   "$root": {
     "name": "M_Matte_Blue_Grey",
-    "userData": {},
     "color": {
       "_": [
         0.247,
         0.506,
-        0.580
+        0.58
       ],
       "$bc": "c"
     },
     "roughness": 0.9,
-    "metalness": 0.0,
     "envMapIntensity": 0.2,
     "$bc": "THREE.MeshStandardMaterial"
   }

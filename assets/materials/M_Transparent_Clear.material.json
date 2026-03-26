@@ -2,20 +2,10 @@
   "$version": 2,
   "$root": {
     "name": "M_Transparent_Clear",
-    "userData": {},
-    "color": {
-      "_": [
-        1.0,
-        1.0,
-        1.0
-      ],
-      "$bc": "c"
-    },
-    "transparent": true,
     "opacity": 0.4,
+    "transparent": true,
     "roughness": 0.1,
-    "metalness": 0.0,
-    "envMapIntensity": 2.0,
+    "envMapIntensity": 2,
     "$bc": "THREE.MeshStandardMaterial"
   }
 }

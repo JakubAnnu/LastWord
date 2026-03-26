@@ -2,17 +2,16 @@
   "$version": 2,
   "$root": {
     "name": "M_Transparent_Ice_Blue",
-    "userData": {},
+    "opacity": 0.35,
+    "transparent": true,
     "color": {
       "_": [
         0.6,
         0.9,
-        1.0
+        1
       ],
       "$bc": "c"
     },
-    "transparent": true,
-    "opacity": 0.35,
     "roughness": 0.1,
     "metalness": 0.1,
     "envMapIntensity": 1.8,

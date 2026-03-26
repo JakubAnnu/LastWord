@@ -2,26 +2,24 @@
   "$version": 2,
   "$root": {
     "name": "M_Emissive_Red_Glow",
-    "userData": {},
     "color": {
       "_": [
-        1.0,
+        1,
         0.4,
         0.4
       ],
       "$bc": "c"
     },
+    "roughness": 0.15,
     "emissive": {
       "_": [
-        1.0,
+        1,
         0.4,
-        0.0
+        0
       ],
       "$bc": "c"
     },
-    "emissiveIntensity": 5.0,
-    "roughness": 0.15,
-    "metalness": 0.0,
+    "emissiveIntensity": 5,
     "envMapIntensity": 0.2,
     "$bc": "THREE.MeshStandardMaterial"
   }

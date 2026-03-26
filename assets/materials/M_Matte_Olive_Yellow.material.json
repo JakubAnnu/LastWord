@@ -2,18 +2,15 @@
   "$version": 2,
   "$root": {
     "name": "M_Matte_Olive_Yellow",
-    "userData": {},
     "color": {
       "_": [
-        0.580,
-        0.580,
+        0.58,
+        0.58,
         0.247
       ],
       "$bc": "c"
     },
-    "roughness": 1.0,
-    "metalness": 0.0,
-    "envMapIntensity": 0.0,
+    "envMapIntensity": 0,
     "$bc": "THREE.MeshStandardMaterial"
   }
 }

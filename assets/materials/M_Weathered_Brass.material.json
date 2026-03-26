@@ -2,7 +2,6 @@
   "$version": 2,
   "$root": {
     "name": "M_Weathered_Brass",
-    "userData": {},
     "color": {
       "_": [
         0.85,
@@ -13,7 +12,6 @@
     },
     "roughness": 0.5,
     "metalness": 0.88,
-    "envMapIntensity": 1.0,
     "$bc": "THREE.MeshStandardMaterial"
   }
 }

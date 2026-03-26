@@ -144,7 +144,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Functional group lock ────────────────────────────────────────────────────
   private readonly FUNCTIONAL_GROUP_INDEX        = 3;
-  private readonly FUNCTIONAL_GROUP_LOCK_S       = 30;
+  private readonly FUNCTIONAL_GROUP_LOCK_S       = 40;
   private functionalGroupLocked                  = true;
   private functionalGroupLockElapsed             = 0;
 
@@ -259,6 +259,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Functional Camera 1 sequence ────────────────────────────────────────────
   private functionalCam1Sequence: FunctionalCam1Sequence | null = null;
+  private functionalCam1SequencePlayed: boolean = false;
   /** Blocks A/D group switching and 1–8 camera-number keys during sequences */
   private cameraInputBlocked: boolean = false;
   /** When true the L-key PointLight_16 handler is suppressed (Z already fired) */
@@ -1205,6 +1206,9 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private triggerFunctionalCam1Sequence(): void {
+    if (this.functionalCam1SequencePlayed) return;
+    this.functionalCam1SequencePlayed = true;
+
     // Dismiss the persistent map hint that was shown after the intro sequence.
     if (this.hideMapHintCallback) {
       this.hideMapHintCallback();

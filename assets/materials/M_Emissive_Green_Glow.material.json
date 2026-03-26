@@ -2,26 +2,24 @@
   "$version": 2,
   "$root": {
     "name": "M_Emissive_Green_Glow",
-    "userData": {},
     "color": {
       "_": [
         0.4,
-        1.0,
+        1,
         0.5
       ],
       "$bc": "c"
     },
+    "roughness": 0.15,
     "emissive": {
       "_": [
         0.4,
-        1.0,
+        1,
         0.5
       ],
       "$bc": "c"
     },
-    "emissiveIntensity": 5.0,
-    "roughness": 0.15,
-    "metalness": 0.0,
+    "emissiveIntensity": 5,
     "envMapIntensity": 0.2,
     "$bc": "THREE.MeshStandardMaterial"
   }

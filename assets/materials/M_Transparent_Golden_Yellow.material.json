@@ -2,17 +2,16 @@
   "$version": 2,
   "$root": {
     "name": "M_Transparent_Golden_Yellow",
-    "userData": {},
+    "opacity": 0.4,
+    "transparent": true,
     "color": {
       "_": [
-        1.0,
+        1,
         0.9,
         0.2
       ],
       "$bc": "c"
     },
-    "transparent": true,
-    "opacity": 0.4,
     "roughness": 0.15,
     "metalness": 0.2,
     "envMapIntensity": 1.6,

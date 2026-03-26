@@ -19,7 +19,7 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "../../",
     "declaration": true,
     "inlineSourceMap": true,
     "experimentalDecorators": true,
@@ -30,8 +30,8 @@
     ]
   },
   "include": [
-    "src/**/*",
-    "scripts/**/*",
-    "vite.config.ts"
+    "../../src/**/*",
+    "../../scripts/**/*",
+    "../../vite.config.ts"
   ]
 }

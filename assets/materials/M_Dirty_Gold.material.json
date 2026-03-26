@@ -2,10 +2,9 @@
   "$version": 2,
   "$root": {
     "name": "M_Dirty_Gold",
-    "userData": {},
     "color": {
       "_": [
-        1.0,
+        1,
         0.88,
         0.1
       ],

@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gnsx/genesys.js':
-        specifier: 7.3.4
-        version: 7.3.4(@types/three@0.183.1)
+        specifier: 7.3.5
+        version: 7.3.5(@types/three@0.183.1)
       three:
         specifier: 0.183.2
         version: 0.183.2
@@ -337,8 +337,8 @@ packages:
   '@gltf-transform/functions@4.3.0':
     resolution: {integrity: sha512-FZggHVgt3DHOezgESBrf2vDzuD2FYQYaNT2sT/aP316SIwhuiIwby3z7rhV9joDvWqqUaPkf1UmkjlOaY9riSQ==}
 
-  '@gnsx/genesys.js@7.3.4':
-    resolution: {integrity: sha512-ROnc+VRQ4TBs3t75LEqcjcL0fTXd0QN6BKnqQL1iO69uifZZEfq8m2SGiE4kF6909acrSi0G9NM7qZUAw/ymYA==}
+  '@gnsx/genesys.js@7.3.5':
+    resolution: {integrity: sha512-lwXRD1/MF31hDQGZdwG7iC7tvxJW2lejoSNRbgmW2AobEZWK/oRj9vwo0Bjd5ptx14hGuAeoz69Vyf/Mn+ml0Q==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -699,9 +699,6 @@ packages:
   '@ts-morph/common@0.28.1':
     resolution: {integrity: sha512-W74iWf7ILp1ZKNYXY5qbddNaml7e9Sedv5lvU1V8lftlitkc9Pq1A+jlH23ltDgWYeZFFEqGCD1Ies9hqu3O+g==}
 
-  '@tweakpane/core@2.0.5':
-    resolution: {integrity: sha512-punBgD5rKCF5vcNo6BsSOXiDR/NSs9VM7SG65QSLJIxfRaGgj54ree9zQW6bO3pNFf3AogiGgaNODUVQRk9YqQ==}
-
   '@tweenjs/tween.js@23.1.3':
     resolution: {integrity: sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==}
 
@@ -802,12 +799,6 @@ packages:
 
   '@webgpu/types@0.1.69':
     resolution: {integrity: sha512-RPmm6kgRbI8e98zSD3RVACvnuktIja5+yLgDAkTmxLr90BEwdTXRQWNLF3ETTTyH/8mKhznZuN5AveXYFEsMGQ==}
-
-  '@webxr-input-profiles/assets@1.0.20':
-    resolution: {integrity: sha512-V/8NB4Ywgm//TBVMgo0TgJ9DtxsBoo0iiaF8AdfiP0F0cgbwkuQycEZAIOsplyd/iZ8L3mrFYNJBC6rzQb4tJA==}
-
-  '@webxr-input-profiles/motion-controllers@1.0.0':
-    resolution: {integrity: sha512-Ppxde+G1/QZbU8ShCQg+eq5VtlcL/FPkerF1dkDOLlIml0LJD1tFqnCZYR0SrHzYleIQ2siRnOx7xbFLaCpExQ==}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -2067,11 +2058,6 @@ packages:
     peerDependencies:
       three: '>= 0.159.0'
 
-  three-pathfinding@1.3.0:
-    resolution: {integrity: sha512-LKxMI3/YqdMYvt6AdE2vB6s5ueDFczt/DWoxhtPNgRsH6E0D8LMYQxz+eIrmKo0MQpDvMVzXYUMBk+b86+k97w==}
-    peerDependencies:
-      three: 0.x.x
-
   three@0.183.2:
     resolution: {integrity: sha512-di3BsL2FEQ1PA7Hcvn4fyJOlxRRgFYBpMTcyOgkwJIaDOdJMebEFPA+t98EvjuljDx4hNulAGwF6KIjtwI5jgQ==}
 
@@ -2555,14 +2541,11 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@gnsx/genesys.js@7.3.4(@types/three@0.183.1)':
+  '@gnsx/genesys.js@7.3.5(@types/three@0.183.1)':
     dependencies:
       '@dimforge/rapier3d-compat': 0.18.2
       '@recast-navigation/three': 0.39.0(@types/three@0.183.1)(three@0.183.2)
-      '@tweakpane/core': 2.0.5
       '@tweenjs/tween.js': 25.0.0
-      '@webxr-input-profiles/assets': 1.0.20
-      '@webxr-input-profiles/motion-controllers': 1.0.0
       dat.gui: 0.7.9
       esbuild-wasm: 0.25.12
       jiti: 2.6.1
@@ -2575,7 +2558,6 @@ snapshots:
       stats.js: 0.17.0
       three: 0.183.2
       three-mesh-bvh: 0.9.8(three@0.183.2)
-      three-pathfinding: 1.3.0(three@0.183.2)
       ts-morph: 27.0.2
       tweakpane: 4.0.5
       xatlas-three: 0.2.1
@@ -2864,8 +2846,6 @@ snapshots:
       path-browserify: 1.0.1
       tinyglobby: 0.2.15
 
-  '@tweakpane/core@2.0.5': {}
-
   '@tweenjs/tween.js@23.1.3': {}
 
   '@tweenjs/tween.js@25.0.0': {}
@@ -2997,10 +2977,6 @@ snapshots:
       eslint-visitor-keys: 4.2.1
 
   '@webgpu/types@0.1.69': {}
-
-  '@webxr-input-profiles/assets@1.0.20': {}
-
-  '@webxr-input-profiles/motion-controllers@1.0.0': {}
 
   accepts@2.0.0:
     dependencies:
@@ -4512,10 +4488,6 @@ snapshots:
       readable-stream: 3.6.2
 
   three-mesh-bvh@0.9.8(three@0.183.2):
-    dependencies:
-      three: 0.183.2
-
-  three-pathfinding@1.3.0(three@0.183.2):
     dependencies:
       three: 0.183.2
 
