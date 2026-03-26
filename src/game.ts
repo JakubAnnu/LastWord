@@ -142,6 +142,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private cameraNumberElements: HTMLElement[]        = [];
   private cameraStatusLabel: HTMLElement | null      = null;
 
+  // ─── Functional group lock ────────────────────────────────────────────────────
+  private readonly FUNCTIONAL_GROUP_INDEX        = 3;
+  private readonly FUNCTIONAL_GROUP_LOCK_S       = 30;
+  private functionalGroupLocked                  = true;
+  private functionalGroupLockElapsed             = 0;
+
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
 
@@ -432,6 +438,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   protected override tick(tickTime: ENGINE.TickTime): void {
     super.tick(tickTime);
+    this.tickFunctionalGroupLock(tickTime.deltaTimeMS / 1000);
     this.handleCameraSwitching();
     this.handleCamera4Hover(tickTime.deltaTimeMS / 1000);
     this.handleCamera2Dolly(tickTime.deltaTimeMS / 1000);
@@ -473,6 +480,21 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (resetRotation) this.mainCamera.resetRotationOffsets();
   }
 
+  // ─── Functional group lock ────────────────────────────────────────────────────
+
+  private tickFunctionalGroupLock(deltaTime: number): void {
+    if (!this.functionalGroupLocked) return;
+    this.functionalGroupLockElapsed += deltaTime;
+    if (this.functionalGroupLockElapsed >= this.FUNCTIONAL_GROUP_LOCK_S) {
+      this.functionalGroupLocked = false;
+      this.updateGroupButtonHighlights();
+    }
+  }
+
+  private isFunctionalGroupLocked(): boolean {
+    return this.functionalGroupLocked;
+  }
+
   // ─── Camera switching ────────────────────────────────────────────────────────
 
   private handleCameraSwitching(): void {
@@ -507,9 +529,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (switchRight) this.lastKeyPressTime['d'] = currentTime;
 
       const current = this.activeGroupIndex ?? 0;
-      const next = switchLeft
+      let next = switchLeft
         ? (current - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
         : (current + 1) % this.CAMERA_GROUPS.length;
+      if (next === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked()) {
+        next = switchLeft
+          ? (next - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
+          : (next + 1) % this.CAMERA_GROUPS.length;
+      }
       this.activeGroupIndex = next;
       this.switchToState(this.CAMERA_GROUPS[next].states[0]);
       this.updateGroupButtonHighlights();
@@ -917,6 +944,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private onGroupButtonClick(groupIndex: number): void {
+    if (groupIndex === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked()) return;
     const group  = this.CAMERA_GROUPS[groupIndex];
     const current = this.computeCameraState();
     const idxInGroup = group.states.indexOf(current);
@@ -932,7 +960,16 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.CAMERA_GROUPS.forEach((group, i) => {
       const btn = this.groupButtonElements[i];
       if (!btn) return;
-      // Highlight if this group is the explicitly active one OR if the current camera belongs here
+      const locked = i === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked();
+      if (locked) {
+        btn.style.background  = 'rgba(0,0,0,0.3)';
+        btn.style.borderColor = 'rgba(255,255,255,0.08)';
+        btn.style.color       = 'rgba(255,255,255,0.2)';
+        btn.style.cursor      = 'not-allowed';
+        delete btn.dataset.active;
+        return;
+      }
+      btn.style.cursor = 'pointer';
       const active = i === this.activeGroupIndex || group.states.includes(current);
       btn.style.background    = active ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.6)';
       btn.style.borderColor   = active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.25)';
