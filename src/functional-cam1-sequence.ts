@@ -1,4 +1,5 @@
 import * as ENGINE from '@gnsx/genesys.js';
+import { createTaskPanel } from './task-ui.js';
 
 // ─── Public interface ─────────────────────────────────────────────────────────
 
@@ -40,7 +41,7 @@ export interface FunctionalCam1Callbacks {
  */
 export class FunctionalCam1Sequence {
   private readonly cbs: FunctionalCam1Callbacks;
-  private uiElements: HTMLElement[] = [];
+  private hideOverlaysFn: (() => void) | null = null;
   private zKeyListener: ((e: KeyboardEvent) => void) | null = null;
 
   // ─── Timing constants (seconds) ──────────────────────────────────────────
@@ -105,50 +106,20 @@ export class FunctionalCam1Sequence {
     });
   }
 
-  /**
-   * Render three vertically stacked, colour-coded prompt labels.
-   * Items are centred on screen, each 52 px apart.
-   */
+  /** Render the three white option prompts in the left-side TASK panel. */
   private showOverlays(): void {
     const container = this.cbs.gameContainer;
     if (!container) return;
-
-    const items: Array<{ text: string; color: string }> = [
-      { text: 'STREAK — press Z',    color: '#ff3333' },
-      { text: 'SCORFAG — press X',   color: '#ffcc00' },
-      { text: 'BLUE CLAY — press C', color: '#4499ff' },
-    ];
-
-    items.forEach((item, i) => {
-      const el = document.createElement('div');
-      // Centre vertically; offset each row by 52 px relative to mid-point.
-      const yOffset = (i - 1) * 52;
-      el.style.cssText = [
-        'position:absolute',
-        'top:50%',
-        'left:50%',
-        `transform:translate(-50%, calc(-50% + ${yOffset}px))`,
-        `color:${item.color}`,
-        'font-family:monospace',
-        'font-size:26px',
-        'font-weight:bold',
-        'letter-spacing:3px',
-        'text-align:center',
-        'white-space:nowrap',
-        'text-shadow:0 2px 8px rgba(0,0,0,0.95),0 0 2px rgba(0,0,0,1)',
-        'pointer-events:none',
-        'user-select:none',
-        'z-index:100',
-      ].join(';');
-      el.textContent = item.text;
-      container.appendChild(el);
-      this.uiElements.push(el);
-    });
+    this.hideOverlays();
+    this.hideOverlaysFn = createTaskPanel(container, [
+      { text: 'STREAK-press Z' },
+      { text: 'SCORFAG-press X' },
+      { text: 'BLUE CLAY-press C' },
+    ]);
   }
 
   private hideOverlays(): void {
-    for (const el of this.uiElements) el.remove();
-    this.uiElements = [];
+    if (this.hideOverlaysFn) { this.hideOverlaysFn(); this.hideOverlaysFn = null; }
   }
 
   /** Clean up listeners and UI (call if the game is reset mid-sequence). */

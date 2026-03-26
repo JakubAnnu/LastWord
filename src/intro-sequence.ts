@@ -1,4 +1,5 @@
 import * as ENGINE from '@gnsx/genesys.js';
+import { createTaskPanel } from './task-ui.js';
 
 // ─── Public interface ─────────────────────────────────────────────────────────
 
@@ -15,6 +16,12 @@ export interface IntroSequenceCallbacks {
   setInputEnabled: (enabled: boolean) => void;
   /** The DOM element used as the game UI container */
   gameContainer:   HTMLElement | null;
+  /**
+   * Called when the persistent map-hint panel is displayed.
+   * The argument is a function that removes the panel from the DOM —
+   * store it in game.ts and call it when the player enters Functional Camera 1.
+   */
+  onMapHintShown?: (hide: () => void) => void;
 }
 
 // ─── Intro sequence ───────────────────────────────────────────────────────────
@@ -27,16 +34,16 @@ export interface IntroSequenceCallbacks {
  * 1.  Wait VO1_DELAY_S seconds, then play VO_1.
  * 2.  3 seconds after VO_1 ends, play VO_2_drill.
  * 3.  After VO_2_drill ends: lock input, position camera at home, switch to
- *     Outdoor 1 (5.1), play VO_3_press_B and show "Press B" prompt.
+ *     Outdoor 1 (5.1), play VO_3_press_B and show "Activate barrier - press B".
  * 4.  Wait for the player to press B.
  * 5.  Stay on Outdoor 1 for 3 more seconds.
  * 6.  Switch to Resource 5 (3.1), play VO_4_note; stay for 2 seconds.
- * 7.  Switch to Resource 7 (3.3), play VO_5_deficite; wait for it to end.
- * 8.  Restore input, play VO_6_map, show final map hint on screen.
+ * 7.  Switch to Resource 7 (3.3); wait for VO_4 to end; play VO_5_deficite.
+ * 8.  Restore input, play VO_6_map, show persistent map hint on screen.
  */
 export class IntroSequence {
   private readonly cbs: IntroSequenceCallbacks;
-  private uiElement: HTMLElement | null = null;
+  private taskHide: (() => void) | null = null;
   private bKeyListener: ((e: KeyboardEvent) => void) | null = null;
 
   // ─── Timing constants (seconds) ──────────────────────────────────────────
@@ -54,13 +61,9 @@ export class IntroSequence {
   private readonly VO6 = '@project/assets/sounds/VO_6_map.mp3';
 
   // ─── Camera state identifiers ─────────────────────────────────────────────
-  /** Reset the camera here before handing off to the scripted sequence */
   private readonly CAM_HOME        = '1.1';
-  /** Outdoor 1  = 1st position of Camera 5 / OUTDOOR CAM group */
   private readonly CAM_OUTDOOR_1   = '5.1';
-  /** Resource 5 = 5th entry of RECOURCES group (1.1, 1.1b, 1.2, 1.3, 3.1 …) */
   private readonly CAM_RESOURCE_5  = '3.1';
-  /** Resource 7 = 7th entry of RECOURCES group (… 3.2, 3.3 …) */
   private readonly CAM_RESOURCE_7  = '3.3';
 
   constructor(cbs: IntroSequenceCallbacks) {
@@ -85,13 +88,13 @@ export class IntroSequence {
     this.cbs.switchToState(this.CAM_HOME);
     this.cbs.switchToState(this.CAM_OUTDOOR_1);
 
-    // ── Phase 4: VO_3_press_B + "Press B" prompt ──────────────────────────────
+    // ── Phase 4: VO_3_press_B + task prompt ───────────────────────────────────
     void this.playVO(this.VO3);
-    this.showUI('PRESS B');
+    this.showTask('Activate barrier - press B');
 
     // ── Phase 5: wait for B key ───────────────────────────────────────────────
     await this.waitForBPress();
-    this.hideUI();
+    this.clearTask();
 
     // ── Phase 6: stay on Outdoor 1 for 3 seconds ─────────────────────────────
     await this.delay(this.AFTER_B_PRESS_S);
@@ -108,10 +111,10 @@ export class IntroSequence {
     const vo5 = await this.playVO(this.VO5);
     await this.waitForSoundEnd(vo5);
 
-    // ── Phase 9: restore controls, VO_6_map, map hint ────────────────────────
+    // ── Phase 9: restore controls, VO_6_map, persistent map hint ─────────────
     this.cbs.setInputEnabled(true);
     void this.playVO(this.VO6);
-    this.showUI('Access the map\nCamera Group 4 — Camera 1', true);
+    this.showPersistentTask('MAP: Enter the Functional Camera 1 group');
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────────
@@ -150,46 +153,28 @@ export class IntroSequence {
     });
   }
 
-  /**
-   * Display a text overlay in the centre of the game container.
-   * @param message    Text to show (supports \n for line breaks).
-   * @param persistent When true the overlay stays until destroy() is called.
-   */
-  private showUI(message: string, persistent = false): void {
-    this.hideUI();
+  /** Show a transient TASK panel (cleared by clearTask). */
+  private showTask(text: string): void {
+    this.clearTask();
     const container = this.cbs.gameContainer;
     if (!container) return;
-
-    const el = document.createElement('div');
-    el.style.cssText = [
-      'position:absolute',
-      'top:50%',
-      'left:50%',
-      'transform:translate(-50%,-50%)',
-      'color:#ffffff',
-      'font-family:monospace',
-      'font-size:28px',
-      'font-weight:bold',
-      'letter-spacing:3px',
-      'text-align:center',
-      'white-space:pre-line',
-      'line-height:1.5',
-      'text-shadow:0 2px 8px rgba(0,0,0,0.9),0 0 2px rgba(0,0,0,1)',
-      'pointer-events:none',
-      'user-select:none',
-      'z-index:100',
-    ].join(';');
-    el.textContent = message;
-    container.appendChild(el);
-    this.uiElement = el;
-
-    // Non-persistent overlays are removed only via an explicit hideUI() call.
-    // Persistent overlays stay until destroy() is called.
-    void persistent;
+    this.taskHide = createTaskPanel(container, [{ text }]);
   }
 
-  private hideUI(): void {
-    if (this.uiElement) { this.uiElement.remove(); this.uiElement = null; }
+  private clearTask(): void {
+    if (this.taskHide) { this.taskHide(); this.taskHide = null; }
+  }
+
+  /**
+   * Show a persistent TASK panel that outlives the sequence.
+   * The hide function is forwarded to `onMapHintShown` so game.ts
+   * can dismiss it at the right moment.
+   */
+  private showPersistentTask(text: string): void {
+    const container = this.cbs.gameContainer;
+    if (!container) return;
+    const hide = createTaskPanel(container, [{ text }]);
+    this.cbs.onMapHintShown?.(hide);
   }
 
   /** Clean up any active listeners and UI elements (call if the game is reset). */
@@ -198,6 +183,6 @@ export class IntroSequence {
       document.removeEventListener('keydown', this.bKeyListener);
       this.bKeyListener = null;
     }
-    this.hideUI();
+    this.clearTask();
   }
 }

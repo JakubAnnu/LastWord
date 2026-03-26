@@ -239,6 +239,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   private cameraInputBlocked: boolean = false;
   /** When true the L-key PointLight_16 handler is suppressed (Z already fired) */
   private pointLight16Locked: boolean = false;
+  /** Hides the persistent map-hint TASK panel; set by IntroSequence, called on entering state '2' */
+  private hideMapHintCallback: (() => void) | null = null;
 
   // ─── Point Light 16 ──────────────────────────────────────────────────────────
   private pointLight16Actor: ENGINE.Actor | null = null;
@@ -398,6 +400,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       switchToState: (state) => this.switchToState(state),
       setInputEnabled: (enabled) => this.setInputEnabled(enabled),
       gameContainer: this.world.gameContainer ?? null,
+      onMapHintShown: (hide) => { this.hideMapHintCallback = hide; },
     });
     this.introSequence.run().catch(err => {
       console.error('[IntroSequence] Sequence error:', err);
@@ -1084,6 +1087,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private triggerFunctionalCam1Sequence(): void {
+    // Dismiss the persistent map hint that was shown after the intro sequence.
+    if (this.hideMapHintCallback) {
+      this.hideMapHintCallback();
+      this.hideMapHintCallback = null;
+    }
+
     // Cancel any previously running instance before starting fresh.
     if (this.functionalCam1Sequence) {
       this.functionalCam1Sequence.destroy();
