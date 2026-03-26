@@ -6,6 +6,7 @@ import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
 import { playIntroVideo } from './intro-video.js';
 import { IntroSequence } from './intro-sequence.js';
+import { FunctionalCam1Sequence } from './functional-cam1-sequence.js';
 import './auto-imports.js';
 import './stan-blended-actor.js';
 
@@ -232,6 +233,13 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Intro sequence ──────────────────────────────────────────────────────────
   private introSequence: IntroSequence | null = null;
 
+  // ─── Functional Camera 1 sequence ────────────────────────────────────────────
+  private functionalCam1Sequence: FunctionalCam1Sequence | null = null;
+  /** Blocks A/D group switching and 1–8 camera-number keys during sequences */
+  private cameraInputBlocked: boolean = false;
+  /** When true the L-key PointLight_16 handler is suppressed (Z already fired) */
+  private pointLight16Locked: boolean = false;
+
   // ─── Point Light 16 ──────────────────────────────────────────────────────────
   private pointLight16Actor: ENGINE.Actor | null = null;
 
@@ -440,6 +448,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Camera switching ────────────────────────────────────────────────────────
 
   private handleCameraSwitching(): void {
+    if (this.cameraInputBlocked) return;
+
     const inputManager = this.world.inputManager;
     const currentTime  = performance.now();
 
@@ -692,7 +702,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Point Light 16 color ────────────────────────────────────────────────────
 
   private handlePointLight16Color(): void {
-    if (!this.pointLight16Actor) return;
+    if (!this.pointLight16Actor || this.pointLight16Locked) return;
     const inputManager = this.world.inputManager;
     const currentTime  = performance.now();
 
@@ -703,6 +713,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       for (const light of lightComponents) {
         light.setColor(0xff0000);
       }
+    }
+  }
+
+  private applyPointLight16Color(hexColor: number): void {
+    if (!this.pointLight16Actor) return;
+    const lightComponents = this.pointLight16Actor.getComponents(ENGINE.PointLightComponent);
+    for (const light of lightComponents) {
+      light.setColor(hexColor);
     }
   }
 
@@ -1060,7 +1078,43 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (!kStates.includes(prev) && kStates.includes(newState)) this.startGeneratorAnimation();
     if (eStates.includes(newState)) this.startElevatorAnimation();
 
+    if (newState === '2') this.triggerFunctionalCam1Sequence();
+
     this.updateAmbientAudio(newState);
+  }
+
+  private triggerFunctionalCam1Sequence(): void {
+    // Cancel any previously running instance before starting fresh.
+    if (this.functionalCam1Sequence) {
+      this.functionalCam1Sequence.destroy();
+      this.cameraInputBlocked = false;
+    }
+
+    this.functionalCam1Sequence = new FunctionalCam1Sequence({
+      switchToState: (state) => this.switchToState(state),
+      blockCameraInput: (blocked) => { this.cameraInputBlocked = blocked; },
+      setPointLight16ColorLocked: (hexColor) => {
+        this.pointLight16Locked = true;
+        this.applyPointLight16Color(hexColor);
+      },
+      playGlobalSound: (url) =>
+        this.world.globalAudioManager.playGlobalSound(url, {
+          volume: 1.0,
+          loop: false,
+          bus: 'Voice',
+        }),
+      resumeAudioContext: async () => {
+        const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+        if (ctx && ctx.state === 'suspended') {
+          await ctx.resume();
+        }
+      },
+      gameContainer: this.world.gameContainer ?? null,
+    });
+
+    this.functionalCam1Sequence.run().catch(err => {
+      console.error('[FunctionalCam1Sequence] Sequence error:', err);
+    });
   }
 
   // ─── Audio ───────────────────────────────────────────────────────────────────

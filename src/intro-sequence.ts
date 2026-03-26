@@ -98,11 +98,13 @@ export class IntroSequence {
 
     // ── Phase 7: Resource 5 (2 seconds) + VO_4_note ───────────────────────────
     this.cbs.switchToState(this.CAM_RESOURCE_5);
-    void this.playVO(this.VO4);
+    const vo4 = await this.playVO(this.VO4);
     await this.delay(this.RESOURCE5_DISPLAY_S);
 
-    // ── Phase 8: Resource 7 + VO_5_deficite ──────────────────────────────────
+    // ── Phase 8: Resource 7 – switch camera immediately, but wait for VO_4 ──
+    // VO_5_deficite starts only after VO_4_note finishes.
     this.cbs.switchToState(this.CAM_RESOURCE_7);
+    await this.waitForSoundEnd(vo4);
     const vo5 = await this.playVO(this.VO5);
     await this.waitForSoundEnd(vo5);
 
