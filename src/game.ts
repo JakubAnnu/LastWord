@@ -140,6 +140,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activeGroupIndex: number | null           = null;
   private cameraNumbersContainer: HTMLElement | null = null;
   private cameraNumberElements: HTMLElement[]        = [];
+  private cameraStatusLabel: HTMLElement | null      = null;
 
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
@@ -184,8 +185,8 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Barriers ────────────────────────────────────────────────────────────────
   private readonly BARRIER_START_Y      = -2.16;
-  private readonly BARRIER_TARGET_Y     = 3.59;
-  private readonly BARRIER_RISE_DURATION = 12;
+  private readonly BARRIER_TARGET_Y     = 3;
+  private readonly BARRIER_RISE_DURATION = 10;
   private barrierActors: ENGINE.Actor[] = [];
   private barrierRiseStartY: number[]   = [];
   private barrierRiseProgress           = 0;
@@ -398,7 +399,10 @@ class MyGame extends ENGINE.BaseGameLoop {
         }
       },
       switchToState: (state) => this.switchToState(state),
-      setInputEnabled: (enabled) => this.setInputEnabled(enabled),
+      setInputEnabled: (enabled) => {
+        this.setInputEnabled(enabled);
+        this.updateCameraStatusLabel(enabled ? 'free' : 'controlled');
+      },
       gameContainer: this.world.gameContainer ?? null,
       onMapHintShown: (hide) => { this.hideMapHintCallback = hide; },
     });
@@ -756,14 +760,45 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private createCameraNumbersDisplay(): void {
-    const container = document.createElement('div');
-    container.style.cssText = [
+    // Outer column: always visible, aligns numbers row + status label to the right.
+    const column = document.createElement('div');
+    column.style.cssText = [
       'position: absolute', 'top: 24px', 'right: 24px',
-      'display: none', 'flex-direction: row', 'gap: 10px',
+      'display: flex', 'flex-direction: column', 'align-items: flex-end', 'gap: 8px',
       'pointer-events: none', 'user-select: none',
     ].join(';');
-    this.world.gameContainer?.appendChild(container);
-    this.cameraNumbersContainer = container;
+    this.world.gameContainer?.appendChild(column);
+
+    // Numbers row — starts hidden; shown when a camera group is active.
+    const numbersRow = document.createElement('div');
+    numbersRow.style.cssText = [
+      'display: none', 'flex-direction: row', 'gap: 10px',
+    ].join(';');
+    column.appendChild(numbersRow);
+    this.cameraNumbersContainer = numbersRow;
+
+    // Status label — directly below the numbers row.
+    const statusLabel = document.createElement('div');
+    statusLabel.textContent = 'FREE CAMERA';
+    statusLabel.style.cssText = [
+      'color: rgba(255,255,255,0.5)',
+      'font-family: monospace', 'font-size: 13px', 'font-weight: bold',
+      'letter-spacing: 2px', 'text-align: right',
+      'text-shadow: 0 1px 6px rgba(0,0,0,0.9)',
+    ].join(';');
+    column.appendChild(statusLabel);
+    this.cameraStatusLabel = statusLabel;
+  }
+
+  private updateCameraStatusLabel(mode: 'controlled' | 'free'): void {
+    if (!this.cameraStatusLabel) return;
+    if (mode === 'controlled') {
+      this.cameraStatusLabel.textContent = 'CAMERA CONTROLLED';
+      this.cameraStatusLabel.style.color = 'rgba(255,200,80,0.9)';
+    } else {
+      this.cameraStatusLabel.textContent = 'FREE CAMERA';
+      this.cameraStatusLabel.style.color = 'rgba(255,255,255,0.5)';
+    }
   }
 
   private updateCameraNumbers(): void {
@@ -803,12 +838,32 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private createCameraGroupButtons(): void {
-    const container = document.createElement('div');
-    container.style.cssText = [
+    // Outer column – centres the heading + buttons row together.
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = [
       'position: absolute', 'bottom: 24px', 'left: 50%',
       'transform: translateX(-50%)',
+      'display: flex', 'flex-direction: column', 'align-items: center', 'gap: 6px',
+      'pointer-events: none', 'user-select: none',
+    ].join(';');
+
+    // "Camera Groups" heading above the buttons.
+    const heading = document.createElement('div');
+    heading.textContent = 'CAMERA GROUPS';
+    heading.style.cssText = [
+      'color: rgba(255,255,255,0.4)',
+      'font-family: monospace', 'font-size: 11px', 'font-weight: bold',
+      'letter-spacing: 4px',
+      'text-shadow: 0 1px 4px rgba(0,0,0,0.8)',
+      'pointer-events: none',
+    ].join(';');
+    wrapper.appendChild(heading);
+
+    // Buttons row.
+    const container = document.createElement('div');
+    container.style.cssText = [
       'display: flex', 'gap: 6px',
-      'pointer-events: auto', 'user-select: none',
+      'pointer-events: auto',
     ].join(';');
 
     this.CAMERA_GROUPS.forEach((group, index) => {
@@ -836,7 +891,8 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.groupButtonElements.push(btn);
     });
 
-    this.world.gameContainer?.appendChild(container);
+    wrapper.appendChild(container);
+    this.world.gameContainer?.appendChild(wrapper);
   }
 
   private onGroupButtonClick(groupIndex: number): void {
@@ -1101,7 +1157,10 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     this.functionalCam1Sequence = new FunctionalCam1Sequence({
       switchToState: (state) => this.switchToState(state),
-      blockCameraInput: (blocked) => { this.cameraInputBlocked = blocked; },
+      blockCameraInput: (blocked) => {
+        this.cameraInputBlocked = blocked;
+        this.updateCameraStatusLabel(blocked ? 'controlled' : 'free');
+      },
       setPointLight16ColorLocked: (hexColor) => {
         this.pointLight16Locked = true;
         this.applyPointLight16Color(hexColor);

@@ -14402,7 +14402,7 @@
           "position": {
             "_": [
               10.97,
-              1.12,
+              0.55,
               -8.67
             ],
             "$bc": "v3"
@@ -64781,9 +64781,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              54.949526,
-              -2.292266,
-              -48.518514
+              54.95,
+              -2.292,
+              -48.519
             ],
             "$bc": "v3"
           },
@@ -64797,7 +64797,7 @@
           },
           "scale": {
             "_": [
-              -6.88,
+              -6.882,
               7.87,
               0.96
             ],
@@ -70109,33 +70109,6 @@
       },
       "1758": {
         "rootComponent": {
-          "uuid": "28ff2180-7794-4e13-8aa4-83d99c0e3228",
-          "name": "GLTFMeshComponent",
-          "position": {
-            "_": [
-              1.73,
-              5.25,
-              -5.31
-            ],
-            "$bc": "v3"
-          },
-          "rotation": {
-            "_": [
-              0,
-              1.53589,
-              0
-            ],
-            "$bc": "e"
-          },
-          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-03-20_09-52-34.glb",
-          "$bc": "ENGINE.GLTFMeshComponent"
-        },
-        "uuid": "b41bc038513b3975",
-        "name": "GLTFMeshActor_46",
-        "$bc": "ENGINE.GLTFMeshActor"
-      },
-      "1759": {
-        "rootComponent": {
           "uuid": "3b40cc57-2da9-4780-bf15-f46754fc46c5",
           "name": "GLTFMeshComponent",
           "position": {
@@ -70162,7 +70135,7 @@
         "name": "dune1",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "1760": {
+      "1759": {
         "rootComponent": {
           "uuid": "65983415cff5f1d0",
           "name": "GLTFMeshComponent",
@@ -70188,6 +70161,41 @@
         },
         "uuid": "9f5b5484f08992ca",
         "name": "dune2",
+        "$bc": "ENGINE.GLTFMeshActor"
+      },
+      "1760": {
+        "rootComponent": {
+          "uuid": "9e4f2e03-3c99-419c-ad8c-fc91fea6a976",
+          "name": "GLTFMeshComponent",
+          "position": {
+            "_": [
+              -15.46,
+              0.51,
+              1.51
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0,
+              1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              2.99,
+              2.99,
+              2.99
+            ],
+            "$bc": "v3"
+          },
+          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-03-26_14-53-12.glb",
+          "$bc": "ENGINE.GLTFMeshComponent"
+        },
+        "uuid": "e8413faa5e7e1df3",
+        "name": "GLTFMeshActor_249",
         "$bc": "ENGINE.GLTFMeshActor"
       },
       "$length": 1761
@@ -77227,15 +77235,15 @@
             "nodeType": "actor"
           },
           {
-            "id": "b41bc038513b3975",
-            "nodeType": "actor"
-          },
-          {
             "id": "1dfc44b4e1a521e6",
             "nodeType": "actor"
           },
           {
             "id": "9f5b5484f08992ca",
+            "nodeType": "actor"
+          },
+          {
+            "id": "e8413faa5e7e1df3",
             "nodeType": "actor"
           }
         ]
