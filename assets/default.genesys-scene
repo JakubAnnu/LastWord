@@ -70334,7 +70334,37 @@
         "name": "dune8",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "$length": 1765
+      "1765": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "379dd906-818f-49b0-9aca-0da2a79251d5",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              3016.14,
+              56.81,
+              -32.09
+            ],
+            "$bc": "v3"
+          },
+          "scale": {
+            "_": [
+              36.876906,
+              14.4393,
+              25.354048
+            ],
+            "$bc": "v3"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "e5395739746916ad",
+        "name": "enemy",
+        "$bc": "ENGINE.Actor"
+      },
+      "$length": 1766
     },
     "resources": null,
     "editorData": {
@@ -77396,6 +77426,10 @@
           },
           {
             "id": "b745d5b83121e9c3",
+            "nodeType": "actor"
+          },
+          {
+            "id": "e5395739746916ad",
             "nodeType": "actor"
           }
         ]

@@ -222,6 +222,15 @@ class MyGame extends ENGINE.BaseGameLoop {
   private figureMoveProgress                       = 0;
   private figureMoveActive                         = false;
 
+  // ─── Enemy movement (triggered 20 s after VO_10_base ends) ──────────────
+  private enemyActor: ENGINE.Actor | null          = null;
+  private readonly ENEMY_START_POS                 = new THREE.Vector3(3016.14, 56.81, -32.09);
+  private readonly ENEMY_END_POS                   = new THREE.Vector3(58.06,   56.81, -32.09);
+  private readonly ENEMY_MOVE_DURATION             = 120; // seconds
+  private readonly ENEMY_START_DELAY               = 20;  // seconds after VO_10_base ends
+  private enemyMoveProgress                        = 0;
+  private enemyMoveActive                          = false;
+
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
   private readonly MOBILE_START_POS              = new THREE.Vector3(-13.33, 0.43, 28.75);
@@ -469,6 +478,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleFuelCam33(tickTime.deltaTimeMS / 1000);
     this.handleMobileMove(tickTime.deltaTimeMS / 1000);
     this.handleFigureMove(tickTime.deltaTimeMS / 1000);
+    this.handleEnemyMove(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -1260,7 +1270,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       },
       gameContainer: this.world.gameContainer ?? null,
       startMobileAnimation: () => this.startMobileMove(),
-      onVO10BaseEnd: () => this.startFigureMove(),
+      onVO10BaseEnd: () => { this.startFigureMove(); this.startEnemyMoveAfterDelay(); },
     });
 
     this.functionalCam1Sequence.run().catch(err => {
@@ -1775,6 +1785,28 @@ class MyGame extends ENGINE.BaseGameLoop {
       new THREE.Vector3().lerpVectors(this.FIGURE_START_POS, this.FIGURE_END_POS, this.figureMoveProgress),
     );
     if (this.figureMoveProgress >= 1) this.figureMoveActive = false;
+  }
+
+  // ─── Enemy movement ───────────────────────────────────────────────────────────
+
+  private startEnemyMoveAfterDelay(): void {
+    setTimeout(() => {
+      if (!this.enemyActor) {
+        this.enemyActor = this.findActorByDisplayName('enemy');
+      }
+      if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_START_POS.clone());
+      this.enemyMoveProgress = 0;
+      this.enemyMoveActive   = true;
+    }, this.ENEMY_START_DELAY * 1_000);
+  }
+
+  private handleEnemyMove(deltaTime: number): void {
+    if (!this.enemyMoveActive || !this.enemyActor) return;
+    this.enemyMoveProgress = Math.min(this.enemyMoveProgress + deltaTime / this.ENEMY_MOVE_DURATION, 1);
+    this.enemyActor.setWorldPosition(
+      new THREE.Vector3().lerpVectors(this.ENEMY_START_POS, this.ENEMY_END_POS, this.enemyMoveProgress),
+    );
+    if (this.enemyMoveProgress >= 1) this.enemyMoveActive = false;
   }
 
   // ─── Fuel cam 3.3 descent ────────────────────────────────────────────────────
