@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@gnsx/genesys.js':
-        specifier: 7.3.5
-        version: 7.3.5(@types/three@0.183.1)
+        specifier: 7.3.6
+        version: 7.3.6(@types/three@0.183.1)
       three:
         specifier: 0.183.2
         version: 0.183.2
@@ -55,8 +55,8 @@ importers:
         specifier: 26.1.0
         version: 26.1.0(canvas@3.1.0)
       nanoid:
-        specifier: 5.1.6
-        version: 5.1.6
+        specifier: 5.1.7
+        version: 5.1.7
       ts-morph:
         specifier: 26.0.0
         version: 26.0.0
@@ -71,13 +71,13 @@ importers:
         version: 5.8.3
       vite:
         specifier: 7.1.7
-        version: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2)
+        version: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3)
       vite-plugin-mkcert:
         specifier: 1.17.8
-        version: 1.17.8(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2))
+        version: 1.17.8(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3))
       vite-plugin-node-polyfills:
         specifier: 0.24.0
-        version: 0.24.0(rollup@4.57.1)(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2))
+        version: 0.24.0(rollup@4.57.1)(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3))
       ws:
         specifier: 8.18.2
         version: 8.18.2
@@ -337,8 +337,8 @@ packages:
   '@gltf-transform/functions@4.3.0':
     resolution: {integrity: sha512-FZggHVgt3DHOezgESBrf2vDzuD2FYQYaNT2sT/aP316SIwhuiIwby3z7rhV9joDvWqqUaPkf1UmkjlOaY9riSQ==}
 
-  '@gnsx/genesys.js@7.3.5':
-    resolution: {integrity: sha512-lwXRD1/MF31hDQGZdwG7iC7tvxJW2lejoSNRbgmW2AobEZWK/oRj9vwo0Bjd5ptx14hGuAeoz69Vyf/Mn+ml0Q==}
+  '@gnsx/genesys.js@7.3.6':
+    resolution: {integrity: sha512-N+ZBm6pwwLrYDptv+6Cw/JTZUM+yutDVO/aM7TsyDyJSHlA5owlXr6WlGJzoeVB8rFWaibCqLWL5Y8yFnExr8g==}
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1648,8 +1648,8 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  nanoid@5.1.6:
-    resolution: {integrity: sha512-c7+7RQ+dMB5dPwwCp4ee1/iV/q2P6aK1mTZcfr1BTuVlyW9hJYiMPybJCcnBlQtuSmTIWNeazm/zqNoZSSElBg==}
+  nanoid@5.1.7:
+    resolution: {integrity: sha512-ua3NDgISf6jdwezAheMOk4mbE1LXjm1DfMUDMuJf4AqxLFK3ccGpgWizwa5YV7Yz9EpXwEaWoRXSb/BnV0t5dQ==}
     engines: {node: ^18 || >=20}
     hasBin: true
 
@@ -2323,8 +2323,8 @@ packages:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
     engines: {node: '>=0.4'}
 
-  yaml@2.8.2:
-    resolution: {integrity: sha512-mplynKqc1C2hTVYxd0PU2xQAc22TI1vShAYGksCCfxbn/dFwnHTNi1bvYsBTkhdUNtGIf5xNOg938rrSSYvS9A==}
+  yaml@2.8.3:
+    resolution: {integrity: sha512-AvbaCLOO2Otw/lW5bmh9d/WEdcDFdQp2Z2ZUH3pX9U2ihyUY0nvLv7J6TrWowklRGPYbB/IuIMfYgxaCPg5Bpg==}
     engines: {node: '>= 14.6'}
     hasBin: true
 
@@ -2340,8 +2340,8 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
-  zustand@5.0.11:
-    resolution: {integrity: sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg==}
+  zustand@5.0.12:
+    resolution: {integrity: sha512-i77ae3aZq4dhMlRhJVCYgMLKuSiZAaUPAct2AksxQ+gOtimhGMdXljRT21P5BNpeT4kXlLIckvkPM029OljD7g==}
     engines: {node: '>=12.20.0'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -2541,7 +2541,7 @@ snapshots:
       ndarray-lanczos: 0.3.0
       ndarray-pixels: 5.0.1
 
-  '@gnsx/genesys.js@7.3.5(@types/three@0.183.1)':
+  '@gnsx/genesys.js@7.3.6(@types/three@0.183.1)':
     dependencies:
       '@dimforge/rapier3d-compat': 0.18.2
       '@recast-navigation/three': 0.39.0(@types/three@0.183.1)(three@0.183.2)
@@ -2550,7 +2550,7 @@ snapshots:
       esbuild-wasm: 0.25.12
       jiti: 2.6.1
       manifold-3d: 3.3.2
-      nanoid: 5.1.6
+      nanoid: 5.1.7
       nipplejs: 0.10.2
       postprocessing: 6.38.2(three@0.183.2)
       recast-navigation: 0.39.0
@@ -2561,9 +2561,9 @@ snapshots:
       ts-morph: 27.0.2
       tweakpane: 4.0.5
       xatlas-three: 0.2.1
-      yaml: 2.8.2
+      yaml: 2.8.3
       zod: 3.25.76
-      zustand: 5.0.11
+      zustand: 5.0.12
     transitivePeerDependencies:
       - '@types/react'
       - '@types/three'
@@ -3950,7 +3950,7 @@ snapshots:
 
   nanoid@3.3.11: {}
 
-  nanoid@5.1.6: {}
+  nanoid@5.1.7: {}
 
   napi-build-utils@2.0.0: {}
 
@@ -4636,24 +4636,24 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-plugin-mkcert@1.17.8(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2)):
+  vite-plugin-mkcert@1.17.8(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3)):
     dependencies:
       axios: 1.13.5(debug@4.4.3)
       debug: 4.4.3
       picocolors: 1.1.1
-      vite: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2)
+      vite: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-node-polyfills@0.24.0(rollup@4.57.1)(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2)):
+  vite-plugin-node-polyfills@0.24.0(rollup@4.57.1)(vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3)):
     dependencies:
       '@rollup/plugin-inject': 5.0.5(rollup@4.57.1)
       node-stdlib-browser: 1.3.1
-      vite: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2)
+      vite: 7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3)
     transitivePeerDependencies:
       - rollup
 
-  vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.2):
+  vite@7.1.7(@types/node@24.12.0)(jiti@2.6.1)(tsx@4.20.3)(yaml@2.8.3):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -4666,7 +4666,7 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.6.1
       tsx: 4.20.3
-      yaml: 2.8.2
+      yaml: 2.8.3
 
   vm-browserify@1.1.2: {}
 
@@ -4715,7 +4715,7 @@ snapshots:
 
   xtend@4.0.2: {}
 
-  yaml@2.8.2: {}
+  yaml@2.8.3: {}
 
   yocto-queue@0.1.0: {}
 
@@ -4725,4 +4725,4 @@ snapshots:
 
   zod@3.25.76: {}
 
-  zustand@5.0.11: {}
+  zustand@5.0.12: {}

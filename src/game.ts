@@ -203,6 +203,9 @@ class MyGame extends ENGINE.BaseGameLoop {
   private fuelActor: ENGINE.Actor | null       = null;
   private readonly FUEL_START_POS              = new THREE.Vector3(10.97, 1.65, -8.67);
   private readonly FUEL_END_Y                  = 10.97;
+  private readonly FUEL_RISE_DURATION          = 12;  // seconds, matches barrier rise
+  private fuelRiseActive                       = false;
+  private fuelRiseProgress                     = 0;
 
   // ─── Fuel cam 3.3 descent ─────────────────────────────────────────────────
   private readonly FUEL_CAM33_START_Y  = 1.12;
@@ -210,6 +213,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly FUEL_CAM33_DURATION = 25;
   private fuelCam33Progress            = 0;
   private fuelCam33IsMoving            = false;
+
+  // ─── Figure movement (triggered after VO_10_base ends) ──────────────────
+  private figureActor: ENGINE.Actor | null         = null;
+  private readonly FIGURE_START_POS                = new THREE.Vector3(0.55, 3.97, -8.92);
+  private readonly FIGURE_END_POS                  = new THREE.Vector3(0.55, 3.97, -9.21);
+  private readonly FIGURE_MOVE_DURATION            = 240; // seconds
+  private figureMoveProgress                       = 0;
+  private figureMoveActive                         = false;
 
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
@@ -431,6 +442,8 @@ class MyGame extends ENGINE.BaseGameLoop {
       },
       gameContainer: this.world.gameContainer ?? null,
       onMapHintShown: (hide) => { this.hideMapHintCallback = hide; },
+      startFuelAnimation: () => this.startFuelRiseAnimation(),
+      stopFuelAnimation: () => this.stopFuelRiseAnimation(),
     });
     this.introSequence.run().catch(err => {
       console.error('[IntroSequence] Sequence error:', err);
@@ -447,6 +460,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleCamera7FocalToggle();
     this.handleHillsMove(tickTime.deltaTimeMS / 1000);
     this.handleBarrierRise(tickTime.deltaTimeMS / 1000);
+    this.handleFuelRise(tickTime.deltaTimeMS / 1000);
     this.handlePrintScale(tickTime.deltaTimeMS / 1000);
     this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
@@ -454,6 +468,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleDirLight02(tickTime.deltaTimeMS / 1000);
     this.handleFuelCam33(tickTime.deltaTimeMS / 1000);
     this.handleMobileMove(tickTime.deltaTimeMS / 1000);
+    this.handleFigureMove(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -786,7 +801,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     const label = document.createElement('div');
     label.style.cssText = [
       'position: absolute', 'bottom: 24px', 'left: 24px', 'color: white',
-      'font-family: monospace', 'font-size: 32px', 'font-weight: bold',
+      "font-family: 'Space Mono', sans-serif", 'font-size: 32px', 'font-weight: bold',
       'letter-spacing: 3px', 'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
       'display: none', 'pointer-events: none', 'user-select: none',
     ].join(';');
@@ -796,7 +811,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     const hint = document.createElement('div');
     hint.style.cssText = [
       'position: absolute', 'bottom: 24px', 'right: 24px',
-      'color: rgba(255,255,255,0.85)', 'font-family: monospace', 'font-size: 16px',
+      'color: rgba(255,255,255,0.85)', "font-family: 'Space Mono', sans-serif", 'font-size: 16px',
       'font-weight: normal', 'letter-spacing: 1px', 'line-height: 1.8',
       'text-align: right', 'text-shadow: 0 1px 6px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,1)',
       'display: none', 'pointer-events: none', 'user-select: none',
@@ -831,7 +846,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     statusLabel.textContent = 'FREE CAMERA';
     statusLabel.style.cssText = [
       'color: rgba(255,255,255,0.5)',
-      'font-family: monospace', 'font-size: 13px', 'font-weight: bold',
+      "font-family: 'Space Mono', sans-serif", 'font-size: 13px', 'font-weight: bold',
       'letter-spacing: 2px', 'text-align: right',
       'text-shadow: 0 1px 6px rgba(0,0,0,0.9)',
     ].join(';');
@@ -870,7 +885,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         const el = document.createElement('span');
         el.textContent = String(i + 1);
         el.style.cssText = [
-          'font-family: monospace', 'font-weight: bold', 'letter-spacing: 1px',
+          "font-family: 'Space Mono', sans-serif", 'font-weight: bold', 'letter-spacing: 1px',
           'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
           'transition: color 0.15s, font-size 0.15s',
         ].join(';');
@@ -901,7 +916,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     heading.textContent = 'CAMERA GROUPS';
     heading.style.cssText = [
       'color: rgba(255,255,255,0.4)',
-      'font-family: monospace', 'font-size: 11px', 'font-weight: bold',
+      "font-family: 'Space Mono', sans-serif", 'font-size: 11px', 'font-weight: bold',
       'letter-spacing: 4px',
       'text-shadow: 0 1px 4px rgba(0,0,0,0.8)',
       'pointer-events: none',
@@ -922,7 +937,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         'background: rgba(0,0,0,0.6)',
         'color: rgba(255,255,255,0.7)',
         'border: 1px solid rgba(255,255,255,0.25)',
-        'font-family: monospace', 'font-size: 12px', 'font-weight: bold',
+        "font-family: 'Space Mono', sans-serif", 'font-size: 12px', 'font-weight: bold',
         'letter-spacing: 1.5px', 'padding: 7px 14px',
         'cursor: pointer', 'outline: none',
         'text-shadow: 0 1px 4px rgba(0,0,0,0.9)',
@@ -1099,11 +1114,9 @@ class MyGame extends ENGINE.BaseGameLoop {
       const thin = (s: string) => `<span style="font-weight:300;opacity:0.65">${s}</span>`;
 
       const lines: string[] = [
-        bold('A / D  —  change camera group'),
-        bold('1 – 8  —  change camera'),
-        ...(rotateHint ? [bold(rotateHint)] : []),
-        thin('H  —  hills animation'),
-        thin('B  —  barrier animation'),
+        bold('A / D  —  CHANGE CAMERA GROUP'),
+        bold('1 – 8  —  CHANGE CAMERA'),
+        ...(rotateHint ? [bold(rotateHint.toUpperCase())] : []),
       ];
       this.cameraHintLabel.innerHTML = lines.join('<br>');
       this.cameraHintLabel.style.display = 'block';
@@ -1247,6 +1260,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       },
       gameContainer: this.world.gameContainer ?? null,
       startMobileAnimation: () => this.startMobileMove(),
+      onVO10BaseEnd: () => this.startFigureMove(),
     });
 
     this.functionalCam1Sequence.run().catch(err => {
@@ -1480,10 +1494,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
       for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
     }
-    if (!this.fuelActor) {
-      this.fuelActor = this.findActorByDisplayName('fuel');
-      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
-    }
     if (this.barrierActors.length === 0) return;
 
     if (!this.barrierActivated) {
@@ -1496,7 +1506,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.barrierIsRising     = false;
       this.barrierRiseProgress = 0;
       for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
-      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
     }
   }
 
@@ -1507,10 +1516,6 @@ class MyGame extends ENGINE.BaseGameLoop {
         for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
       }
     }
-    if (!this.fuelActor) {
-      this.fuelActor = this.findActorByDisplayName('fuel');
-      if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
-    }
     if (!this.barrierIsRising) return;
 
     this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
@@ -1520,12 +1525,33 @@ class MyGame extends ENGINE.BaseGameLoop {
       pos.y = this.barrierRiseStartY[i] + (this.BARRIER_TARGET_Y - this.barrierRiseStartY[i]) * t;
       this.barrierActors[i].setWorldPosition(pos);
     }
-    if (this.fuelActor) {
-      const fuelPos = this.FUEL_START_POS.clone();
-      fuelPos.y = this.FUEL_START_POS.y + (this.FUEL_END_Y - this.FUEL_START_POS.y) * t;
-      this.fuelActor.setWorldPosition(fuelPos);
-    }
     if (this.barrierRiseProgress >= 1) this.barrierIsRising = false;
+  }
+
+  // ─── Independent fuel rise (intro sequence phase 8 only) ────────────────────
+
+  private startFuelRiseAnimation(): void {
+    if (!this.fuelActor) {
+      this.fuelActor = this.findActorByDisplayName('fuel');
+    }
+    if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
+    this.fuelRiseProgress = 0;
+    this.fuelRiseActive   = true;
+  }
+
+  private stopFuelRiseAnimation(): void {
+    this.fuelRiseActive   = false;
+    this.fuelRiseProgress = 0;
+    if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
+  }
+
+  private handleFuelRise(deltaTime: number): void {
+    if (!this.fuelRiseActive || !this.fuelActor) return;
+    this.fuelRiseProgress = Math.min(this.fuelRiseProgress + deltaTime / this.FUEL_RISE_DURATION, 1);
+    const fuelPos = this.FUEL_START_POS.clone();
+    fuelPos.y = this.FUEL_START_POS.y + (this.FUEL_END_Y - this.FUEL_START_POS.y) * this.fuelRiseProgress;
+    this.fuelActor.setWorldPosition(fuelPos);
+    if (this.fuelRiseProgress >= 1) this.fuelRiseActive = false;
   }
 
   // ─── Print scale ─────────────────────────────────────────────────────────────
@@ -1729,6 +1755,26 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.mobileMoveProgress = Math.min(this.mobileMoveProgress + deltaTime / this.MOBILE_MOVE_DURATION, 1);
     this.mobileActor.setWorldPosition(new THREE.Vector3().lerpVectors(this.MOBILE_START_POS, this.MOBILE_END_POS, this.mobileMoveProgress));
     if (this.mobileMoveProgress >= 1) this.mobileIsMoving = false;
+  }
+
+  // ─── Figure movement ─────────────────────────────────────────────────────────
+
+  private startFigureMove(): void {
+    if (!this.figureActor) {
+      this.figureActor = this.findActorByDisplayName('figure');
+    }
+    if (this.figureActor) this.figureActor.setWorldPosition(this.FIGURE_START_POS.clone());
+    this.figureMoveProgress = 0;
+    this.figureMoveActive   = true;
+  }
+
+  private handleFigureMove(deltaTime: number): void {
+    if (!this.figureMoveActive || !this.figureActor) return;
+    this.figureMoveProgress = Math.min(this.figureMoveProgress + deltaTime / this.FIGURE_MOVE_DURATION, 1);
+    this.figureActor.setWorldPosition(
+      new THREE.Vector3().lerpVectors(this.FIGURE_START_POS, this.FIGURE_END_POS, this.figureMoveProgress),
+    );
+    if (this.figureMoveProgress >= 1) this.figureMoveActive = false;
   }
 
   // ─── Fuel cam 3.3 descent ────────────────────────────────────────────────────

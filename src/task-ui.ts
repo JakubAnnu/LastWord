@@ -33,7 +33,7 @@ export function createTaskPanel(
   header.textContent = 'TASK';
   header.style.cssText = [
     'color:rgba(255,255,255,0.45)',
-    'font-family:monospace',
+    "font-family:'Space Mono',sans-serif",
     'font-size:12px',
     'font-weight:bold',
     'letter-spacing:5px',
@@ -58,7 +58,7 @@ export function createTaskPanel(
     el.textContent = text;
     el.style.cssText = [
       `color:${color ?? '#ffffff'}`,
-      'font-family:monospace',
+      "font-family:'Space Mono',sans-serif",
       'font-size:20px',
       'font-weight:bold',
       'letter-spacing:2px',

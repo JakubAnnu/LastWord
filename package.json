@@ -16,12 +16,12 @@
   "keywords": [],
   "type": "module",
   "dependencies": {
-    "@gnsx/genesys.js": "7.3.5",
+    "@gnsx/genesys.js": "7.3.6",
     "three": "0.183.2"
   },
   "devDependencies": {
     "@types/three": "0.183.1",
-    "nanoid": "5.1.6",
+    "nanoid": "5.1.7",
     "ajv": "8.17.1",
     "esbuild": "0.25.12",
     "canvas": "3.1.0",

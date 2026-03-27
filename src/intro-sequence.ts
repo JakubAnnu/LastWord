@@ -22,6 +22,10 @@ export interface IntroSequenceCallbacks {
    * store it in game.ts and call it when the player enters Functional Camera 1.
    */
   onMapHintShown?: (hide: () => void) => void;
+  /** Start the independent fuel-rise animation (phase 8 only) */
+  startFuelAnimation?: () => void;
+  /** Stop and reset the fuel-rise animation */
+  stopFuelAnimation?: () => void;
 }
 
 // ─── Intro sequence ───────────────────────────────────────────────────────────
@@ -106,10 +110,13 @@ export class IntroSequence {
 
     // ── Phase 8: Resource 7 – switch camera immediately, but wait for VO_4 ──
     // VO_5_deficite starts only after VO_4_note finishes.
+    // Fuel rise animation runs exclusively during this phase.
     this.cbs.switchToState(this.CAM_RESOURCE_7);
     await this.waitForSoundEnd(vo4);
+    this.cbs.startFuelAnimation?.();
     const vo5 = await this.playVO(this.VO5);
     await this.waitForSoundEnd(vo5);
+    this.cbs.stopFuelAnimation?.();
 
     // ── Phase 9: restore controls, VO_6_map, persistent map hint ─────────────
     this.cbs.setInputEnabled(true);

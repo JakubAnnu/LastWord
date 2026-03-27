@@ -38,7 +38,7 @@ export async function playIntroVideo(container: HTMLElement): Promise<void> {
       left: 50%;
       transform: translateX(-50%);
       color: rgba(255, 255, 255, 0.75);
-      font-family: sans-serif;
+      font-family: 'Space Mono', sans-serif;
       font-size: 14px;
       letter-spacing: 0.05em;
       pointer-events: none;

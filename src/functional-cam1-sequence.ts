@@ -20,6 +20,8 @@ export interface FunctionalCam1Callbacks {
   gameContainer: HTMLElement | null;
   /** Called when VO_8_route starts — triggers the mobile model animation */
   startMobileAnimation: () => void;
+  /** Called when VO_10_base finishes playing — triggers the figure movement */
+  onVO10BaseEnd?: () => void;
 }
 
 // ─── Sequence ─────────────────────────────────────────────────────────────────
@@ -95,13 +97,16 @@ export class FunctionalCam1Sequence {
     this.cbs.startMobileAnimation();
     void this.cbs.playGlobalSound(this.VO8);
 
-    // ── Step 7: 3 s after VO_8_route → VO_10_base ────────────────────────
+    // ── Step 7: 2 s after VO_8_route → VO_10_base ────────────────────────
     await this.delay(this.VO10_BASE_DELAY_S);
-    void this.cbs.playGlobalSound(this.VO10_BASE);
+    const vo10 = await this.cbs.playGlobalSound(this.VO10_BASE);
 
-    // ── Step 8: 2 s later (5 s total from VO_8_route) → restore control ──
+    // ── Step 8: 3 s later (5 s total from VO_8_route) → restore control ──
     await this.delay(this.RESTORE_DELAY_S - this.VO10_BASE_DELAY_S);
     this.cbs.blockCameraInput(false);
+
+    // ── Step 9: when VO_10_base finishes → trigger figure movement ────────
+    this.waitForSoundEnd(vo10).then(() => { this.cbs.onVO10BaseEnd?.(); });
   }
 
   // ─── Private helpers ─────────────────────────────────────────────────────
