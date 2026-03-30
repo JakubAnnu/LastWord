@@ -9,7 +9,8 @@
         "src/**",
         "tsconfig*.json",
         "vite.config.*",
-        "package.json"
+        "package.json",
+        "../../../../pnpm-workspace.yaml"
       ]
     }
   }

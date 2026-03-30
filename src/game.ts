@@ -222,14 +222,50 @@ class MyGame extends ENGINE.BaseGameLoop {
   private figureMoveProgress                       = 0;
   private figureMoveActive                         = false;
 
-  // ─── Enemy movement (triggered 20 s after VO_10_base ends) ──────────────
-  private enemyActor: ENGINE.Actor | null          = null;
-  private readonly ENEMY_START_POS                 = new THREE.Vector3(3016.14, 56.81, -32.09);
-  private readonly ENEMY_END_POS                   = new THREE.Vector3(58.06,   56.81, -32.09);
-  private readonly ENEMY_MOVE_DURATION             = 120; // seconds
-  private readonly ENEMY_START_DELAY               = 20;  // seconds after VO_10_base ends
-  private enemyMoveProgress                        = 0;
-  private enemyMoveActive                          = false;
+  // ─── Enemy / Scan sequence (triggered 20 s after VO_10_base ends) ───────
+  private enemyActor: ENGINE.Actor | null = null;
+  private scanActor:  ENGINE.Actor | null = null;
+
+  private readonly ENEMY_START_DELAY = 20; // seconds after VO_10_base ends
+
+  // Phase: approach  (enemy moves to bridge position)
+  private readonly ENEMY_APPROACH_FROM   = new THREE.Vector3(3016.14, 56.81, -32.09);
+  private readonly ENEMY_APPROACH_TO     = new THREE.Vector3(58.06,   56.81, -32.09);
+  private readonly ENEMY_APPROACH_DUR    = 120; // seconds
+
+  // Phase: bridge  (enemy descends Y to 25; scan rises at t=8 s)
+  private readonly BRIDGE_DURATION       = 10;  // seconds
+  private readonly BRIDGE_SCAN_TRIGGER   = 8;   // second within bridge when scan starts
+  private readonly BRIDGE_ENEMY_FROM_Y   = 56.81;
+  private readonly BRIDGE_ENEMY_TO_Y     = 25;
+  private readonly SCAN_RISE_FROM        = new THREE.Vector3(58.06, -36.21, -32.09);
+  private readonly SCAN_RISE_TO          = new THREE.Vector3(58.06,  28.59, -32.09);
+  private readonly SCAN_RISE_DUR         = 0.5; // seconds
+
+  // Phase: scanning  (both actors move together; scan also gets random XZ scale)
+  private readonly SCAN_PHASE_DUR        = 180; // seconds (3 minutes)
+  private readonly ENEMY_SCAN_FROM       = new THREE.Vector3(58.06,  25,    -32.09);
+  private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-2.9,   25,    -7.01);
+  private readonly SCAN_SCAN_FROM        = new THREE.Vector3(58.06,  28.59, -32.09);
+  private readonly SCAN_SCAN_TO          = new THREE.Vector3(-2.9,   28.59, -7.01);
+
+  // Scan random-scale during scanning phase
+  private readonly SCAN_SCALE_MAX_DELTA  = 20;  // max change per axis per transition
+  private readonly SCAN_SCALE_MAX_DUR    = 20;  // max seconds per scale transition
+  private scanScaleFromX  = 1;
+  private scanScaleFromZ  = 1;
+  private scanScaleToX    = 1;
+  private scanScaleToZ    = 1;
+  private scanScaleProg   = 0;
+  private scanScaleDur    = 1;
+
+  // Runtime state
+  private enemyPhase:        'idle' | 'approach' | 'bridge' | 'scanning' = 'idle';
+  private enemyPhaseTimer    = 0; // elapsed seconds in current phase
+  private enemyApproachProg  = 0;
+  private scanRiseProg       = 0;
+  private scanRiseActive     = false;
+  private scanPhaseProg      = 0;
 
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
@@ -478,7 +514,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleFuelCam33(tickTime.deltaTimeMS / 1000);
     this.handleMobileMove(tickTime.deltaTimeMS / 1000);
     this.handleFigureMove(tickTime.deltaTimeMS / 1000);
-    this.handleEnemyMove(tickTime.deltaTimeMS / 1000);
+    this.handleEnemySequence(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -1787,26 +1823,121 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.figureMoveProgress >= 1) this.figureMoveActive = false;
   }
 
-  // ─── Enemy movement ───────────────────────────────────────────────────────────
+  // ─── Enemy / Scan sequence ───────────────────────────────────────────────────
 
   private startEnemyMoveAfterDelay(): void {
     setTimeout(() => {
-      if (!this.enemyActor) {
-        this.enemyActor = this.findActorByDisplayName('enemy');
-      }
-      if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_START_POS.clone());
-      this.enemyMoveProgress = 0;
-      this.enemyMoveActive   = true;
+      if (!this.enemyActor) this.enemyActor = this.findActorByDisplayName('enemy');
+      if (!this.scanActor)  this.scanActor  = this.findActorByDisplayName('scan');
+      if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_APPROACH_FROM.clone());
+      this.enemyApproachProg = 0;
+      this.enemyPhaseTimer   = 0;
+      this.enemyPhase        = 'approach';
     }, this.ENEMY_START_DELAY * 1_000);
   }
 
-  private handleEnemyMove(deltaTime: number): void {
-    if (!this.enemyMoveActive || !this.enemyActor) return;
-    this.enemyMoveProgress = Math.min(this.enemyMoveProgress + deltaTime / this.ENEMY_MOVE_DURATION, 1);
+  private handleEnemySequence(deltaTime: number): void {
+    switch (this.enemyPhase) {
+      case 'approach': this.tickApproach(deltaTime); break;
+      case 'bridge':   this.tickBridge(deltaTime);   break;
+      case 'scanning': this.tickScanning(deltaTime);  break;
+    }
+  }
+
+  private tickApproach(deltaTime: number): void {
+    if (!this.enemyActor) return;
+    this.enemyApproachProg = Math.min(this.enemyApproachProg + deltaTime / this.ENEMY_APPROACH_DUR, 1);
     this.enemyActor.setWorldPosition(
-      new THREE.Vector3().lerpVectors(this.ENEMY_START_POS, this.ENEMY_END_POS, this.enemyMoveProgress),
+      new THREE.Vector3().lerpVectors(this.ENEMY_APPROACH_FROM, this.ENEMY_APPROACH_TO, this.enemyApproachProg),
     );
-    if (this.enemyMoveProgress >= 1) this.enemyMoveActive = false;
+    if (this.enemyApproachProg >= 1) {
+      this.enemyPhaseTimer = 0;
+      this.scanRiseProg    = 0;
+      this.scanRiseActive  = false;
+      this.enemyPhase      = 'bridge';
+    }
+  }
+
+  private tickBridge(deltaTime: number): void {
+    this.enemyPhaseTimer += deltaTime;
+
+    // Smoothly lower enemy Y from BRIDGE_ENEMY_FROM_Y to BRIDGE_ENEMY_TO_Y over bridge duration
+    if (this.enemyActor) {
+      const t = Math.min(this.enemyPhaseTimer / this.BRIDGE_DURATION, 1);
+      const pos = this.enemyActor.getWorldPosition();
+      pos.y = this.BRIDGE_ENEMY_FROM_Y + (this.BRIDGE_ENEMY_TO_Y - this.BRIDGE_ENEMY_FROM_Y) * t;
+      this.enemyActor.setWorldPosition(pos);
+    }
+
+    // At t=8 s within bridge, raise the scan model over 0.5 s
+    if (this.enemyPhaseTimer >= this.BRIDGE_SCAN_TRIGGER) {
+      if (!this.scanRiseActive && this.scanRiseProg < 1) {
+        this.scanRiseActive = true;
+        if (this.scanActor) this.scanActor.setWorldPosition(this.SCAN_RISE_FROM.clone());
+      }
+      if (this.scanRiseActive && this.scanRiseProg < 1) {
+        this.scanRiseProg = Math.min(this.scanRiseProg + deltaTime / this.SCAN_RISE_DUR, 1);
+        if (this.scanActor) {
+          this.scanActor.setWorldPosition(
+            new THREE.Vector3().lerpVectors(this.SCAN_RISE_FROM, this.SCAN_RISE_TO, this.scanRiseProg),
+          );
+        }
+        if (this.scanRiseProg >= 1) this.scanRiseActive = false;
+      }
+    }
+
+    if (this.enemyPhaseTimer >= this.BRIDGE_DURATION) {
+      this.enemyPhaseTimer = 0;
+      this.scanPhaseProg   = 0;
+      // Initialise scan scale state from actual actor scale
+      const startScale = this.scanActor?.getWorldScale() ?? new THREE.Vector3(1, 1, 1);
+      this.scanScaleFromX = startScale.x;
+      this.scanScaleFromZ = startScale.z;
+      this.pickNextScanScaleTarget();
+      this.enemyPhase = 'scanning';
+    }
+  }
+
+  private pickNextScanScaleTarget(): void {
+    const clamp = (v: number) => Math.max(2, v);
+    const deltaX = (Math.random() * 2 - 1) * this.SCAN_SCALE_MAX_DELTA;
+    const deltaZ = (Math.random() * 2 - 1) * this.SCAN_SCALE_MAX_DELTA;
+    this.scanScaleToX  = clamp(this.scanScaleFromX + deltaX);
+    this.scanScaleToZ  = clamp(this.scanScaleFromZ + deltaZ);
+    this.scanScaleProg = 0;
+    this.scanScaleDur  = Math.random() * (this.SCAN_SCALE_MAX_DUR - 0.5) + 0.5; // 0.5–20 s
+  }
+
+  private tickScanning(deltaTime: number): void {
+    // Move both actors
+    this.scanPhaseProg = Math.min(this.scanPhaseProg + deltaTime / this.SCAN_PHASE_DUR, 1);
+    if (this.enemyActor) {
+      this.enemyActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.ENEMY_SCAN_FROM, this.ENEMY_SCAN_TO, this.scanPhaseProg),
+      );
+    }
+    if (this.scanActor) {
+      this.scanActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.SCAN_SCAN_FROM, this.SCAN_SCAN_TO, this.scanPhaseProg),
+      );
+    }
+
+    // Random XZ scale animation on scan actor
+    this.scanScaleProg += deltaTime / this.scanScaleDur;
+    if (this.scanScaleProg >= 1) {
+      this.scanScaleFromX = this.scanScaleToX;
+      this.scanScaleFromZ = this.scanScaleToZ;
+      this.pickNextScanScaleTarget();
+    }
+    if (this.scanActor) {
+      const t = Math.min(this.scanScaleProg, 1);
+      const sx = this.scanScaleFromX + (this.scanScaleToX - this.scanScaleFromX) * t;
+      const sz = this.scanScaleFromZ + (this.scanScaleToZ - this.scanScaleFromZ) * t;
+      const sy = this.scanActor.getWorldScale().y;
+      this.scanActor.setWorldScale(new THREE.Vector3(sx, sy, sz));
+    }
+
+    if (this.scanPhaseProg >= 1) this.enemyPhase = 'idle';
   }
 
   // ─── Fuel cam 3.3 descent ────────────────────────────────────────────────────
