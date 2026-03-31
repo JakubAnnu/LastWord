@@ -16,7 +16,7 @@
   "keywords": [],
   "type": "module",
   "dependencies": {
-    "@gnsx/genesys.js": "7.3.10",
+    "@gnsx/genesys.js": "8.0.2",
     "three": "0.183.2"
   },
   "devDependencies": {

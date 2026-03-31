@@ -233,25 +233,25 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly ENEMY_APPROACH_TO     = new THREE.Vector3(58.06,   56.81, -32.09);
   private readonly ENEMY_APPROACH_DUR    = 120; // seconds
 
-  // Phase: bridge  (enemy descends Y to 25; scan rises at t=8 s)
+  // Phase: bridge  (enemy holds position; scan rises at t=8 s)
   private readonly BRIDGE_DURATION       = 10;  // seconds
   private readonly BRIDGE_SCAN_TRIGGER   = 8;   // second within bridge when scan starts
-  private readonly BRIDGE_ENEMY_FROM_Y   = 56.81;
-  private readonly BRIDGE_ENEMY_TO_Y     = 25;
   private readonly SCAN_RISE_FROM        = new THREE.Vector3(58.06, -36.21, -32.09);
   private readonly SCAN_RISE_TO          = new THREE.Vector3(58.06,  28.59, -32.09);
   private readonly SCAN_RISE_DUR         = 0.5; // seconds
 
   // Phase: scanning  (both actors move together; scan also gets random XZ scale)
   private readonly SCAN_PHASE_DUR        = 180; // seconds (3 minutes)
-  private readonly ENEMY_SCAN_FROM       = new THREE.Vector3(58.06,  25,    -32.09);
-  private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-2.9,   25,    -7.01);
+  private readonly ENEMY_SCAN_FROM       = new THREE.Vector3(58.06,  56.81, -32.09);
+  private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-0.41,  38.76, -24.68);
   private readonly SCAN_SCAN_FROM        = new THREE.Vector3(58.06,  28.59, -32.09);
-  private readonly SCAN_SCAN_TO          = new THREE.Vector3(-2.9,   28.59, -7.01);
+  private readonly SCAN_SCAN_TO          = new THREE.Vector3(-8.55,  8.34,  -20.48);
 
   // Scan random-scale during scanning phase
-  private readonly SCAN_SCALE_MAX_DELTA  = 20;  // max change per axis per transition
+  private readonly SCAN_SCALE_MAX_DELTA  = 10;  // max change per axis per transition
   private readonly SCAN_SCALE_MAX_DUR    = 20;  // max seconds per scale transition
+  private readonly SCAN_SCALE_LATE_TRIGGER = 5; // seconds into scanning before scale cap kicks in
+  private readonly SCAN_SCALE_LATE_MAX   = 5;   // max scale value after trigger
   private scanScaleFromX  = 1;
   private scanScaleFromZ  = 1;
   private scanScaleToX    = 1;
@@ -266,6 +266,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private scanRiseProg       = 0;
   private scanRiseActive     = false;
   private scanPhaseProg      = 0;
+
+  // ─── Ending system ───────────────────────────────────────────────────────────
+  private readonly TRUEEND_START_S    = 140; // 2 min 20 s into scanning
+  private readonly TRUEEND_END_S      = 150; // 2 min 30 s into scanning
+  private endingTriggered             = false;
+  private endingOverlayEl: HTMLElement | null = null;
 
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
@@ -445,6 +451,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.pointLight16Actor = this.findActorByDisplayName('PointLight_16') ?? this.findActorByName('PointLight_16');
 
     this.registerBarrierKeyListener();
+    this.registerEndingKeyListener();
 
     // Trigger camera-based animations now that all scene actors are loaded
     this.currentCameraState = '';
@@ -1535,6 +1542,42 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
   }
 
+  // ─── Ending system ───────────────────────────────────────────────────────────
+
+  private registerEndingKeyListener(): void {
+    document.addEventListener('keydown', (e: KeyboardEvent) => {
+      if (e.key !== 'Enter') return;
+      if (this.enemyPhase !== 'scanning') return;
+      if (this.endingTriggered) return;
+      this.endingTriggered = true;
+
+      const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
+      const isTrueEnd   = elapsedScan >= this.TRUEEND_START_S && elapsedScan <= this.TRUEEND_END_S;
+      this.showEndingOverlay(isTrueEnd ? 'yes' : 'no');
+    });
+  }
+
+  private showEndingOverlay(text: 'yes' | 'no'): void {
+    const container = this.world.gameContainer;
+    if (!container) return;
+
+    const el = document.createElement('div');
+    el.textContent = text;
+    el.style.cssText = [
+      'position: absolute', 'inset: 0',
+      'display: flex', 'align-items: center', 'justify-content: center',
+      "font-family: 'Space Mono', monospace",
+      'font-size: 160px', 'font-weight: bold',
+      'color: white',
+      'letter-spacing: 0.15em',
+      'text-transform: uppercase',
+      'text-shadow: 0 0 60px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,1)',
+      'pointer-events: none', 'user-select: none',
+    ].join(';');
+    container.appendChild(el);
+    this.endingOverlayEl = el;
+  }
+
   private toggleBarrier(): void {
     if (this.barrierActors.length === 0) {
       this.barrierActors = this.findActorsByDisplayNamePrefix('barrier');
@@ -1861,14 +1904,6 @@ class MyGame extends ENGINE.BaseGameLoop {
   private tickBridge(deltaTime: number): void {
     this.enemyPhaseTimer += deltaTime;
 
-    // Smoothly lower enemy Y from BRIDGE_ENEMY_FROM_Y to BRIDGE_ENEMY_TO_Y over bridge duration
-    if (this.enemyActor) {
-      const t = Math.min(this.enemyPhaseTimer / this.BRIDGE_DURATION, 1);
-      const pos = this.enemyActor.getWorldPosition();
-      pos.y = this.BRIDGE_ENEMY_FROM_Y + (this.BRIDGE_ENEMY_TO_Y - this.BRIDGE_ENEMY_FROM_Y) * t;
-      this.enemyActor.setWorldPosition(pos);
-    }
-
     // At t=8 s within bridge, raise the scan model over 0.5 s
     if (this.enemyPhaseTimer >= this.BRIDGE_SCAN_TRIGGER) {
       if (!this.scanRiseActive && this.scanRiseProg < 1) {
@@ -1893,13 +1928,15 @@ class MyGame extends ENGINE.BaseGameLoop {
       const startScale = this.scanActor?.getWorldScale() ?? new THREE.Vector3(1, 1, 1);
       this.scanScaleFromX = startScale.x;
       this.scanScaleFromZ = startScale.z;
-      this.pickNextScanScaleTarget();
+      this.pickNextScanScaleTarget(0);
       this.enemyPhase = 'scanning';
     }
   }
 
-  private pickNextScanScaleTarget(): void {
-    const clamp = (v: number) => Math.max(2, v);
+  private pickNextScanScaleTarget(elapsedScanSeconds: number): void {
+    const latePhase = elapsedScanSeconds >= this.SCAN_SCALE_LATE_TRIGGER;
+    const maxVal = latePhase ? this.SCAN_SCALE_LATE_MAX : Infinity;
+    const clamp  = (v: number) => Math.min(Math.max(2, v), maxVal);
     const deltaX = (Math.random() * 2 - 1) * this.SCAN_SCALE_MAX_DELTA;
     const deltaZ = (Math.random() * 2 - 1) * this.SCAN_SCALE_MAX_DELTA;
     this.scanScaleToX  = clamp(this.scanScaleFromX + deltaX);
@@ -1923,11 +1960,17 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
 
     // Random XZ scale animation on scan actor
+    const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
     this.scanScaleProg += deltaTime / this.scanScaleDur;
     if (this.scanScaleProg >= 1) {
       this.scanScaleFromX = this.scanScaleToX;
       this.scanScaleFromZ = this.scanScaleToZ;
-      this.pickNextScanScaleTarget();
+      this.pickNextScanScaleTarget(elapsedScan);
+    }
+    // After 5 s, clamp any in-progress target that exceeds the cap
+    if (elapsedScan >= this.SCAN_SCALE_LATE_TRIGGER) {
+      this.scanScaleToX = Math.min(this.scanScaleToX, this.SCAN_SCALE_LATE_MAX);
+      this.scanScaleToZ = Math.min(this.scanScaleToZ, this.SCAN_SCALE_LATE_MAX);
     }
     if (this.scanActor) {
       const t = Math.min(this.scanScaleProg, 1);

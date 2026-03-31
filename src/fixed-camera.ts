@@ -31,7 +31,7 @@ export interface FixedCameraOptions extends ENGINE.ActorOptions {
  */
 @ENGINE.GameClass()
 export class FixedCamera extends ENGINE.Actor {
-  private cameraComponent: ENGINE.CameraComponent;
+  private cameraComponent: ENGINE.ViewTargetCameraComponent;
   private target: THREE.Vector3 | ENGINE.Actor | null = null;
   private shouldStartActive: boolean = false;
   private rollDegrees: number = 0;
@@ -61,7 +61,7 @@ export class FixedCamera extends ENGINE.Actor {
     super();
     
     // Create camera component (don't set startActive yet, we'll do it in initialize)
-    this.cameraComponent = ENGINE.CameraComponent.create({
+    this.cameraComponent = ENGINE.ViewTargetCameraComponent.create({
       fov: ENGINE.CAMERA_FOV,
       near: ENGINE.CAMERA_NEAR,
       far: ENGINE.CAMERA_FAR,

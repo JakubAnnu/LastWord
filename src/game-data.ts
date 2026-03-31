@@ -4,3 +4,8 @@
 import { registerGeneratedPropertyMetadata } from '@gnsx/genesys.js';
 
 
+export function registerMetadata(): void {
+}
+
+// Deferred to avoid circular reference issues during module initialization
+queueMicrotask(registerMetadata);
