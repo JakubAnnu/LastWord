@@ -5,8 +5,8 @@ import * as THREE from 'three';
 import { FreeCameraPlayer } from './player.js';
 import { FixedCamera } from './fixed-camera.js';
 import { playIntroVideo } from './intro-video.js';
-import { IntroSequence } from './intro-sequence.js';
-import { FunctionalCam1Sequence } from './functional-cam1-sequence.js';
+import { IntroSequence, SequenceCancelledError as IntroSequenceCancelledError } from './intro-sequence.js';
+import { FunctionalCam1Sequence, SequenceCancelledError as FuncCam1CancelledError } from './functional-cam1-sequence.js';
 import './auto-imports.js';
 import './stan-blended-actor.js';
 
@@ -136,6 +136,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── UI ──────────────────────────────────────────────────────────────────────
   private cameraPositionLabel: HTMLElement | null = null;
   private cameraHintLabel: HTMLElement | null = null;
+  private cameraColumnEl: HTMLElement | null = null;
+  private skipTutorialBtn: HTMLElement | null = null;
   private currentCameraState: string = '';
 
   // ─── Camera groups ───────────────────────────────────────────────────────────
@@ -536,7 +538,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       stopFuelAnimation: () => this.stopFuelRiseAnimation(),
     });
     this.introSequence.run().catch(err => {
-      console.error('[IntroSequence] Sequence error:', err);
+      if (!(err instanceof IntroSequenceCancelledError)) console.error('[IntroSequence] Sequence error:', err);
     });
   }
 
@@ -893,16 +895,6 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── UI ──────────────────────────────────────────────────────────────────────
 
   private createCameraPositionLabel(): void {
-    const label = document.createElement('div');
-    label.style.cssText = [
-      'position: absolute', 'bottom: 24px', 'left: 24px', 'color: white',
-      "font-family: 'Space Mono', sans-serif", 'font-size: 32px', 'font-weight: bold',
-      'letter-spacing: 3px', 'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-      'display: none', 'pointer-events: none', 'user-select: none',
-    ].join(';');
-    this.world.gameContainer?.appendChild(label);
-    this.cameraPositionLabel = label;
-
     const hint = document.createElement('div');
     hint.style.cssText = [
       'position: absolute', 'bottom: 24px', 'right: 24px',
@@ -915,7 +907,20 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.cameraHintLabel = hint;
 
     this.createCameraNumbersDisplay();
+
+    // Camera name label lives in the top-right column, below the status label.
+    const label = document.createElement('div');
+    label.style.cssText = [
+      'color: white', "font-family: 'Space Mono', sans-serif", 'font-size: 32px', 'font-weight: bold',
+      'letter-spacing: 3px', 'text-align: right',
+      'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
+      'display: none', 'pointer-events: none', 'user-select: none',
+    ].join(';');
+    this.cameraColumnEl?.appendChild(label);
+    this.cameraPositionLabel = label;
+
     this.createCameraGroupButtons();
+    this.createSkipTutorialButton();
   }
 
   private createCameraNumbersDisplay(): void {
@@ -927,6 +932,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       'pointer-events: none', 'user-select: none',
     ].join(';');
     this.world.gameContainer?.appendChild(column);
+    this.cameraColumnEl = column;
 
     // Numbers row — starts hidden; shown when a camera group is active.
     const numbersRow = document.createElement('div');
@@ -1054,6 +1060,111 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     wrapper.appendChild(container);
     this.world.gameContainer?.appendChild(wrapper);
+  }
+
+  private createSkipTutorialButton(): void {
+    const btn = document.createElement('div');
+    btn.textContent = 'SKIP TUTORIAL';
+    btn.style.cssText = [
+      'position: absolute', 'bottom: 24px', 'left: 24px',
+      'color: rgba(255,255,255,0.6)',
+      "font-family: 'Space Mono', sans-serif",
+      'font-size: 13px', 'font-weight: bold', 'letter-spacing: 3px',
+      'text-shadow: 0 1px 6px rgba(0,0,0,0.9)',
+      'padding: 6px 12px',
+      'border: 1px solid rgba(255,255,255,0.25)',
+      'cursor: pointer', 'user-select: none',
+      'transition: color 0.15s, border-color 0.15s',
+    ].join(';');
+    btn.addEventListener('mouseenter', () => {
+      btn.style.color = 'rgba(255,255,255,1)';
+      btn.style.borderColor = 'rgba(255,255,255,0.6)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.color = 'rgba(255,255,255,0.6)';
+      btn.style.borderColor = 'rgba(255,255,255,0.25)';
+    });
+    btn.addEventListener('click', () => this.skipToVO10Base());
+    this.world.gameContainer?.appendChild(btn);
+    this.skipTutorialBtn = btn;
+  }
+
+  private dismissSkipTutorialButton(): void {
+    if (this.skipTutorialBtn) {
+      this.skipTutorialBtn.remove();
+      this.skipTutorialBtn = null;
+    }
+  }
+
+  private skipToVO10Base(): void {
+    this.dismissSkipTutorialButton();
+
+    // Cancel every running tutorial sequence — releases all key listeners and UI panels
+    if (this.introSequence) {
+      this.introSequence.destroy();
+      this.introSequence = null;
+    }
+    if (this.functionalCam1Sequence) {
+      this.functionalCam1Sequence.destroy();
+      this.functionalCam1Sequence = null;
+    }
+    this.functionalCam1SequencePlayed = true;
+
+    // Stop all audio (VO lines, ambience, soundtrack) and clear handles
+    this.world.globalAudioManager.stopAllSounds();
+    this.soundtrackHandle   = null;
+    this.ambientSoundHandle = null;
+
+    // Stop any in-progress tutorial animations
+    this.stopFuelRiseAnimation();
+
+    // Restore player input and camera control
+    this.setInputEnabled(true);
+    this.cameraInputBlocked = false;
+    this.updateCameraStatusLabel('free');
+
+    // Dismiss persistent map-hint panel if present
+    if (this.hideMapHintCallback) {
+      this.hideMapHintCallback();
+      this.hideMapHintCallback = null;
+    }
+
+    // Jump to the post-tutorial world state
+    this.switchToState('5.1');
+    this.pointLight16Locked = true;
+    this.applyPointLight16Color(0xff0000);
+    this.startMobileMove();
+
+    const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+    const resume = ctx && ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+    void resume.then(async () => {
+      // Restart background audio that was cleared above
+      this.soundtrackHandle = await this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/soundtrack.mp3',
+        { volume: 1.0, loop: true },
+      );
+      await this.startAmbientForState(this.currentCameraState);
+
+      // Play VO_10_base — this is the first thing the player hears post-skip
+      const handle = await this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/VO_10_base.mp3',
+        { volume: 1.0, loop: false, bus: 'Voice' },
+      );
+      if (!handle) {
+        this.startFigureMove();
+        this.startEnemyMoveAfterDelay();
+        return;
+      }
+      const poll = () => {
+        if (!this.world.globalAudioManager.isSoundPlaying(handle)) {
+          this.startFigureMove();
+          this.startEnemyMoveAfterDelay();
+          return;
+        }
+        setTimeout(poll, 100);
+      };
+      poll();
+    });
   }
 
   private onGroupButtonClick(groupIndex: number): void {
@@ -1366,11 +1477,12 @@ class MyGame extends ENGINE.BaseGameLoop {
       },
       gameContainer: this.world.gameContainer ?? null,
       startMobileAnimation: () => this.startMobileMove(),
+      onVO10BaseStart: () => this.dismissSkipTutorialButton(),
       onVO10BaseEnd: () => { this.startFigureMove(); this.startEnemyMoveAfterDelay(); },
     });
 
     this.functionalCam1Sequence.run().catch(err => {
-      console.error('[FunctionalCam1Sequence] Sequence error:', err);
+      if (!(err instanceof FuncCam1CancelledError)) console.error('[FunctionalCam1Sequence] Sequence error:', err);
     });
   }
 
@@ -1611,11 +1723,16 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   private showEndingOverlay(text: 'yes' | 'no'): void {
+    if (text === 'no') {
+      this.showFalseEndScreen();
+      return;
+    }
+
     const container = this.world.gameContainer;
     if (!container) return;
 
     const el = document.createElement('div');
-    el.textContent = text;
+    el.textContent = 'yes';
     el.style.cssText = [
       'position: absolute', 'inset: 0',
       'display: flex', 'align-items: center', 'justify-content: center',
@@ -1629,6 +1746,99 @@ class MyGame extends ENGINE.BaseGameLoop {
     ].join(';');
     container.appendChild(el);
     this.endingOverlayEl = el;
+  }
+
+  private showFalseEndScreen(): void {
+    const container = this.world.gameContainer;
+    if (!container) return;
+
+    // Stop all audio immediately
+    this.world.globalAudioManager.stopAllSounds();
+    this.soundtrackHandle  = null;
+    this.ambientSoundHandle = null;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = [
+      'position: absolute', 'inset: 0',
+      'background: #000',
+      'display: flex', 'flex-direction: column',
+      'align-items: center', 'justify-content: center',
+      'gap: 52px',
+      'pointer-events: auto', 'user-select: none',
+      'z-index: 1000',
+    ].join(';');
+
+    const title = document.createElement('div');
+    title.textContent = 'CONNECTION LOST';
+    title.style.cssText = [
+      "font-family: 'Space Mono', monospace",
+      'font-size: 72px', 'font-weight: bold',
+      'color: white',
+      'letter-spacing: 0.18em',
+      'text-shadow: 0 0 40px rgba(255,255,255,0.45)',
+    ].join(';');
+
+    const btn = document.createElement('button');
+    btn.textContent = 'RESTORE SAVE 138-A';
+    btn.style.cssText = [
+      "font-family: 'Space Mono', monospace",
+      'font-size: 18px', 'font-weight: bold',
+      'color: white',
+      'background: transparent',
+      'border: 2px solid rgba(255,255,255,0.55)',
+      'padding: 14px 36px',
+      'letter-spacing: 0.14em',
+      'cursor: pointer',
+      'outline: none',
+    ].join(';');
+    btn.addEventListener('mouseenter', () => {
+      btn.style.background    = 'rgba(255,255,255,0.12)';
+      btn.style.borderColor   = 'rgba(255,255,255,0.95)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background    = 'transparent';
+      btn.style.borderColor   = 'rgba(255,255,255,0.55)';
+    });
+    btn.addEventListener('click', () => {
+      overlay.remove();
+      this.endingOverlayEl = null;
+      void this.restartScanningPhase();
+    });
+
+    overlay.appendChild(title);
+    overlay.appendChild(btn);
+    container.appendChild(overlay);
+    this.endingOverlayEl = overlay;
+  }
+
+  private async restartScanningPhase(): Promise<void> {
+    this.endingTriggered = false;
+
+    if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_SCAN_FROM.clone());
+    if (this.scanActor) {
+      this.scanActor.setWorldPosition(this.SCAN_SCAN_FROM.clone());
+      this.scanActor.setWorldScale(new THREE.Vector3(1, 1, 1));
+    }
+
+    this.scanPhaseProg   = 0;
+    this.enemyPhaseTimer = 0;
+    this.scanScaleFromX  = 1;
+    this.scanScaleFromZ  = 1;
+    this.pickNextScanScaleTarget(0);
+
+    this.enemyPhase = 'scanning';
+
+    // Restart audio
+    const audioManager = this.world.globalAudioManager;
+    const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+    if (ctx && ctx.state === 'suspended') await ctx.resume();
+
+    this.soundtrackHandle = await audioManager.playGlobalSound(
+      '@project/assets/sounds/soundtrack.mp3',
+      { volume: 1.0, loop: true },
+    );
+
+    await this.startAmbientForState(this.currentCameraState);
   }
 
   private toggleBarrier(): void {

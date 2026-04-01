@@ -28,6 +28,12 @@ export interface IntroSequenceCallbacks {
   stopFuelAnimation?: () => void;
 }
 
+// ─── Cancellation error ───────────────────────────────────────────────────────
+
+export class SequenceCancelledError extends Error {
+  constructor() { super('Sequence cancelled'); this.name = 'SequenceCancelledError'; }
+}
+
 // ─── Intro sequence ───────────────────────────────────────────────────────────
 
 /**
@@ -49,6 +55,10 @@ export class IntroSequence {
   private readonly cbs: IntroSequenceCallbacks;
   private taskHide: (() => void) | null = null;
   private bKeyListener: ((e: KeyboardEvent) => void) | null = null;
+
+  // Cancellation — set by destroy(); every async helper checks this and rejects.
+  private cancelled = false;
+  private cancelCurrent: (() => void) | null = null;
 
   // ─── Timing constants (seconds) ──────────────────────────────────────────
   private readonly VO1_DELAY_S          = 2;
@@ -127,19 +137,31 @@ export class IntroSequence {
   // ─── Private helpers ──────────────────────────────────────────────────────
 
   private delay(seconds: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1_000));
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      const id = setTimeout(() => {
+        this.cancelCurrent = null;
+        if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+        resolve();
+      }, seconds * 1_000);
+      this.cancelCurrent = () => { clearTimeout(id); reject(new SequenceCancelledError()); };
+    });
   }
 
   private async playVO(url: string): Promise<ENGINE.SoundHandle | null> {
+    if (this.cancelled) throw new SequenceCancelledError();
     await this.cbs.resumeAudioContext();
     return this.cbs.playGlobalSound(url);
   }
 
   private waitForSoundEnd(handle: ENGINE.SoundHandle | null): Promise<void> {
     if (!handle) return Promise.resolve();
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      this.cancelCurrent = () => reject(new SequenceCancelledError());
       const poll = () => {
-        if (!this.cbs.isSoundPlaying(handle)) { resolve(); return; }
+        if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+        if (!this.cbs.isSoundPlaying(handle)) { this.cancelCurrent = null; resolve(); return; }
         setTimeout(poll, 100);
       };
       poll();
@@ -147,13 +169,22 @@ export class IntroSequence {
   }
 
   private waitForBPress(): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      this.cancelCurrent = () => {
+        if (this.bKeyListener) {
+          document.removeEventListener('keydown', this.bKeyListener);
+          this.bKeyListener = null;
+        }
+        reject(new SequenceCancelledError());
+      };
       this.bKeyListener = (e: KeyboardEvent) => {
         if (e.key.toLowerCase() !== 'b') return;
         if (this.bKeyListener) {
           document.removeEventListener('keydown', this.bKeyListener);
           this.bKeyListener = null;
         }
+        this.cancelCurrent = null;
         resolve();
       };
       document.addEventListener('keydown', this.bKeyListener);
@@ -184,8 +215,13 @@ export class IntroSequence {
     this.cbs.onMapHintShown?.(hide);
   }
 
-  /** Clean up any active listeners and UI elements (call if the game is reset). */
+  /** Cancel the running sequence immediately and clean up all listeners and UI. */
   public destroy(): void {
+    this.cancelled = true;
+    if (this.cancelCurrent) {
+      this.cancelCurrent();
+      this.cancelCurrent = null;
+    }
     if (this.bKeyListener) {
       document.removeEventListener('keydown', this.bKeyListener);
       this.bKeyListener = null;

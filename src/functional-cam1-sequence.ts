@@ -20,8 +20,16 @@ export interface FunctionalCam1Callbacks {
   gameContainer: HTMLElement | null;
   /** Called when VO_8_route starts — triggers the mobile model animation */
   startMobileAnimation: () => void;
+  /** Called when VO_10_base starts playing — used to dismiss the skip button */
+  onVO10BaseStart?: () => void;
   /** Called when VO_10_base finishes playing — triggers the figure movement */
   onVO10BaseEnd?: () => void;
+}
+
+// ─── Cancellation error ───────────────────────────────────────────────────────
+
+export class SequenceCancelledError extends Error {
+  constructor() { super('Sequence cancelled'); this.name = 'SequenceCancelledError'; }
 }
 
 // ─── Sequence ─────────────────────────────────────────────────────────────────
@@ -51,6 +59,10 @@ export class FunctionalCam1Sequence {
   private readonly cbs: FunctionalCam1Callbacks;
   private hideOverlaysFn: (() => void) | null = null;
   private zKeyListener: ((e: KeyboardEvent) => void) | null = null;
+
+  // Cancellation — set by destroy(); every async helper checks this and rejects.
+  private cancelled = false;
+  private cancelCurrent: (() => void) | null = null;
 
   // ─── Timing constants (seconds) ──────────────────────────────────────────
   private readonly AFTER_Z_PRESS_S   = 2;
@@ -100,6 +112,7 @@ export class FunctionalCam1Sequence {
     // ── Step 7: 2 s after VO_8_route → VO_10_base ────────────────────────
     await this.delay(this.VO10_BASE_DELAY_S);
     const vo10 = await this.cbs.playGlobalSound(this.VO10_BASE);
+    this.cbs.onVO10BaseStart?.();
 
     // ── Step 8: 3 s later (5 s total from VO_8_route) → restore control ──
     await this.delay(this.RESTORE_DELAY_S - this.VO10_BASE_DELAY_S);
@@ -112,14 +125,25 @@ export class FunctionalCam1Sequence {
   // ─── Private helpers ─────────────────────────────────────────────────────
 
   private delay(seconds: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, seconds * 1_000));
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      const id = setTimeout(() => {
+        this.cancelCurrent = null;
+        if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+        resolve();
+      }, seconds * 1_000);
+      this.cancelCurrent = () => { clearTimeout(id); reject(new SequenceCancelledError()); };
+    });
   }
 
   private waitForSoundEnd(handle: ENGINE.SoundHandle | null): Promise<void> {
     if (!handle) return Promise.resolve();
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      this.cancelCurrent = () => reject(new SequenceCancelledError());
       const poll = () => {
-        if (!this.cbs.isSoundPlaying(handle)) { resolve(); return; }
+        if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+        if (!this.cbs.isSoundPlaying(handle)) { this.cancelCurrent = null; resolve(); return; }
         setTimeout(poll, 100);
       };
       poll();
@@ -127,13 +151,22 @@ export class FunctionalCam1Sequence {
   }
 
   private waitForZPress(): Promise<void> {
-    return new Promise(resolve => {
+    return new Promise((resolve, reject) => {
+      if (this.cancelled) { reject(new SequenceCancelledError()); return; }
+      this.cancelCurrent = () => {
+        if (this.zKeyListener) {
+          document.removeEventListener('keydown', this.zKeyListener);
+          this.zKeyListener = null;
+        }
+        reject(new SequenceCancelledError());
+      };
       this.zKeyListener = (e: KeyboardEvent) => {
         if (e.key.toLowerCase() !== 'z') return;
         if (this.zKeyListener) {
           document.removeEventListener('keydown', this.zKeyListener);
           this.zKeyListener = null;
         }
+        this.cancelCurrent = null;
         resolve();
       };
       document.addEventListener('keydown', this.zKeyListener);
@@ -156,8 +189,13 @@ export class FunctionalCam1Sequence {
     if (this.hideOverlaysFn) { this.hideOverlaysFn(); this.hideOverlaysFn = null; }
   }
 
-  /** Clean up listeners and UI (call if the game is reset mid-sequence). */
+  /** Cancel the running sequence immediately and clean up all listeners and UI. */
   public destroy(): void {
+    this.cancelled = true;
+    if (this.cancelCurrent) {
+      this.cancelCurrent();
+      this.cancelCurrent = null;
+    }
     if (this.zKeyListener) {
       document.removeEventListener('keydown', this.zKeyListener);
       this.zKeyListener = null;
