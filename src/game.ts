@@ -313,6 +313,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private endingTriggered             = false;
   private endingOverlayEl: HTMLElement | null = null;
 
+  // Camera shake (TrueEnd)
+  private cameraShakeActive   = false;
+  private cameraShakeElapsed  = 0;
+  private readonly CAMERA_SHAKE_DURATION  = 5;    // seconds
+  private readonly CAMERA_SHAKE_INTENSITY = 0.15; // max offset in world units
+
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
   private readonly MOBILE_START_POS              = new THREE.Vector3(-13.33, 0.43, 28.75);
@@ -562,6 +568,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleMobileMove(tickTime.deltaTimeMS / 1000);
     this.handleFigureMove(tickTime.deltaTimeMS / 1000);
     this.handleEnemySequence(tickTime.deltaTimeMS / 1000);
+    this.handleCameraShake(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -1716,6 +1723,10 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (this.endingTriggered) return;
       this.endingTriggered = true;
 
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/generator_expl.mp3', { volume: 1.0, loop: false },
+      );
+
       const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
       const isTrueEnd   = elapsedScan >= this.TRUEEND_START_S && elapsedScan <= this.TRUEEND_END_S;
       this.showEndingOverlay(isTrueEnd ? 'yes' : 'no');
@@ -1728,24 +1739,51 @@ class MyGame extends ENGINE.BaseGameLoop {
       return;
     }
 
-    const container = this.world.gameContainer;
-    if (!container) return;
+    // TrueEnd: 1 s delay → impact sound, 4 s delay → camera shake
+    setTimeout(() => {
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/impact_sound.mp3',
+        { volume: 1.0, loop: false },
+      );
+    }, 1_000);
 
-    const el = document.createElement('div');
-    el.textContent = 'yes';
-    el.style.cssText = [
-      'position: absolute', 'inset: 0',
-      'display: flex', 'align-items: center', 'justify-content: center',
-      "font-family: 'Space Mono', monospace",
-      'font-size: 160px', 'font-weight: bold',
-      'color: white',
-      'letter-spacing: 0.15em',
-      'text-transform: uppercase',
-      'text-shadow: 0 0 60px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,1)',
-      'pointer-events: none', 'user-select: none',
-    ].join(';');
-    container.appendChild(el);
-    this.endingOverlayEl = el;
+    setTimeout(() => { this.startCameraShake(); }, 4_000);
+  }
+
+  private startCameraShake(): void {
+    this.cameraShakeActive  = true;
+    this.cameraShakeElapsed = 0;
+  }
+
+  private handleCameraShake(deltaTime: number): void {
+    if (!this.cameraShakeActive || !this.mainCamera) return;
+
+    const computeOffset = (t: number, progress: number): THREE.Vector3 => {
+      const intensity = this.CAMERA_SHAKE_INTENSITY * (1 - progress);
+      return new THREE.Vector3(
+        Math.sin(t * 43.7 + 1.1) * Math.cos(t * 29.3 + 0.7) * intensity,
+        Math.sin(t * 37.1 + 2.3) * Math.cos(t * 23.9 + 1.5) * intensity,
+        0,
+      );
+    };
+
+    const prevElapsed  = this.cameraShakeElapsed;
+    const prevProgress = Math.min(prevElapsed / this.CAMERA_SHAKE_DURATION, 1);
+    const prevOffset   = computeOffset(prevElapsed, prevProgress);
+
+    this.cameraShakeElapsed = Math.min(
+      this.cameraShakeElapsed + deltaTime, this.CAMERA_SHAKE_DURATION,
+    );
+    const currProgress = this.cameraShakeElapsed / this.CAMERA_SHAKE_DURATION;
+    const currOffset   = currProgress >= 1
+      ? new THREE.Vector3()
+      : computeOffset(this.cameraShakeElapsed, currProgress);
+
+    const pos = this.mainCamera.getWorldPosition();
+    pos.sub(prevOffset).add(currOffset);
+    this.mainCamera.setWorldPosition(pos);
+
+    if (currProgress >= 1) this.cameraShakeActive = false;
   }
 
   private showFalseEndScreen(): void {
@@ -1800,45 +1838,13 @@ class MyGame extends ENGINE.BaseGameLoop {
       btn.style.borderColor   = 'rgba(255,255,255,0.55)';
     });
     btn.addEventListener('click', () => {
-      overlay.remove();
-      this.endingOverlayEl = null;
-      void this.restartScanningPhase();
+      window.location.reload();
     });
 
     overlay.appendChild(title);
     overlay.appendChild(btn);
     container.appendChild(overlay);
     this.endingOverlayEl = overlay;
-  }
-
-  private async restartScanningPhase(): Promise<void> {
-    this.endingTriggered = false;
-
-    if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_SCAN_FROM.clone());
-    if (this.scanActor) {
-      this.scanActor.setWorldPosition(this.SCAN_SCAN_FROM.clone());
-      this.scanActor.setWorldScale(new THREE.Vector3(1, 1, 1));
-    }
-
-    this.scanPhaseProg   = 0;
-    this.enemyPhaseTimer = 0;
-    this.scanScaleFromX  = 1;
-    this.scanScaleFromZ  = 1;
-    this.pickNextScanScaleTarget(0);
-
-    this.enemyPhase = 'scanning';
-
-    // Restart audio
-    const audioManager = this.world.globalAudioManager;
-    const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
-    if (ctx && ctx.state === 'suspended') await ctx.resume();
-
-    this.soundtrackHandle = await audioManager.playGlobalSound(
-      '@project/assets/sounds/soundtrack.mp3',
-      { volume: 1.0, loop: true },
-    );
-
-    await this.startAmbientForState(this.currentCameraState);
   }
 
   private toggleBarrier(): void {
