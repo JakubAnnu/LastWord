@@ -108,6 +108,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private scanningThemeHandle:  ENGINE.SoundHandle | null = null;
   private approachAudioPlayed   = false;
   private approachVO11Played    = false;
+  private approachBridgeSoundPlayed = false;
   private bridgeScanSoundPlayed = false;
   private scanningAudioPlayed   = false;
 
@@ -2161,9 +2162,10 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.updateCameraNumbers();
 
       // Reset one-shot audio flags and stop any lingering enemy-sequence sounds
-      this.approachAudioPlayed   = false;
-      this.approachVO11Played    = false;
-      this.bridgeScanSoundPlayed = false;
+      this.approachAudioPlayed        = false;
+      this.approachVO11Played         = false;
+      this.approachBridgeSoundPlayed  = false;
+      this.bridgeScanSoundPlayed      = false;
       this.scanningAudioPlayed   = false;
       if (this.enemyLoopHandle)     { this.world.globalAudioManager.stopSound(this.enemyLoopHandle);     this.enemyLoopHandle     = null; }
       if (this.scanningThemeHandle) { this.world.globalAudioManager.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
@@ -2204,6 +2206,14 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.approachVO11Played = true;
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/VO_11_enemy.mp3', { volume: 1.0, loop: false, bus: 'Voice' },
+      );
+    }
+
+    // Last 3 s of approach: bridge_sound (plays once, may overlap next phases)
+    if (!this.approachBridgeSoundPlayed && this.enemyPhaseTimer >= this.ENEMY_APPROACH_DUR - 3) {
+      this.approachBridgeSoundPlayed = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/bridge_sound.mp3', { volume: 1.0, loop: false },
       );
     }
 
