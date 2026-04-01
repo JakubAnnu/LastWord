@@ -103,6 +103,15 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly DESERT_STATES  = new Set(['1.2b', '1.3b', '3.1', '4', '5.1', '5.2', '5.3', '5.4', '6.4']);
   private readonly HOWLING_STATES = new Set(['1.1', '1.1b', '1.2', '1.3', '2', '3.2', '3.3', '3.4', '6.1', '6.2', '6.3', '7']);
 
+  // Enemy-sequence audio handles & one-shot flags
+  private enemyLoopHandle:      ENGINE.SoundHandle | null = null;
+  private scanningThemeHandle:  ENGINE.SoundHandle | null = null;
+  private approachAudioPlayed   = false;
+  private approachVO11Played    = false;
+  private bridgeScanSoundPlayed = false;
+  private scanningAudioPlayed   = false;
+
+
   // ─── Camera 2 (dolly) ────────────────────────────────────────────────────────
   private camera2BasePosition = new THREE.Vector3(0.71, 4.71, -8.82);
   private camera2Target       = new THREE.Vector3(0.74, 3.93, -8.82);
@@ -190,15 +199,17 @@ class MyGame extends ENGINE.BaseGameLoop {
   private hill4IsMoving      = false;
 
   // ─── Barriers ────────────────────────────────────────────────────────────────
-  private readonly BARRIER_START_Y      = -2.16;
-  private readonly BARRIER_TARGET_Y     = 3;
-  private readonly BARRIER_RISE_DURATION = 18;
-  private barrierActors: ENGINE.Actor[] = [];
-  private barrierRiseStartY: number[]   = [];
-  private barrierRiseProgress           = 0;
-  private barrierIsRising               = false;
-  private barrierActivated              = false;
-  private barrierKeyPressTime           = 0;
+  private readonly BARRIER_START_Y        = -2.16;
+  private readonly BARRIER_TARGET_Y       = 3;
+  private readonly BARRIER_RISE_DURATION  = 18;
+  private readonly BARRIER_AUTO_RESET_S   = 30; // seconds until auto-return to start
+  private barrierActors: ENGINE.Actor[]   = [];
+  private barrierRiseStartY: number[]     = [];
+  private barrierRiseProgress             = 0;
+  private barrierIsRising                 = false;
+  private barrierActivated                = false;
+  private barrierKeyPressTime             = 0;
+  private barrierResetTimerId: ReturnType<typeof setTimeout> | null = null;
 
   private fuelActor: ENGINE.Actor | null       = null;
   private readonly FUEL_START_POS              = new THREE.Vector3(10.97, 1.65, -8.67);
@@ -246,6 +257,33 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-0.41,  38.76, -24.68);
   private readonly SCAN_SCAN_FROM        = new THREE.Vector3(58.06,  28.59, -32.09);
   private readonly SCAN_SCAN_TO          = new THREE.Vector3(-8.55,  8.34,  -20.48);
+
+  // Camera blackout sequence during scanning phase
+  private readonly BLACKOUT_START_DELAY  = 60;  // seconds into scanning before blackouts begin
+  private readonly BLACKOUT_INTERVAL     = 4;   // seconds between each camera going dark
+  private readonly CAMERA_BLACKOUT_ORDER = [
+    '6.3',  // base cam 3
+    '1.1b', // resources 2
+    '1.3',  // resources 4
+    '3.4',  // resources 8
+    '3.3',  // resources 7
+    '3.2',  // resources 6
+    '1.2',  // resources 3
+    '7',    // functional 2
+    '1.2b', // outdoor 4
+    '5.1',  // outdoor 1
+    '3.1',  // resources 5
+    '1.1',  // resources 1
+    '6.4',  // base cam 4
+    '6.2',  // base cam 2
+    '6.1',  // base cam 1
+    '4',    // outdoor 6
+    '5.3',  // outdoor 3
+    '5.2',  // outdoor 2
+    '1.3b', // outdoor 5
+  ] as const;
+  private blackedOutStates         = new Set<string>();
+  private scanningBlackoutStarted  = false;
 
   // Scan random-scale during scanning phase
   private readonly SCAN_SCALE_MAX_DELTA  = 10;  // max change per axis per transition
@@ -579,7 +617,9 @@ class MyGame extends ENGINE.BaseGameLoop {
         const k = String(i + 1) as keyof typeof this.lastKeyPressTime;
         if (inputManager.isKeyDown(k) && currentTime - this.lastKeyPressTime[k] > this.KEY_PRESS_COOLDOWN) {
           this.lastKeyPressTime[k] = currentTime;
-          this.switchToState(group.states[i]);
+          if (!this.blackedOutStates.has(group.states[i])) {
+            this.switchToState(group.states[i]);
+          }
           return;
         }
       }
@@ -606,8 +646,10 @@ class MyGame extends ENGINE.BaseGameLoop {
           ? (next - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
           : (next + 1) % this.CAMERA_GROUPS.length;
       }
+      const firstActive = this.firstActiveStateInGroup(next);
+      if (!firstActive) return; // whole group deactivated — skip
       this.activeGroupIndex = next;
-      this.switchToState(this.CAMERA_GROUPS[next].states[0]);
+      this.switchToState(firstActive);
       this.updateGroupButtonHighlights();
     }
   }
@@ -949,8 +991,10 @@ class MyGame extends ENGINE.BaseGameLoop {
 
     this.cameraNumbersContainer.style.display = 'flex';
     this.cameraNumberElements.forEach((el, i) => {
-      el.style.color    = i === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.3)';
-      el.style.fontSize = i === activeIdx ? '34px'    : '28px';
+      const deactivated = this.blackedOutStates.has(group.states[i]);
+      el.style.color    = deactivated ? 'rgba(220,30,30,0.8)'
+                        : i === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.3)';
+      el.style.fontSize = i === activeIdx ? '34px' : '28px';
     });
   }
 
@@ -1014,14 +1058,23 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   private onGroupButtonClick(groupIndex: number): void {
     if (groupIndex === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked()) return;
-    const group  = this.CAMERA_GROUPS[groupIndex];
+    const group   = this.CAMERA_GROUPS[groupIndex];
     const current = this.computeCameraState();
     const idxInGroup = group.states.indexOf(current);
-    const nextState = idxInGroup >= 0
-      ? group.states[(idxInGroup + 1) % group.states.length]
-      : group.states[0];
+    // Cycle through active (non-deactivated) states only
+    const activeStates = group.states.filter(s => !this.blackedOutStates.has(s));
+    if (activeStates.length === 0) return;
+    const activeIdx = activeStates.indexOf(current);
+    const nextState = activeIdx >= 0
+      ? activeStates[(activeIdx + 1) % activeStates.length]
+      : activeStates[0];
     this.activeGroupIndex = groupIndex;
     this.switchToState(nextState);
+  }
+
+  /** Returns the first non-deactivated state in a camera group, or null if all are deactivated. */
+  private firstActiveStateInGroup(groupIndex: number): string | null {
+    return this.CAMERA_GROUPS[groupIndex].states.find(s => !this.blackedOutStates.has(s)) ?? null;
   }
 
   private updateGroupButtonHighlights(): void {
@@ -1590,12 +1643,24 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.barrierRiseStartY   = this.barrierActors.map(a => a.getWorldPosition().y);
       this.barrierRiseProgress = 0;
       this.barrierIsRising     = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/barriers.mp3', { volume: 1.0, loop: false },
+      );
+      // Auto-reset after 30 seconds
+      if (this.barrierResetTimerId !== null) clearTimeout(this.barrierResetTimerId);
+      this.barrierResetTimerId = setTimeout(() => { this.resetBarriers(); }, this.BARRIER_AUTO_RESET_S * 1_000);
     } else {
-      this.barrierActivated    = false;
-      this.barrierIsRising     = false;
-      this.barrierRiseProgress = 0;
-      for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+      if (this.barrierResetTimerId !== null) { clearTimeout(this.barrierResetTimerId); this.barrierResetTimerId = null; }
+      this.resetBarriers();
     }
+  }
+
+  private resetBarriers(): void {
+    this.barrierActivated    = false;
+    this.barrierIsRising     = false;
+    this.barrierRiseProgress = 0;
+    this.barrierResetTimerId = null;
+    for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
   }
 
   private handleBarrierRise(deltaTime: number): void {
@@ -1873,9 +1938,21 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (!this.enemyActor) this.enemyActor = this.findActorByDisplayName('enemy');
       if (!this.scanActor)  this.scanActor  = this.findActorByDisplayName('scan');
       if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_APPROACH_FROM.clone());
-      this.enemyApproachProg = 0;
-      this.enemyPhaseTimer   = 0;
-      this.enemyPhase        = 'approach';
+      this.enemyApproachProg       = 0;
+      this.enemyPhaseTimer         = 0;
+      this.scanningBlackoutStarted = false;
+      this.blackedOutStates.clear();
+      this.updateCameraNumbers();
+
+      // Reset one-shot audio flags and stop any lingering enemy-sequence sounds
+      this.approachAudioPlayed   = false;
+      this.approachVO11Played    = false;
+      this.bridgeScanSoundPlayed = false;
+      this.scanningAudioPlayed   = false;
+      if (this.enemyLoopHandle)     { this.world.globalAudioManager.stopSound(this.enemyLoopHandle);     this.enemyLoopHandle     = null; }
+      if (this.scanningThemeHandle) { this.world.globalAudioManager.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
+
+      this.enemyPhase              = 'approach';
     }, this.ENEMY_START_DELAY * 1_000);
   }
 
@@ -1889,10 +1966,31 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   private tickApproach(deltaTime: number): void {
     if (!this.enemyActor) return;
-    this.enemyApproachProg = Math.min(this.enemyApproachProg + deltaTime / this.ENEMY_APPROACH_DUR, 1);
+    this.enemyPhaseTimer   += deltaTime;
+    this.enemyApproachProg  = Math.min(this.enemyApproachProg + deltaTime / this.ENEMY_APPROACH_DUR, 1);
     this.enemyActor.setWorldPosition(
       new THREE.Vector3().lerpVectors(this.ENEMY_APPROACH_FROM, this.ENEMY_APPROACH_TO, this.enemyApproachProg),
     );
+
+    // On approach start: enemy loop + alarm
+    if (!this.approachAudioPlayed) {
+      this.approachAudioPlayed = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/enemy.mp3', { volume: 1.0, loop: true },
+      ).then(h => { this.enemyLoopHandle = h; });
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/alarm.mp3', { volume: 1.0, loop: false },
+      );
+    }
+
+    // At 3 s into approach: VO_11_enemy
+    if (!this.approachVO11Played && this.enemyPhaseTimer >= 3) {
+      this.approachVO11Played = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/VO_11_enemy.mp3', { volume: 1.0, loop: false, bus: 'Voice' },
+      );
+    }
+
     if (this.enemyApproachProg >= 1) {
       this.enemyPhaseTimer = 0;
       this.scanRiseProg    = 0;
@@ -1904,8 +2002,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   private tickBridge(deltaTime: number): void {
     this.enemyPhaseTimer += deltaTime;
 
-    // At t=8 s within bridge, raise the scan model over 0.5 s
+    // At t=8 s within bridge, raise the scan model over 0.5 s and play scan_sound
     if (this.enemyPhaseTimer >= this.BRIDGE_SCAN_TRIGGER) {
+      if (!this.bridgeScanSoundPlayed) {
+        this.bridgeScanSoundPlayed = true;
+        void this.world.globalAudioManager.playGlobalSound(
+          '@project/assets/sounds/scan_sound_1.mp3', { volume: 1.0, loop: false },
+        );
+      }
       if (!this.scanRiseActive && this.scanRiseProg < 1) {
         this.scanRiseActive = true;
         if (this.scanActor) this.scanActor.setWorldPosition(this.SCAN_RISE_FROM.clone());
@@ -1945,7 +2049,32 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.scanScaleDur  = Math.random() * (this.SCAN_SCALE_MAX_DUR - 0.5) + 0.5; // 0.5–20 s
   }
 
+  private startCameraBlackoutSequence(): void {
+    this.blackedOutStates.clear();
+    this.CAMERA_BLACKOUT_ORDER.forEach((state, i) => {
+      setTimeout(() => {
+        this.blackedOutStates.add(state);
+        this.updateCameraNumbers();
+        // If the player is currently on this camera, eject to functional cam 1
+        if (this.computeCameraState() === state) {
+          this.switchToState('2');
+        }
+      }, i * this.BLACKOUT_INTERVAL * 1_000);
+    });
+  }
+
   private tickScanning(deltaTime: number): void {
+    // On scanning start: VO_12_scaning + scaning_theme
+    if (!this.scanningAudioPlayed) {
+      this.scanningAudioPlayed = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/VO_12_scaning.mp3', { volume: 1.0, loop: false, bus: 'Voice' },
+      );
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/scaning_theme.mp3', { volume: 1.0, loop: true },
+      ).then(h => { this.scanningThemeHandle = h; });
+    }
+
     // Move both actors
     this.scanPhaseProg = Math.min(this.scanPhaseProg + deltaTime / this.SCAN_PHASE_DUR, 1);
     if (this.enemyActor) {
@@ -1978,6 +2107,12 @@ class MyGame extends ENGINE.BaseGameLoop {
       const sz = this.scanScaleFromZ + (this.scanScaleToZ - this.scanScaleFromZ) * t;
       const sy = this.scanActor.getWorldScale().y;
       this.scanActor.setWorldScale(new THREE.Vector3(sx, sy, sz));
+    }
+
+    // Camera blackout sequence — starts at 60 s into scanning
+    if (elapsedScan >= this.BLACKOUT_START_DELAY && !this.scanningBlackoutStarted) {
+      this.scanningBlackoutStarted = true;
+      this.startCameraBlackoutSequence();
     }
 
     if (this.scanPhaseProg >= 1) this.enemyPhase = 'idle';

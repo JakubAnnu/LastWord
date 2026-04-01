@@ -63,6 +63,7 @@ export async function playIntroVideo(container: HTMLElement): Promise<void> {
     };
 
     video.addEventListener('ended', cleanup, { once: true });
+    video.addEventListener('error', cleanup, { once: true });
     document.addEventListener('keydown', onKeyDown);
 
     video.play().catch(() => {
