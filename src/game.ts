@@ -132,7 +132,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly CAMERA4_ANIMATION_SPEED    = 0.5;
   private camera4SideOffset                   = 0;
   private readonly CAMERA4_SIDE_SPEED         = 3.6;
-  private readonly CAMERA4_MAX_SIDE_OFFSET    = 5.4;
+  private readonly CAMERA4_MAX_SIDE_OFFSET    = 30;
   private camera4HoverTime                    = 0;
   private readonly CAMERA4_HOVER_AMPLITUDE    = 0.3;
   private readonly CAMERA4_HOVER_SPEED        = 1.5;
