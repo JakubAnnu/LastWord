@@ -7,6 +7,7 @@ import { FixedCamera } from './fixed-camera.js';
 import { playIntroVideo } from './intro-video.js';
 import { IntroSequence, SequenceCancelledError as IntroSequenceCancelledError } from './intro-sequence.js';
 import { FunctionalCam1Sequence, SequenceCancelledError as FuncCam1CancelledError } from './functional-cam1-sequence.js';
+import { createTaskPanel } from './task-ui.js';
 import './auto-imports.js';
 import './stan-blended-actor.js';
 
@@ -106,6 +107,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   // Enemy-sequence audio handles & one-shot flags
   private enemyLoopHandle:      ENGINE.SoundHandle | null = null;
   private scanningThemeHandle:  ENGINE.SoundHandle | null = null;
+  private scanSound1Handle:     ENGINE.SoundHandle | null = null;
+  private alarmHandle:          ENGINE.SoundHandle | null = null;
   private approachAudioPlayed   = false;
   private approachVO11Played    = false;
   private approachBridgeSoundPlayed = false;
@@ -314,11 +317,23 @@ class MyGame extends ENGINE.BaseGameLoop {
   private endingTriggered             = false;
   private endingOverlayEl: HTMLElement | null = null;
 
+  // Scanning task panel
+  private scanningTaskHideCallback: (() => void) | null = null;
+
   // Camera shake (TrueEnd)
   private cameraShakeActive   = false;
   private cameraShakeElapsed  = 0;
   private readonly CAMERA_SHAKE_DURATION  = 5;    // seconds
-  private readonly CAMERA_SHAKE_INTENSITY = 0.15; // max offset in world units
+  private readonly CAMERA_SHAKE_INTENSITY = 0.06; // max offset in world units
+
+  // Camera redirect (TrueEnd — after VO_13_end 30 s)
+  private readonly TRUEEND_CAMERA_TARGET_A    = new THREE.Vector3(13.53, -25.93, 0.28);  // resources 1 & 5
+  private readonly TRUEEND_CAMERA_TARGET_B    = new THREE.Vector3(3.02, -22.58, -39.15); // base cam 1 & functional 2
+  private readonly TRUEEND_REDIRECTED_STATES  = new Set(['6.1', '1.1', '3.1', '7']);
+  private trueEndCameraTargetA: THREE.Vector3 | null = null;
+  private trueEndCameraTargetB: THREE.Vector3 | null = null;
+  private trueEndExtrasActive  = false; // FOV boost + typing sound gate
+  private typingSoundHandle: ENGINE.SoundHandle | null = null;
 
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
@@ -1224,7 +1239,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     switch (state) {
       case '1.1':
         this.activeCamera = 1; this.activeCamera1Position = 0;
-        this.configureCam(this.CAMERA1_POSITIONS[0], this.camera1StanTarget, 70, 0, true, false); break;
+        this.configureCam(this.CAMERA1_POSITIONS[0], this.trueEndCameraTargetA ?? this.camera1StanTarget, 70, 0, true, false); break;
       case '1.2':
         this.activeCamera = 1; this.activeCamera1Position = 1;
         this.configureCam(this.CAMERA1_POSITIONS[1], this.CAMERA1_TARGETS_FIXED[1], 70, 0, true, false); break;
@@ -1245,7 +1260,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.configureCam(this.camera2BasePosition, this.camera2Target, 94, 90, true, false); break;
       case '3.1':
         this.activeCamera = 3; this.activeCamera3Position = 0;
-        this.configureCam(this.CAMERA3_POSITIONS[0], this.CAMERA3_TARGETS[0], this.CAMERA3_FOVS[0], 0, false, false); break;
+        this.configureCam(this.CAMERA3_POSITIONS[0], this.trueEndCameraTargetA ?? this.CAMERA3_TARGETS[0], this.CAMERA3_FOVS[0], 0, false, false); break;
       case '3.2':
         this.activeCamera = 3; this.activeCamera3Position = 1;
         this.configureCam(this.CAMERA3_POSITIONS[1], this.CAMERA3_TARGETS[1], this.CAMERA3_FOVS[1], 0, false, false); break;
@@ -1271,7 +1286,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.configureCam(this.CAMERA5_POSITIONS[2], this.CAMERA5_TARGET, this.CAMERA5_FOCAL_STEPS[0].fov, 0, false, false); break;
       case '6.1':
         this.activeCamera = 6; this.activeCamera6Position = 0;
-        this.configureCam(this.CAMERA6_POSITIONS[0], this.CAMERA6_TARGETS[0], 70, 0, false, true); break;
+        this.configureCam(this.CAMERA6_POSITIONS[0], this.trueEndCameraTargetB ?? this.CAMERA6_TARGETS[0], this.trueEndExtrasActive ? 85 : 70, 0, false, true); break;
       case '6.2':
         this.activeCamera = 6; this.activeCamera6Position = 1;
         this.configureCam(this.CAMERA6_POSITIONS[1], this.CAMERA6_TARGETS[1], 70, 0, false, true); break;
@@ -1283,7 +1298,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.configureCam(this.CAMERA6_POSITIONS[3], this.CAMERA6_TARGETS[3], 70, 0, false, true); break;
       case '7':
         this.activeCamera = 7; this.camera7FocalLength = '20mm';
-        this.configureCam(this.CAM7_POSITION, this.CAM7_TARGET, 70, 0, false, false); break;
+        this.configureCam(this.CAM7_POSITION, this.trueEndCameraTargetB ?? this.CAM7_TARGET, 70, 0, false, false); break;
       default: return;
     }
     this.updateCameraPositionLabel();
@@ -1437,8 +1452,16 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (newState === '3.3') this.startFuelCam33Animation();
     if (prev === '3.3' && newState !== '3.3') this.stopFuelCam33Animation();
 
-
     if (newState === '2') this.triggerFunctionalCam1Sequence();
+
+    // Typing sound for '6.1' and '7' after TrueEnd redirect
+    if (this.trueEndExtrasActive) {
+      const typingStates = ['6.1', '7'];
+      const enteringTyping = typingStates.includes(newState) && !typingStates.includes(prev);
+      const leavingTyping  = typingStates.includes(prev)    && !typingStates.includes(newState);
+      if (enteringTyping) this.startTypingSound();
+      if (leavingTyping)  this.stopTypingSound();
+    }
 
     this.updateAmbientAudio(newState);
   }
@@ -1724,12 +1747,39 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (this.endingTriggered) return;
       this.endingTriggered = true;
 
+      if (this.scanningTaskHideCallback) {
+        this.scanningTaskHideCallback();
+        this.scanningTaskHideCallback = null;
+      }
+
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/generator_expl.mp3', { volume: 1.0, loop: false },
       );
 
       const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
       const isTrueEnd   = elapsedScan >= this.TRUEEND_START_S && elapsedScan <= this.TRUEEND_END_S;
+      if (isTrueEnd) {
+        // Stop scanning tick so it no longer overwrites actor positions
+        this.enemyPhase = 'idle';
+
+        if (this.enemyActor) {
+          this.enemyActor.setWorldPosition(new THREE.Vector3(73, 14, -5));
+          this.enemyActor.setWorldRotation(new THREE.Euler(
+            THREE.MathUtils.degToRad(-21),
+            THREE.MathUtils.degToRad(-37),
+            THREE.MathUtils.degToRad(-32),
+          ));
+        }
+        if (this.scanActor) {
+          this.scanActor.setWorldPosition(new THREE.Vector3(-8, -35, -20));
+        }
+        const am = this.world.globalAudioManager;
+        if (this.soundtrackHandle)    { am.stopSound(this.soundtrackHandle);    this.soundtrackHandle    = null; }
+        if (this.alarmHandle)         { am.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
+        if (this.enemyLoopHandle)     { am.stopSound(this.enemyLoopHandle);     this.enemyLoopHandle     = null; }
+        if (this.scanningThemeHandle) { am.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
+        if (this.scanSound1Handle)    { am.stopSound(this.scanSound1Handle);    this.scanSound1Handle    = null; }
+      }
       this.showEndingOverlay(isTrueEnd ? 'yes' : 'no');
     });
   }
@@ -1740,7 +1790,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       return;
     }
 
-    // TrueEnd: 1 s delay → impact sound, 4 s delay → camera shake
+    // TrueEnd: 1 s → impact_sound, 4 s → camera shake, 7 s → VO_13_end, 37 s → camera redirect
     setTimeout(() => {
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/impact_sound.mp3',
@@ -1749,11 +1799,133 @@ class MyGame extends ENGINE.BaseGameLoop {
     }, 1_000);
 
     setTimeout(() => { this.startCameraShake(); }, 4_000);
+
+    setTimeout(() => {
+      void this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/VO_13_end.mp3',
+        { volume: 1.0, loop: false, bus: 'Voice' },
+      ).then(h => { if (h) this.pollVO13EndFinish(h); });
+    }, 7_000);
+
+    setTimeout(() => { this.activateTrueEndCameraRedirect(); }, 37_000);
+  }
+
+  private pollVO13EndFinish(handle: ENGINE.SoundHandle): void {
+    const check = () => {
+      if (!this.world.globalAudioManager.isSoundPlaying(handle)) {
+        // VO_13_end finished — 20 s later show "End of Act I", 5 s after that reload
+        setTimeout(() => { this.showEndOfActI(); }, 20_000);
+        return;
+      }
+      setTimeout(check, 200);
+    };
+    setTimeout(check, 200);
+  }
+
+  private showEndOfActI(): void {
+    const container = this.world.gameContainer;
+    if (!container) return;
+
+    const btn = document.createElement('button');
+    btn.textContent = 'End of Act I';
+    btn.style.cssText = [
+      'position:absolute', 'bottom:24px', 'left:24px',
+      "font-family:'Space Mono',monospace",
+      'font-size:28px', 'font-weight:bold',
+      'color:white',
+      'background:transparent',
+      'border:none',
+      'letter-spacing:0.1em',
+      'text-shadow:0 0 20px rgba(255,255,255,0.5)',
+      'cursor:pointer',
+      'pointer-events:auto', 'user-select:none',
+      'z-index:2000',
+      'padding:0',
+    ].join(';');
+    btn.addEventListener('mouseenter', () => {
+      btn.style.textShadow = '0 0 30px rgba(255,255,255,0.9)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.textShadow = '0 0 20px rgba(255,255,255,0.5)';
+    });
+    btn.addEventListener('click', () => { window.location.reload(); });
+    container.appendChild(btn);
+  }
+
+  private startTypingSound(): void {
+    if (this.typingSoundHandle) return;
+    void this.world.globalAudioManager.playGlobalSound(
+      '@project/assets/sounds/typing_sound.mp3',
+      { volume: 1.0, loop: true },
+    ).then(h => { this.typingSoundHandle = h; });
+  }
+
+  private stopTypingSound(): void {
+    if (!this.typingSoundHandle) return;
+    this.world.globalAudioManager.stopSound(this.typingSoundHandle);
+    this.typingSoundHandle = null;
+  }
+
+  private async scheduleTaskPanelAtHalfVO12(): Promise<void> {
+    const container = this.world.gameContainer;
+    if (!container) return;
+
+    const FALLBACK_HALF_MS = 45_000;
+    let halfMs = FALLBACK_HALF_MS;
+
+    try {
+      const resolved = await ENGINE.resolveAssetPathsInText(
+        'src="@project/assets/sounds/VO_12_scaning.mp3"',
+      );
+      const match = resolved.match(/src="([^"]+)"/);
+      const url = match?.[1];
+      if (url) {
+        const audioCtx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+        if (audioCtx) {
+          const response = await fetch(url);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          halfMs = (audioBuffer.duration / 2) * 1000;
+        }
+      }
+    } catch (err) {
+      console.warn('[ScanningTask] Audio duration fallback used:', err);
+    }
+
+    setTimeout(() => {
+      if (this.endingTriggered) return;
+      this.scanningTaskHideCallback = createTaskPanel(container, [
+        { text: 'PRESS ENTER TO DISCHARGE' },
+      ]);
+    }, halfMs);
   }
 
   private startCameraShake(): void {
     this.cameraShakeActive  = true;
     this.cameraShakeElapsed = 0;
+  }
+
+  private activateTrueEndCameraRedirect(): void {
+    // Restore all cameras from blackout
+    this.blackedOutStates.clear();
+    this.updateCameraNumbers();
+    this.updateGroupButtonHighlights();
+
+    // Lower Outdoor 6 (cam '4') position by 15 units
+    this.camera4EndPos.y -= 15;
+
+    // Point the 4 designated cameras at their respective targets + enable extras (FOV boost, typing sound)
+    this.trueEndCameraTargetA = this.TRUEEND_CAMERA_TARGET_A.clone();
+    this.trueEndCameraTargetB = this.TRUEEND_CAMERA_TARGET_B.clone();
+    this.trueEndExtrasActive  = true;
+    const current = this.computeCameraState();
+    if (this.TRUEEND_REDIRECTED_STATES.has(current)) {
+      this.switchToState(current);
+    }
+    // Start typing sound immediately if already on one of the two target states
+    if (current === '6.1' || current === '7') {
+      this.startTypingSound();
+    }
   }
 
   private handleCameraShake(deltaTime: number): void {
@@ -2169,6 +2341,8 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.scanningAudioPlayed   = false;
       if (this.enemyLoopHandle)     { this.world.globalAudioManager.stopSound(this.enemyLoopHandle);     this.enemyLoopHandle     = null; }
       if (this.scanningThemeHandle) { this.world.globalAudioManager.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
+      if (this.scanSound1Handle)    { this.world.globalAudioManager.stopSound(this.scanSound1Handle);    this.scanSound1Handle    = null; }
+      if (this.alarmHandle)         { this.world.globalAudioManager.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
 
       this.enemyPhase              = 'approach';
     }, this.ENEMY_START_DELAY * 1_000);
@@ -2198,7 +2372,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       ).then(h => { this.enemyLoopHandle = h; });
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/alarm.mp3', { volume: 1.0, loop: false },
-      );
+      ).then(h => { this.alarmHandle = h; });
     }
 
     // At 3 s into approach: VO_11_enemy
@@ -2234,7 +2408,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.bridgeScanSoundPlayed = true;
         void this.world.globalAudioManager.playGlobalSound(
           '@project/assets/sounds/scan_sound_1.mp3', { volume: 1.0, loop: false },
-        );
+        ).then(h => { this.scanSound1Handle = h; });
       }
       if (!this.scanRiseActive && this.scanRiseProg < 1) {
         this.scanRiseActive = true;
@@ -2299,6 +2473,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/scaning_theme.mp3', { volume: 1.0, loop: true },
       ).then(h => { this.scanningThemeHandle = h; });
+      void this.scheduleTaskPanelAtHalfVO12();
     }
 
     // Move both actors

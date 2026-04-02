@@ -65102,8 +65102,8 @@
           "position": {
             "_": [
               0.229909,
-              3.041591,
-              -2.982127
+              2.78,
+              -2.63
             ],
             "$bc": "v3"
           },
@@ -65203,7 +65203,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "35f95256114de0e8",
@@ -65289,7 +65289,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "410024d1eadfc684",
@@ -65375,7 +65375,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "5737ccb92447f74e",
@@ -65504,7 +65504,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "8d8eb963dcb0d7da",
@@ -66020,7 +66020,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "4f845f32a7e29d35",
@@ -66149,7 +66149,7 @@
           "geometry": {
             "$bc": "THREE.BoxGeometry"
           },
-          "meshMaterial": "@engine/assets/shaders/M_Matte_White.material.json",
+          "meshMaterial": "@project/assets/materials/M_Matte_Blue_Grey.material.json",
           "$bc": "ENGINE.MeshComponent"
         },
         "uuid": "27ee24b89e07a825",
@@ -75126,21 +75126,21 @@
               "children": {
                 "$length": 1
               },
-              "uuid": "d03ca1e24b6d427c",
-              "name": "MeshComponent_2",
+              "uuid": "5564051b26fa34fb",
+              "name": "MeshComponent_4",
               "position": {
                 "_": [
                   0,
-                  0,
-                  -0.66
+                  -0.04,
+                  -0.01
                 ],
                 "$bc": "v3"
               },
               "scale": {
                 "_": [
-                  1.165524,
-                  1.356794,
-                  0.31855
+                  0.918976,
+                  1.190306,
+                  0.861277
                 ],
                 "$bc": "v3"
               },
@@ -75151,62 +75151,6 @@
               "$bc": "ENGINE.MeshComponent"
             },
             "2": {
-              "children": {
-                "$length": 1
-              },
-              "uuid": "fc0ddf39d0c4829b",
-              "name": "MeshComponent_3",
-              "position": {
-                "_": [
-                  0,
-                  0,
-                  0.64
-                ],
-                "$bc": "v3"
-              },
-              "scale": {
-                "_": [
-                  1.165524,
-                  1.356794,
-                  0.31855
-                ],
-                "$bc": "v3"
-              },
-              "geometry": {
-                "$bc": "THREE.BoxGeometry"
-              },
-              "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
-              "$bc": "ENGINE.MeshComponent"
-            },
-            "3": {
-              "children": {
-                "$length": 1
-              },
-              "uuid": "5564051b26fa34fb",
-              "name": "MeshComponent_4",
-              "position": {
-                "_": [
-                  0,
-                  0,
-                  0.01
-                ],
-                "$bc": "v3"
-              },
-              "scale": {
-                "_": [
-                  0.918976,
-                  1.190306,
-                  0.864502
-                ],
-                "$bc": "v3"
-              },
-              "geometry": {
-                "$bc": "THREE.BoxGeometry"
-              },
-              "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
-              "$bc": "ENGINE.MeshComponent"
-            },
-            "4": {
               "children": {
                 "$length": 1
               },
@@ -75234,23 +75178,31 @@
               "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
               "$bc": "ENGINE.MeshComponent"
             },
-            "$length": 5
+            "$length": 3
           },
           "uuid": "379dd906-818f-49b0-9aca-0da2a79251d5",
           "name": "MeshComponent",
           "position": {
             "_": [
-              -0.41,
-              -25.93,
-              -24.68
+              74.366222,
+              -20.25525,
+              -5.340352
             ],
             "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              0.001343,
+              0.087727,
+              0.034748
+            ],
+            "$bc": "e"
           },
           "scale": {
             "_": [
               57.348953,
               15.811203,
-              58.632829
+              83.448784
             ],
             "$bc": "v3"
           },
