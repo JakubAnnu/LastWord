@@ -22,6 +22,8 @@ export interface IntroSequenceCallbacks {
    * store it in game.ts and call it when the player enters Functional Camera 1.
    */
   onMapHintShown?: (hide: () => void) => void;
+  /** Called when VO_6_map starts playing — unlocks Functional Camera 1 */
+  onVO6MapStart?: () => void;
   /** Start the independent fuel-rise animation (phase 8 only) */
   startFuelAnimation?: () => void;
   /** Stop and reset the fuel-rise animation */
@@ -130,6 +132,7 @@ export class IntroSequence {
 
     // ── Phase 9: restore controls, VO_6_map, persistent map hint ─────────────
     this.cbs.setInputEnabled(true);
+    this.cbs.onVO6MapStart?.();
     void this.playVO(this.VO6);
     this.showPersistentTask('MAP: Enter the Functional Camera 1 group');
   }

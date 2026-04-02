@@ -158,10 +158,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   private cameraStatusLabel: HTMLElement | null      = null;
 
   // ─── Functional group lock ────────────────────────────────────────────────────
-  private readonly FUNCTIONAL_GROUP_INDEX        = 3;
-  private readonly FUNCTIONAL_GROUP_LOCK_S       = 50;
-  private functionalGroupLocked                  = true;
-  private functionalGroupLockElapsed             = 0;
+  private readonly FUNCTIONAL_GROUP_INDEX = 3;
+  private functionalGroupLocked           = true;
 
   private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
@@ -246,7 +244,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly ENEMY_START_DELAY = 20; // seconds after VO_10_base ends
 
   // Phase: approach  (enemy moves to bridge position)
-  private readonly ENEMY_APPROACH_FROM   = new THREE.Vector3(3016.14, 56.81, -32.09);
+  private readonly ENEMY_APPROACH_FROM   = new THREE.Vector3(1392.79, 56.81, -32.09);
   private readonly ENEMY_APPROACH_TO     = new THREE.Vector3(58.06,   56.81, -32.09);
   private readonly ENEMY_APPROACH_DUR    = 120; // seconds
 
@@ -303,8 +301,33 @@ class MyGame extends ENGINE.BaseGameLoop {
   private scanScaleProg   = 0;
   private scanScaleDur    = 1;
 
+  // enemy_mini — small model mirroring the sequence with its own positions
+  private enemyMiniActor: ENGINE.Actor | null = null;
+  private readonly ENEMY_MINI_PRE_FROM      = new THREE.Vector3(1.33,  3.98, -8.85);
+  private readonly ENEMY_MINI_PRE_TO        = new THREE.Vector3(1.33,  4.04, -8.85);
+  private readonly ENEMY_MINI_PRE_DUR       = 1;   // seconds
+  private readonly ENEMY_MINI_APPROACH_TO   = new THREE.Vector3(0.62,  4.04, -8.84);
+  private readonly ENEMY_MINI_SCAN_TO       = new THREE.Vector3(0.56,  4.04, -8.84);
+  private readonly ENEMY_MINI_IMPACT_TO_POS = new THREE.Vector3(0.65,  3.99, -8.85);
+  private readonly ENEMY_MINI_IMPACT_TO_QUAT = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(
+      THREE.MathUtils.degToRad(-94),
+      THREE.MathUtils.degToRad(51),
+      THREE.MathUtils.degToRad(97),
+    ),
+  );
+  private readonly IMPACT_SOUND             = '@project/assets/sounds/impact_sound.mp3';
+  private readonly IMPACT_FALLBACK_DUR      = 15;  // max seconds if sound never stops
+  private enemyMiniPreProg                  = 0;
+  private impactSoundHandle: ENGINE.SoundHandle | null = null;
+  private impactSoundStarted                = false;
+  private impactSoundEnded                  = false;
+  private enemyMiniImpactElapsed            = 0;
+  private enemyMiniImpactFromPos            = new THREE.Vector3();
+  private enemyMiniImpactFromQuat           = new THREE.Quaternion();
+
   // Runtime state
-  private enemyPhase:        'idle' | 'approach' | 'bridge' | 'scanning' = 'idle';
+  private enemyPhase: 'idle' | 'pre_approach' | 'approach' | 'bridge' | 'scanning' | 'impact' = 'idle';
   private enemyPhaseTimer    = 0; // elapsed seconds in current phase
   private enemyApproachProg  = 0;
   private scanRiseProg       = 0;
@@ -327,11 +350,13 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly CAMERA_SHAKE_INTENSITY = 0.06; // max offset in world units
 
   // Camera redirect (TrueEnd — after VO_13_end 30 s)
-  private readonly TRUEEND_CAMERA_TARGET_A    = new THREE.Vector3(13.53, -25.93, 0.28);  // resources 1 & 5
-  private readonly TRUEEND_CAMERA_TARGET_B    = new THREE.Vector3(3.02, -22.58, -39.15); // base cam 1 & functional 2
+  private readonly TRUEEND_CAMERA_TARGET_A    = new THREE.Vector3(13.53, -25.93, 0.28);   // resources 1 & 5
+  private readonly TRUEEND_CAMERA_TARGET_B    = new THREE.Vector3(3.02, -22.58, -39.15);  // functional 2 (7)
+  private readonly TRUEEND_CAMERA_TARGET_C    = new THREE.Vector3(-33.55, -15.37, -45.75); // base cam 1 (6.1)
   private readonly TRUEEND_REDIRECTED_STATES  = new Set(['6.1', '1.1', '3.1', '7']);
   private trueEndCameraTargetA: THREE.Vector3 | null = null;
   private trueEndCameraTargetB: THREE.Vector3 | null = null;
+  private trueEndCameraTargetC: THREE.Vector3 | null = null;
   private trueEndExtrasActive  = false; // FOV boost + typing sound gate
   private typingSoundHandle: ENGINE.SoundHandle | null = null;
 
@@ -439,6 +464,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   protected override async preStart(): Promise<void> {
+    if (this.stats) this.stats.dom.style.display = 'none';
+
     // Create the single camera – starts at Camera 1 position 1.1
     this.mainCamera = FixedCamera.create({
       position: this.CAMERA1_POSITIONS[0].clone(),
@@ -558,6 +585,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       onMapHintShown: (hide) => { this.hideMapHintCallback = hide; },
       startFuelAnimation: () => this.startFuelRiseAnimation(),
       stopFuelAnimation: () => this.stopFuelRiseAnimation(),
+      onVO6MapStart: () => this.unlockFunctionalGroup(),
     });
     this.introSequence.run().catch(err => {
       if (!(err instanceof IntroSequenceCancelledError)) console.error('[IntroSequence] Sequence error:', err);
@@ -614,10 +642,10 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── Functional group lock ────────────────────────────────────────────────────
 
-  private tickFunctionalGroupLock(deltaTime: number): void {
-    if (!this.functionalGroupLocked) return;
-    this.functionalGroupLockElapsed += deltaTime;
-    if (this.functionalGroupLockElapsed >= this.FUNCTIONAL_GROUP_LOCK_S) {
+  private tickFunctionalGroupLock(_deltaTime: number): void { /* unlocked via unlockFunctionalGroup() */ }
+
+  private unlockFunctionalGroup(): void {
+    if (this.functionalGroupLocked) {
       this.functionalGroupLocked = false;
       this.updateGroupButtonHighlights();
     }
@@ -1141,6 +1169,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     // Stop any in-progress tutorial animations
     this.stopFuelRiseAnimation();
 
+    // Unlock functional camera group in case it wasn't unlocked yet by VO_6_map
+    this.unlockFunctionalGroup();
+
     // Restore player input and camera control
     this.setInputEnabled(true);
     this.cameraInputBlocked = false;
@@ -1286,7 +1317,7 @@ class MyGame extends ENGINE.BaseGameLoop {
         this.configureCam(this.CAMERA5_POSITIONS[2], this.CAMERA5_TARGET, this.CAMERA5_FOCAL_STEPS[0].fov, 0, false, false); break;
       case '6.1':
         this.activeCamera = 6; this.activeCamera6Position = 0;
-        this.configureCam(this.CAMERA6_POSITIONS[0], this.trueEndCameraTargetB ?? this.CAMERA6_TARGETS[0], this.trueEndExtrasActive ? 85 : 70, 0, false, true); break;
+        this.configureCam(this.CAMERA6_POSITIONS[0], this.trueEndCameraTargetC ?? this.CAMERA6_TARGETS[0], this.trueEndExtrasActive ? 85 : 70, 0, false, true); break;
       case '6.2':
         this.activeCamera = 6; this.activeCamera6Position = 1;
         this.configureCam(this.CAMERA6_POSITIONS[1], this.CAMERA6_TARGETS[1], 70, 0, false, true); break;
@@ -1469,6 +1500,17 @@ class MyGame extends ENGINE.BaseGameLoop {
   private triggerFunctionalCam1Sequence(): void {
     if (this.functionalCam1SequencePlayed) return;
     this.functionalCam1SequencePlayed = true;
+
+    // Cancel the intro sequence if it is still running (e.g. player entered FC1 early).
+    if (this.introSequence) {
+      this.introSequence.destroy();
+      this.introSequence = null;
+    }
+    // Stop any VO audio that was left playing by the intro sequence.
+    this.world.globalAudioManager.stopAllSounds();
+    // Ensure player input is restored (intro may have had it blocked).
+    this.setInputEnabled(true);
+    this.updateCameraStatusLabel('free');
 
     // Dismiss the persistent map hint that was shown after the intro sequence.
     if (this.hideMapHintCallback) {
@@ -1790,7 +1832,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       return;
     }
 
-    // TrueEnd: 1 s → impact_sound, 4 s → camera shake, 7 s → VO_13_end, 37 s → camera redirect
+    // TrueEnd: 1 s → impact_sound, 4 s → camera shake, 12 s → VO_13_end, 42 s → camera redirect
     setTimeout(() => {
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/impact_sound.mp3',
@@ -1805,9 +1847,36 @@ class MyGame extends ENGINE.BaseGameLoop {
         '@project/assets/sounds/VO_13_end.mp3',
         { volume: 1.0, loop: false, bus: 'Voice' },
       ).then(h => { if (h) this.pollVO13EndFinish(h); });
-    }, 7_000);
+      this.startVO13DimEffect();
+    }, 12_000);
 
-    setTimeout(() => { this.activateTrueEndCameraRedirect(); }, 37_000);
+    setTimeout(() => { this.activateTrueEndCameraRedirect(); }, 42_000);
+  }
+
+  private startVO13DimEffect(): void {
+    const container = this.world.gameContainer;
+    if (!container) return;
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = [
+      'position:absolute', 'inset:0',
+      'background:#000',
+      'opacity:0',
+      'transition:opacity 50s linear',
+      'pointer-events:none',
+      'z-index:500',
+    ].join(';');
+    container.appendChild(overlay);
+
+    // Trigger CSS transition (needs separate frame so transition applies)
+    requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+
+    // At 20 s: instantly flash back to full brightness
+    setTimeout(() => {
+      overlay.style.transition = 'none';
+      overlay.style.opacity    = '0';
+      setTimeout(() => overlay.remove(), 50);
+    }, 20_000);
   }
 
   private pollVO13EndFinish(handle: ENGINE.SoundHandle): void {
@@ -1917,6 +1986,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     // Point the 4 designated cameras at their respective targets + enable extras (FOV boost, typing sound)
     this.trueEndCameraTargetA = this.TRUEEND_CAMERA_TARGET_A.clone();
     this.trueEndCameraTargetB = this.TRUEEND_CAMERA_TARGET_B.clone();
+    this.trueEndCameraTargetC = this.TRUEEND_CAMERA_TARGET_C.clone();
     this.trueEndExtrasActive  = true;
     const current = this.computeCameraState();
     if (this.TRUEEND_REDIRECTED_STATES.has(current)) {
@@ -2324,10 +2394,15 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   private startEnemyMoveAfterDelay(): void {
     setTimeout(() => {
-      if (!this.enemyActor) this.enemyActor = this.findActorByDisplayName('enemy');
-      if (!this.scanActor)  this.scanActor  = this.findActorByDisplayName('scan');
-      if (this.enemyActor) this.enemyActor.setWorldPosition(this.ENEMY_APPROACH_FROM.clone());
+      if (!this.enemyActor)     this.enemyActor     = this.findActorByDisplayName('enemy');
+      if (!this.scanActor)      this.scanActor       = this.findActorByDisplayName('scan');
+      if (!this.enemyMiniActor) this.enemyMiniActor  = this.findActorByDisplayName('enemy_mini');
+
+      if (this.enemyActor)     this.enemyActor.setWorldPosition(this.ENEMY_APPROACH_FROM.clone());
+      if (this.enemyMiniActor) this.enemyMiniActor.setWorldPosition(this.ENEMY_MINI_PRE_FROM.clone());
+
       this.enemyApproachProg       = 0;
+      this.enemyMiniPreProg        = 0;
       this.enemyPhaseTimer         = 0;
       this.scanningBlackoutStarted = false;
       this.blackedOutStates.clear();
@@ -2343,16 +2418,35 @@ class MyGame extends ENGINE.BaseGameLoop {
       if (this.scanningThemeHandle) { this.world.globalAudioManager.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
       if (this.scanSound1Handle)    { this.world.globalAudioManager.stopSound(this.scanSound1Handle);    this.scanSound1Handle    = null; }
       if (this.alarmHandle)         { this.world.globalAudioManager.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
+      if (this.impactSoundHandle)   { this.world.globalAudioManager.stopSound(this.impactSoundHandle);   this.impactSoundHandle   = null; }
+      this.impactSoundStarted = false;
+      this.impactSoundEnded   = false;
 
-      this.enemyPhase              = 'approach';
+      this.enemyPhase              = 'pre_approach';
     }, this.ENEMY_START_DELAY * 1_000);
   }
 
   private handleEnemySequence(deltaTime: number): void {
     switch (this.enemyPhase) {
-      case 'approach': this.tickApproach(deltaTime); break;
-      case 'bridge':   this.tickBridge(deltaTime);   break;
-      case 'scanning': this.tickScanning(deltaTime);  break;
+      case 'pre_approach': this.tickPreApproach(deltaTime); break;
+      case 'approach':     this.tickApproach(deltaTime);    break;
+      case 'bridge':       this.tickBridge(deltaTime);      break;
+      case 'scanning':     this.tickScanning(deltaTime);    break;
+      case 'impact':       this.tickImpact(deltaTime);      break;
+    }
+  }
+
+  private tickPreApproach(deltaTime: number): void {
+    this.enemyMiniPreProg = Math.min(this.enemyMiniPreProg + deltaTime / this.ENEMY_MINI_PRE_DUR, 1);
+    if (this.enemyMiniActor) {
+      this.enemyMiniActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.ENEMY_MINI_PRE_FROM, this.ENEMY_MINI_PRE_TO, this.enemyMiniPreProg),
+      );
+    }
+    if (this.enemyMiniPreProg >= 1) {
+      this.enemyPhaseTimer   = 0;
+      this.enemyApproachProg = 0;
+      this.enemyPhase        = 'approach';
     }
   }
 
@@ -2363,6 +2457,11 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.enemyActor.setWorldPosition(
       new THREE.Vector3().lerpVectors(this.ENEMY_APPROACH_FROM, this.ENEMY_APPROACH_TO, this.enemyApproachProg),
     );
+    if (this.enemyMiniActor) {
+      this.enemyMiniActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.ENEMY_MINI_PRE_TO, this.ENEMY_MINI_APPROACH_TO, this.enemyApproachProg),
+      );
+    }
 
     // On approach start: enemy loop + alarm
     if (!this.approachAudioPlayed) {
@@ -2488,6 +2587,11 @@ class MyGame extends ENGINE.BaseGameLoop {
         new THREE.Vector3().lerpVectors(this.SCAN_SCAN_FROM, this.SCAN_SCAN_TO, this.scanPhaseProg),
       );
     }
+    if (this.enemyMiniActor) {
+      this.enemyMiniActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.ENEMY_MINI_APPROACH_TO, this.ENEMY_MINI_SCAN_TO, this.scanPhaseProg),
+      );
+    }
 
     // Random XZ scale animation on scan actor
     const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
@@ -2516,7 +2620,66 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.startCameraBlackoutSequence();
     }
 
-    if (this.scanPhaseProg >= 1) this.enemyPhase = 'idle';
+    if (this.scanPhaseProg >= 1) {
+      this.enemyMiniImpactElapsed = 0;
+      this.impactSoundHandle      = null;
+      this.impactSoundStarted     = false;
+      this.impactSoundEnded       = false;
+      if (this.enemyMiniActor) {
+        this.enemyMiniImpactFromPos.copy(this.enemyMiniActor.getWorldPosition());
+        this.enemyMiniImpactFromQuat.copy(this.enemyMiniActor.getWorldQuaternion());
+      }
+      this.enemyPhase = 'impact';
+    }
+  }
+
+  private tickImpact(deltaTime: number): void {
+    // Play the sound exactly once — use a started flag because the handle
+    // comes back asynchronously and would otherwise trigger on every tick.
+    if (!this.impactSoundStarted) {
+      this.impactSoundStarted = true;
+      void this.world.globalAudioManager.playGlobalSound(
+        this.IMPACT_SOUND, { volume: 1.0, loop: false },
+      ).then(h => { this.impactSoundHandle = h ?? null; });
+    }
+
+    this.enemyMiniImpactElapsed += deltaTime;
+
+    // Detect when the sound finishes (once detected, latch the flag so the
+    // check doesn't flip back if the handle becomes stale).
+    if (!this.impactSoundEnded) {
+      if (this.impactSoundHandle) {
+        if (!this.world.globalAudioManager.isSoundPlaying(this.impactSoundHandle)) {
+          this.impactSoundEnded = true;
+        }
+      } else if (this.enemyMiniImpactElapsed >= this.IMPACT_FALLBACK_DUR) {
+        // Fallback: no handle yet but waited long enough
+        this.impactSoundEnded = true;
+      }
+    }
+
+    // Animate position and rotation over the fallback duration; snap on end
+    const t = Math.min(this.enemyMiniImpactElapsed / this.IMPACT_FALLBACK_DUR, 1);
+
+    if (this.enemyMiniActor) {
+      const pos = new THREE.Vector3().lerpVectors(
+        this.enemyMiniImpactFromPos, this.ENEMY_MINI_IMPACT_TO_POS, t,
+      );
+      this.enemyMiniActor.setWorldPosition(pos);
+
+      const quat = new THREE.Quaternion().slerpQuaternions(
+        this.enemyMiniImpactFromQuat, this.ENEMY_MINI_IMPACT_TO_QUAT, t,
+      );
+      this.enemyMiniActor.setWorldQuaternion(quat);
+    }
+
+    if (this.impactSoundEnded) {
+      if (this.enemyMiniActor) {
+        this.enemyMiniActor.setWorldPosition(this.ENEMY_MINI_IMPACT_TO_POS.clone());
+        this.enemyMiniActor.setWorldQuaternion(this.ENEMY_MINI_IMPACT_TO_QUAT.clone());
+      }
+      this.enemyPhase = 'idle';
+    }
   }
 
   // ─── Fuel cam 3.3 descent ────────────────────────────────────────────────────
