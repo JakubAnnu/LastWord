@@ -2033,10 +2033,14 @@ class MyGame extends ENGINE.BaseGameLoop {
     const container = this.world.gameContainer;
     if (!container) return;
 
-    // Stop all audio immediately
+    // Stop all audio immediately, then play FalseEnd sound
     this.world.globalAudioManager.stopAllSounds();
     this.soundtrackHandle  = null;
     this.ambientSoundHandle = null;
+    void this.world.globalAudioManager.playGlobalSound(
+      '@project/assets/sounds/falseend_sound.mp3',
+      { volume: 1.0, loop: false },
+    );
 
     const overlay = document.createElement('div');
     overlay.style.cssText = [
@@ -2044,20 +2048,27 @@ class MyGame extends ENGINE.BaseGameLoop {
       'background: #000',
       'display: flex', 'flex-direction: column',
       'align-items: center', 'justify-content: center',
-      'gap: 52px',
+      'gap: 32px',
       'pointer-events: auto', 'user-select: none',
       'z-index: 1000',
     ].join(';');
 
-    const title = document.createElement('div');
-    title.textContent = 'CONNECTION LOST';
-    title.style.cssText = [
-      "font-family: 'Space Mono', monospace",
-      'font-size: 72px', 'font-weight: bold',
-      'color: white',
-      'letter-spacing: 0.18em',
-      'text-shadow: 0 0 40px rgba(255,255,255,0.45)',
-    ].join(';');
+    const makeLabel = (text: string, size: string, opacity: string) => {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.cssText = [
+        "font-family: 'Space Mono', monospace",
+        `font-size: ${size}`, 'font-weight: bold',
+        `color: rgba(255,255,255,${opacity})`,
+        'letter-spacing: 0.18em',
+      ].join(';');
+      return el;
+    };
+
+    const topLabel    = makeLabel('Mission failed',  '22px', '0.55');
+    const title       = makeLabel('CONNECTION LOST', '72px', '1');
+    title.style.textShadow = '0 0 40px rgba(255,255,255,0.45)';
+    const tryAgain    = makeLabel('try again',       '28px', '0.70');
 
     const btn = document.createElement('button');
     btn.textContent = 'RESTORE SAVE 138-A';
@@ -2071,20 +2082,21 @@ class MyGame extends ENGINE.BaseGameLoop {
       'letter-spacing: 0.14em',
       'cursor: pointer',
       'outline: none',
+      'margin-top: 20px',
     ].join(';');
     btn.addEventListener('mouseenter', () => {
-      btn.style.background    = 'rgba(255,255,255,0.12)';
-      btn.style.borderColor   = 'rgba(255,255,255,0.95)';
+      btn.style.background  = 'rgba(255,255,255,0.12)';
+      btn.style.borderColor = 'rgba(255,255,255,0.95)';
     });
     btn.addEventListener('mouseleave', () => {
-      btn.style.background    = 'transparent';
-      btn.style.borderColor   = 'rgba(255,255,255,0.55)';
+      btn.style.background  = 'transparent';
+      btn.style.borderColor = 'rgba(255,255,255,0.55)';
     });
-    btn.addEventListener('click', () => {
-      window.location.reload();
-    });
+    btn.addEventListener('click', () => { window.location.reload(); });
 
+    overlay.appendChild(topLabel);
     overlay.appendChild(title);
+    overlay.appendChild(tryAgain);
     overlay.appendChild(btn);
     container.appendChild(overlay);
     this.endingOverlayEl = overlay;
