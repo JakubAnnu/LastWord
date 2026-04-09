@@ -132,30 +132,24 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly CAMERA4_HOVER_SPEED        = 1.5;
 
   // ─── UI ──────────────────────────────────────────────────────────────────────
-  private cameraPositionLabel: HTMLElement | null = null;
-  private cameraHintLabel: HTMLElement | null = null;
-  private cameraColumnEl: HTMLElement | null = null;
   private skipTutorialBtn: HTMLElement | null = null;
   private currentCameraState: string = '';
 
   // ─── Camera groups ───────────────────────────────────────────────────────────
   private readonly CAMERA_GROUPS: Array<{ label: string; states: string[] }> = [
-    { label: 'OUTDOOR CAM', states: ['5.1', '5.2', '5.3', '1.2b', '1.3b', '4'] },
+    { label: 'OUTDOOR',     states: ['5.1', '5.2', '5.3', '1.2b', '1.3b', '4'] },
     { label: 'BASE CAM',    states: ['6.1', '6.2', '6.3', '6.4'] },
     { label: 'RECOURCES',   states: ['1.1', '1.1b', '1.2', '1.3', '3.1'] },
     { label: 'FUNCTIONAL',  states: ['2', '7'] },
   ];
-  private groupButtonElements: HTMLElement[]        = [];
-  private activeGroupIndex: number | null           = null;
-  private cameraNumbersContainer: HTMLElement | null = null;
-  private cameraNumberElements: HTMLElement[]        = [];
-  private cameraStatusLabel: HTMLElement | null      = null;
+  private cameraTableEl: HTMLElement | null  = null;
+  private cameraTableCells: HTMLElement[][]  = [];
 
   // ─── Functional group lock ────────────────────────────────────────────────────
   private readonly FUNCTIONAL_GROUP_INDEX = 3;
   private functionalGroupLocked           = true;
 
-  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'o': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'o': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
+  private lastKeyPressTime: { '1': number; '2': number; '3': number; '4': number; '5': number; '6': number; '7': number; '8': number; 'w': number; 's': number; 'a': number; 'd': number; 'e': number; 'h': number; 'b': number; 'p': number; 'k': number; 'y': number; 'l': number; 'ArrowLeft': number; 'ArrowRight': number; 'ArrowUp': number; 'ArrowDown': number } = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0, 'w': 0, 's': 0, 'a': 0, 'd': 0, 'e': 0, 'h': 0, 'b': 0, 'p': 0, 'k': 0, 'y': 0, 'l': 0, 'ArrowLeft': 0, 'ArrowRight': 0, 'ArrowUp': 0, 'ArrowDown': 0 };
   private readonly KEY_PRESS_COOLDOWN = 200;
 
   // ─── Hills ───────────────────────────────────────────────────────────────────
@@ -200,14 +194,15 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly BARRIER_START_Y        = -2.16;
   private readonly BARRIER_TARGET_Y       = 3;
   private readonly BARRIER_RISE_DURATION  = 28;
-  private readonly BARRIER_AUTO_RESET_S   = 30; // seconds until auto-return to start
+  private readonly BARRIER_HOLD_S         = 10;   // seconds at top before descent
+  private readonly BARRIER_LOWER_DURATION = 28;   // seconds to descend back to start
   private barrierActors: ENGINE.Actor[]   = [];
   private barrierRiseStartY: number[]     = [];
   private barrierRiseProgress             = 0;
-  private barrierIsRising                 = false;
-  private barrierActivated                = false;
+  private barrierHoldTimer                = 0;
+  private barrierLowerProgress            = 0;
   private barrierKeyPressTime             = 0;
-  private barrierResetTimerId: ReturnType<typeof setTimeout> | null = null;
+  private barrierPhase: 'idle' | 'rising' | 'holding' | 'lowering' = 'idle';
 
   private fuelActor: ENGINE.Actor | null       = null;
   private readonly FUEL_START_POS              = new THREE.Vector3(16, 2, -15);
@@ -273,7 +268,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     '6.4',  // base cam 4
     '6.2',  // base cam 2
     '6.1',  // base cam 1
-    '4',    // outdoor 6
     '5.3',  // outdoor 3
     '5.2',  // outdoor 2
     '1.3b', // outdoor 5
@@ -352,6 +346,18 @@ class MyGame extends ENGINE.BaseGameLoop {
   private trueEndExtrasActive  = false; // FOV boost + typing sound gate
   private typingSoundHandle: ENGINE.SoundHandle | null = null;
 
+  // enemy_mini TrueEnd slide (0.56,4.04,-8.84 → 0.65,3.99,-8.85 over 3 s)
+  private readonly TRUEEND_MINI_FROM_POS  = new THREE.Vector3(0.56,  4.04, -8.84);
+  private readonly TRUEEND_MINI_TO_POS    = new THREE.Vector3(0.65,  3.99, -8.85);
+  private readonly TRUEEND_MINI_FROM_QUAT = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(THREE.MathUtils.degToRad(-90), THREE.MathUtils.degToRad(0),   THREE.MathUtils.degToRad(91),  'XYZ'),
+  );
+  private readonly TRUEEND_MINI_TO_QUAT   = new THREE.Quaternion().setFromEuler(
+    new THREE.Euler(THREE.MathUtils.degToRad(-118), THREE.MathUtils.degToRad(34), THREE.MathUtils.degToRad(108), 'XYZ'),
+  );
+  private readonly TRUEEND_MINI_DUR       = 3; // seconds
+  private trueEndMiniElapsed              = -1; // -1 = not active
+
   // ─── Mobile (OUTDOOR 1 / state '4') ──────────────────────────────────────
   private mobileActor: ENGINE.Actor | null       = null;
   private readonly MOBILE_START_POS              = new THREE.Vector3(-13.33, 0.43, 28.75);
@@ -411,14 +417,6 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Point Light 16 ──────────────────────────────────────────────────────────
   private pointLight16Actor: ENGINE.Actor | null = null;
 
-  // ─── Directional Light 02 ────────────────────────────────────────────────────
-  private dirLight02Actor: ENGINE.Actor | null = null;
-  private readonly DIR_LIGHT02_START   = new THREE.Vector3(2.34, 20.99, -99.96);
-  private readonly DIR_LIGHT02_END     = new THREE.Vector3(2.34, 20.99, 80.09);
-  private readonly DIR_LIGHT02_DURATION = 3;
-  private dirLight02Progress           = 0;
-  private dirLight02IsMoving           = false;
-  private dirLight02Activated          = false;
 
   // ─── Generator ───────────────────────────────────────────────────────────────
   private genSliderActor: ENGINE.Actor | null = null;
@@ -526,9 +524,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.elevatorActor)     this.elevatorActor.setWorldPosition(this.ELEVATOR_START.clone());
     if (this.stanElevatorActor) this.stanElevatorActor.setWorldPosition(this.STAN_ELEVATOR_START.clone());
 
-    this.dirLight02Actor = this.findActorByDisplayName('Directional Light_02') ?? this.findActorByDisplayName('directional light_02') ?? this.findActorByName('Directional Light_02');
-    if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
-
     this.pointLight16Actor = this.findActorByDisplayName('PointLight_16') ?? this.findActorByName('PointLight_16');
 
     this.registerBarrierKeyListener();
@@ -543,6 +538,10 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 
   protected override postStart(): void {
+    // Prevent pointer lock — the camera-table UI uses mouse clicks for camera selection,
+    // so the cursor must remain visible at all times.
+    this.world.inputManager.exitPointerLock();
+
     const container = this.world.gameContainer;
     if (!container) return;
     this.setInputEnabled(false);
@@ -599,12 +598,12 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.handleGeneratorSequence(tickTime.deltaTimeMS / 1000);
     this.handleBubbleRise(tickTime.deltaTimeMS / 1000);
     this.handleElevator(tickTime.deltaTimeMS / 1000);
-    this.handleDirLight02(tickTime.deltaTimeMS / 1000);
     this.handleFuelCam33(tickTime.deltaTimeMS / 1000);
     this.handleMobileMove(tickTime.deltaTimeMS / 1000);
     this.handleFigureMove(tickTime.deltaTimeMS / 1000);
     this.handleEnemySequence(tickTime.deltaTimeMS / 1000);
     this.handleCameraShake(tickTime.deltaTimeMS / 1000);
+    this.handleTrueEndMiniMove(tickTime.deltaTimeMS / 1000);
     this.handlePointLight16Color();
   }
 
@@ -639,7 +638,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private unlockFunctionalGroup(): void {
     if (this.functionalGroupLocked) {
       this.functionalGroupLocked = false;
-      this.updateGroupButtonHighlights();
+      this.updateCameraTable();
     }
   }
 
@@ -650,53 +649,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Camera switching ────────────────────────────────────────────────────────
 
   private handleCameraSwitching(): void {
-    if (this.cameraInputBlocked) return;
-
-    const inputManager = this.world.inputManager;
-    const currentTime  = performance.now();
-
-    if (this.activeGroupIndex !== null) {
-      // ── Group mode: keys 1–8 jump to the Nth camera in the active group ──────
-      const group = this.CAMERA_GROUPS[this.activeGroupIndex];
-      for (let i = 0; i < group.states.length && i < 8; i++) {
-        const k = String(i + 1) as keyof typeof this.lastKeyPressTime;
-        if (inputManager.isKeyDown(k) && currentTime - this.lastKeyPressTime[k] > this.KEY_PRESS_COOLDOWN) {
-          this.lastKeyPressTime[k] = currentTime;
-          if (!this.blackedOutStates.has(group.states[i])) {
-            this.switchToState(group.states[i]);
-          }
-          return;
-        }
-      }
-    }
-
-    // ── A/D: cycle camera groups ──────────────────────────────────────────────
-    const switchLeft =
-      (inputManager.isKeyDown('a') || inputManager.isKeyDown('A')) &&
-      currentTime - this.lastKeyPressTime['a'] > this.KEY_PRESS_COOLDOWN;
-    const switchRight =
-      (inputManager.isKeyDown('d') || inputManager.isKeyDown('D')) &&
-      currentTime - this.lastKeyPressTime['d'] > this.KEY_PRESS_COOLDOWN;
-
-    if (switchLeft || switchRight) {
-      if (switchLeft)  this.lastKeyPressTime['a'] = currentTime;
-      if (switchRight) this.lastKeyPressTime['d'] = currentTime;
-
-      const current = this.activeGroupIndex ?? 0;
-      let next = switchLeft
-        ? (current - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
-        : (current + 1) % this.CAMERA_GROUPS.length;
-      if (next === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked()) {
-        next = switchLeft
-          ? (next - 1 + this.CAMERA_GROUPS.length) % this.CAMERA_GROUPS.length
-          : (next + 1) % this.CAMERA_GROUPS.length;
-      }
-      const firstActive = this.firstActiveStateInGroup(next);
-      if (!firstActive) return; // whole group deactivated — skip
-      this.activeGroupIndex = next;
-      this.switchToState(firstActive);
-      this.updateGroupButtonHighlights();
-    }
+    // Camera switching is now handled exclusively via the bottom table UI (mouse click).
   }
 
   private switchToCamera(cameraNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7): void {
@@ -938,178 +891,152 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── UI ──────────────────────────────────────────────────────────────────────
 
   private createCameraPositionLabel(): void {
-    const hint = document.createElement('div');
-    hint.style.cssText = [
-      'position: absolute', 'bottom: 24px', 'right: 24px',
-      'color: rgba(255,255,255,0.85)', "font-family: 'Space Mono', sans-serif", 'font-size: 16px',
-      'font-weight: normal', 'letter-spacing: 1px', 'line-height: 1.8',
-      'text-align: right', 'text-shadow: 0 1px 6px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,1)',
-      'display: none', 'pointer-events: none', 'user-select: none',
-    ].join(';');
-    this.world.gameContainer?.appendChild(hint);
-    this.cameraHintLabel = hint;
-
-    this.createCameraNumbersDisplay();
-
-    // Camera name label lives in the top-right column, below the status label.
-    const label = document.createElement('div');
-    label.style.cssText = [
-      'color: white', "font-family: 'Space Mono', sans-serif", 'font-size: 32px', 'font-weight: bold',
-      'letter-spacing: 3px', 'text-align: right',
-      'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-      'display: none', 'pointer-events: none', 'user-select: none',
-    ].join(';');
-    this.cameraColumnEl?.appendChild(label);
-    this.cameraPositionLabel = label;
-
-    this.createCameraGroupButtons();
+    this.createCameraTable();
     this.createSkipTutorialButton();
   }
 
-  private createCameraNumbersDisplay(): void {
-    // Outer column: always visible, aligns numbers row + status label to the right.
-    const column = document.createElement('div');
-    column.style.cssText = [
-      'position: absolute', 'top: 24px', 'right: 24px',
-      'display: flex', 'flex-direction: column', 'align-items: flex-end', 'gap: 8px',
+  private createCameraTable(): void {
+    const tableEl = document.createElement('div');
+    tableEl.style.cssText = [
+      'position: absolute', 'bottom: 0', 'left: 0', 'right: 0',
+      'display: flex', 'flex-direction: column',
+      'background: rgba(0,0,0,0.72)',
+      'border-top: 1px solid rgba(255,255,255,0.13)',
       'pointer-events: none', 'user-select: none',
+      'transition: opacity 0.2s',
     ].join(';');
-    this.world.gameContainer?.appendChild(column);
-    this.cameraColumnEl = column;
 
-    // Numbers row — starts hidden; shown when a camera group is active.
-    const numbersRow = document.createElement('div');
-    numbersRow.style.cssText = [
-      'display: none', 'flex-direction: row', 'gap: 10px',
-    ].join(';');
-    column.appendChild(numbersRow);
-    this.cameraNumbersContainer = numbersRow;
+    this.cameraTableCells = [];
 
-    // Status label — directly below the numbers row.
-    const statusLabel = document.createElement('div');
-    statusLabel.textContent = 'FREE CAMERA';
-    statusLabel.style.cssText = [
-      'color: rgba(255,255,255,0.5)',
-      "font-family: 'Space Mono', sans-serif", 'font-size: 13px', 'font-weight: bold',
-      'letter-spacing: 2px', 'text-align: right',
-      'text-shadow: 0 1px 6px rgba(0,0,0,0.9)',
-    ].join(';');
-    column.appendChild(statusLabel);
-    this.cameraStatusLabel = statusLabel;
+    this.CAMERA_GROUPS.forEach((group, groupIndex) => {
+      const row = document.createElement('div');
+      row.style.cssText = [
+        'display: flex', 'align-items: stretch',
+        'border-bottom: 1px solid rgba(255,255,255,0.07)',
+        'min-height: 38px',
+      ].join(';');
+
+      const labelCell = document.createElement('div');
+      labelCell.textContent = group.label;
+      labelCell.style.cssText = [
+        'min-width: 148px', 'max-width: 148px', 'padding: 0 16px',
+        'color: rgba(255,255,255,0.45)',
+        "font-family: 'Space Mono', sans-serif",
+        'font-size: 11px', 'font-weight: bold', 'letter-spacing: 3px',
+        'border-right: 1px solid rgba(255,255,255,0.13)',
+        'display: flex', 'align-items: center',
+        'transition: color 0.15s',
+      ].join(';');
+      row.appendChild(labelCell);
+
+      const cells: HTMLElement[] = [];
+      group.states.forEach((state, camIndex) => {
+        const cell = document.createElement('div');
+        cell.textContent = String(camIndex + 1);
+        cell.style.cssText = [
+          'min-width: 52px', 'max-width: 52px',
+          'display: flex', 'align-items: center', 'justify-content: center',
+          "font-family: 'Space Mono', sans-serif",
+          'font-size: 15px', 'font-weight: bold', 'letter-spacing: 1px',
+          'cursor: pointer', 'pointer-events: auto',
+          'border-right: 1px solid rgba(255,255,255,0.07)',
+          'color: rgba(255,255,255,0.3)',
+          'transition: background 0.1s, color 0.1s',
+        ].join(';');
+
+        cell.addEventListener('mouseenter', () => {
+          if (!cell.dataset.active && !cell.dataset.deactivated && !cell.dataset.locked) {
+            cell.style.background = 'rgba(255,255,255,0.08)';
+          }
+        });
+        cell.addEventListener('mouseleave', () => {
+          if (!cell.dataset.active) cell.style.background = '';
+        });
+        cell.addEventListener('click', () => {
+          if (cell.dataset.deactivated || cell.dataset.locked || this.cameraInputBlocked) return;
+          this.switchToState(state);
+        });
+
+        row.appendChild(cell);
+        cells.push(cell);
+      });
+
+      this.cameraTableCells.push(cells);
+      tableEl.appendChild(row);
+    });
+
+    this.world.gameContainer?.appendChild(tableEl);
+    this.cameraTableEl = tableEl;
   }
 
   private updateCameraStatusLabel(mode: 'controlled' | 'free'): void {
-    if (!this.cameraStatusLabel) return;
-    if (mode === 'controlled') {
-      this.cameraStatusLabel.textContent = 'CAMERA CONTROLLED';
-      this.cameraStatusLabel.style.color = 'rgba(255,200,80,0.9)';
-    } else {
-      this.cameraStatusLabel.textContent = 'FREE CAMERA';
-      this.cameraStatusLabel.style.color = 'rgba(255,255,255,0.5)';
-    }
+    if (!this.cameraTableEl) return;
+    this.cameraTableEl.style.opacity = mode === 'controlled' ? '0.4' : '1';
   }
 
-  private updateCameraNumbers(): void {
-    if (!this.cameraNumbersContainer) return;
+  private updateCameraTable(): void {
+    if (!this.cameraTableEl) return;
     const currentState = this.computeCameraState();
-    let groupIndex = this.activeGroupIndex ?? this.CAMERA_GROUPS.findIndex(g => g.states.includes(currentState));
-    if (groupIndex < 0) {
-      this.cameraNumbersContainer.style.display = 'none';
-      return;
-    }
 
-    const group     = this.CAMERA_GROUPS[groupIndex];
-    const activeIdx = group.states.indexOf(currentState);
-    const count     = group.states.length;
+    this.CAMERA_GROUPS.forEach((group, groupIndex) => {
+      const cells = this.cameraTableCells[groupIndex];
+      if (!cells) return;
+      const locked = groupIndex === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked();
+      const groupActive = group.states.includes(currentState);
 
-    if (this.cameraNumberElements.length !== count) {
-      this.cameraNumbersContainer.innerHTML = '';
-      this.cameraNumberElements = [];
-      for (let i = 0; i < count; i++) {
-        const el = document.createElement('span');
-        el.textContent = String(i + 1);
-        el.style.cssText = [
-          "font-family: 'Space Mono', sans-serif", 'font-weight: bold', 'letter-spacing: 1px',
-          'text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 2px rgba(0,0,0,1)',
-          'transition: color 0.15s, font-size 0.15s',
-        ].join(';');
-        this.cameraNumbersContainer.appendChild(el);
-        this.cameraNumberElements.push(el);
+      const row = this.cameraTableEl!.children[groupIndex] as HTMLElement;
+      const labelCell = row?.firstElementChild as HTMLElement | null;
+      if (labelCell) {
+        labelCell.style.color = locked
+          ? 'rgba(255,255,255,0.15)'
+          : groupActive
+            ? 'rgba(255,255,255,0.9)'
+            : 'rgba(255,255,255,0.45)';
       }
-    }
 
-    this.cameraNumbersContainer.style.display = 'flex';
-    this.cameraNumberElements.forEach((el, i) => {
-      const deactivated = this.blackedOutStates.has(group.states[i]);
-      el.style.color    = deactivated ? 'rgba(220,30,30,0.8)'
-                        : i === activeIdx ? '#ffffff' : 'rgba(255,255,255,0.3)';
-      el.style.fontSize = i === activeIdx ? '34px' : '28px';
-    });
-  }
+      cells.forEach((cell, camIndex) => {
+        const state        = group.states[camIndex];
+        const isActive     = state === currentState;
+        const isDeactivated = this.blackedOutStates.has(state);
 
-  private createCameraGroupButtons(): void {
-    // Outer column – centres the heading + buttons row together.
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = [
-      'position: absolute', 'bottom: 24px', 'left: 50%',
-      'transform: translateX(-50%)',
-      'display: flex', 'flex-direction: column', 'align-items: center', 'gap: 6px',
-      'pointer-events: none', 'user-select: none',
-    ].join(';');
-
-    // "Camera Groups" heading above the buttons.
-    const heading = document.createElement('div');
-    heading.textContent = 'CAMERA GROUPS';
-    heading.style.cssText = [
-      'color: rgba(255,255,255,0.4)',
-      "font-family: 'Space Mono', sans-serif", 'font-size: 11px', 'font-weight: bold',
-      'letter-spacing: 4px',
-      'text-shadow: 0 1px 4px rgba(0,0,0,0.8)',
-      'pointer-events: none',
-    ].join(';');
-    wrapper.appendChild(heading);
-
-    // Buttons row.
-    const container = document.createElement('div');
-    container.style.cssText = [
-      'display: flex', 'gap: 6px',
-      'pointer-events: auto',
-    ].join(';');
-
-    this.CAMERA_GROUPS.forEach((group, index) => {
-      const btn = document.createElement('button');
-      btn.textContent = group.label;
-      btn.style.cssText = [
-        'background: rgba(0,0,0,0.6)',
-        'color: rgba(255,255,255,0.7)',
-        'border: 1px solid rgba(255,255,255,0.25)',
-        "font-family: 'Space Mono', sans-serif", 'font-size: 12px', 'font-weight: bold',
-        'letter-spacing: 1.5px', 'padding: 7px 14px',
-        'cursor: pointer', 'outline: none',
-        'text-shadow: 0 1px 4px rgba(0,0,0,0.9)',
-      ].join(';');
-
-      btn.addEventListener('mouseenter', () => {
-        if (!btn.dataset.active) btn.style.background = 'rgba(255,255,255,0.12)';
+        if (locked) {
+          cell.style.color      = 'rgba(255,255,255,0.12)';
+          cell.style.background = '';
+          cell.style.cursor     = 'not-allowed';
+          cell.dataset.locked   = '1';
+          delete cell.dataset.active;
+          delete cell.dataset.deactivated;
+        } else if (isDeactivated) {
+          cell.style.color      = 'rgba(200,30,30,0.7)';
+          cell.style.background = '';
+          cell.style.cursor     = 'default';
+          cell.dataset.deactivated = '1';
+          delete cell.dataset.active;
+          delete cell.dataset.locked;
+        } else if (isActive) {
+          cell.style.color      = '#ffffff';
+          cell.style.background = 'rgba(255,255,255,0.14)';
+          cell.style.cursor     = 'pointer';
+          cell.dataset.active   = '1';
+          delete cell.dataset.deactivated;
+          delete cell.dataset.locked;
+        } else {
+          cell.style.color      = 'rgba(255,255,255,0.3)';
+          cell.style.background = '';
+          cell.style.cursor     = 'pointer';
+          delete cell.dataset.active;
+          delete cell.dataset.deactivated;
+          delete cell.dataset.locked;
+        }
       });
-      btn.addEventListener('mouseleave', () => {
-        if (!btn.dataset.active) btn.style.background = 'rgba(0,0,0,0.6)';
-      });
-      btn.addEventListener('click', () => this.onGroupButtonClick(index));
-
-      container.appendChild(btn);
-      this.groupButtonElements.push(btn);
     });
-
-    wrapper.appendChild(container);
-    this.world.gameContainer?.appendChild(wrapper);
   }
 
   private createSkipTutorialButton(): void {
     const btn = document.createElement('div');
     btn.textContent = 'SKIP TUTORIAL';
     btn.style.cssText = [
-      'position: absolute', 'bottom: 24px', 'left: 24px',
+      'position: absolute', 'top: 24px', 'left: 24px',
       'color: rgba(255,255,255,0.6)',
       "font-family: 'Space Mono', sans-serif",
       'font-size: 13px', 'font-weight: bold', 'letter-spacing: 3px',
@@ -1213,50 +1140,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     });
   }
 
-  private onGroupButtonClick(groupIndex: number): void {
-    if (groupIndex === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked()) return;
-    const group   = this.CAMERA_GROUPS[groupIndex];
-    const current = this.computeCameraState();
-    const idxInGroup = group.states.indexOf(current);
-    // Cycle through active (non-deactivated) states only
-    const activeStates = group.states.filter(s => !this.blackedOutStates.has(s));
-    if (activeStates.length === 0) return;
-    const activeIdx = activeStates.indexOf(current);
-    const nextState = activeIdx >= 0
-      ? activeStates[(activeIdx + 1) % activeStates.length]
-      : activeStates[0];
-    this.activeGroupIndex = groupIndex;
-    this.switchToState(nextState);
-  }
-
-  /** Returns the first non-deactivated state in a camera group, or null if all are deactivated. */
-  private firstActiveStateInGroup(groupIndex: number): string | null {
-    return this.CAMERA_GROUPS[groupIndex].states.find(s => !this.blackedOutStates.has(s)) ?? null;
-  }
-
-  private updateGroupButtonHighlights(): void {
-    const current = this.computeCameraState();
-    this.CAMERA_GROUPS.forEach((group, i) => {
-      const btn = this.groupButtonElements[i];
-      if (!btn) return;
-      const locked = i === this.FUNCTIONAL_GROUP_INDEX && this.isFunctionalGroupLocked();
-      if (locked) {
-        btn.style.background  = 'rgba(0,0,0,0.3)';
-        btn.style.borderColor = 'rgba(255,255,255,0.08)';
-        btn.style.color       = 'rgba(255,255,255,0.2)';
-        btn.style.cursor      = 'not-allowed';
-        delete btn.dataset.active;
-        return;
-      }
-      btn.style.cursor = 'pointer';
-      const active = i === this.activeGroupIndex || group.states.includes(current);
-      btn.style.background    = active ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.6)';
-      btn.style.borderColor   = active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.25)';
-      btn.style.color         = active ? 'white' : 'rgba(255,255,255,0.7)';
-      if (active) btn.dataset.active = '1'; else delete btn.dataset.active;
-    });
-  }
-
   private switchToState(state: string): void {
     this.isCamera1b = false; this.isCamera1c = false; this.isCamera1d = false;
     switch (state) {
@@ -1334,51 +1217,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
   }
 
-  private getStateDisplayName(state: string): string {
-    const prefixes = ['OUTDOOR', 'BASE CAM', 'RESOURCES', 'FUNCTIONAL'];
-    for (let g = 0; g < this.CAMERA_GROUPS.length; g++) {
-      const idx = this.CAMERA_GROUPS[g].states.indexOf(state);
-      if (idx >= 0) return `${prefixes[g]} ${idx + 1}`;
-    }
-    return `CAM ${state}`;
-  }
-
   private updateCameraPositionLabel(): void {
-    if (!this.cameraPositionLabel) return;
-
-    const state = this.computeCameraState();
-    const text  = state ? this.getStateDisplayName(state) : '';
-
-    let rotateHint = '';
-    switch (state) {
-      case '1.1': case '1.2': case '1.3':
-      case '2':
-        rotateHint = '← → ↑ ↓  —  rotate camera'; break;
-      case '1.1b': case '1.2b': case '1.3b':
-      case '4':
-      case '6.1': case '6.2': case '6.3': case '6.4':
-        rotateHint = '← →  —  rotate camera'; break;
-    }
-
-    this.cameraPositionLabel.textContent = text;
-    this.cameraPositionLabel.style.display = text ? 'block' : 'none';
-
-    if (this.cameraHintLabel) {
-      const bold = (s: string) => `<span style="font-weight:bold">${s}</span>`;
-      const thin = (s: string) => `<span style="font-weight:300;opacity:0.65">${s}</span>`;
-
-      const lines: string[] = [
-        bold('A / D  —  CHANGE CAMERA GROUP'),
-        bold('1 – 8  —  CHANGE CAMERA'),
-        ...(rotateHint ? [bold(rotateHint.toUpperCase())] : []),
-      ];
-      this.cameraHintLabel.innerHTML = lines.join('<br>');
-      this.cameraHintLabel.style.display = 'block';
-    }
-
-    this.updateGroupButtonHighlights();
-    this.updateCameraNumbers();
-    this.onCameraStateChanged(state);
+    this.updateCameraTable();
+    this.onCameraStateChanged(this.computeCameraState());
   }
 
   // ─── Animation state helpers ────────────────────────────────────────────────
@@ -1798,6 +1639,12 @@ class MyGame extends ENGINE.BaseGameLoop {
         if (this.scanActor) {
           this.scanActor.setWorldPosition(new THREE.Vector3(-8, -35, -20));
         }
+        // Animate enemy_mini from start pose to end pose over 3 s
+        if (this.enemyMiniActor) {
+          this.enemyMiniActor.setWorldPosition(this.TRUEEND_MINI_FROM_POS.clone());
+          this.enemyMiniActor.setWorldQuaternion(this.TRUEEND_MINI_FROM_QUAT.clone());
+        }
+        this.trueEndMiniElapsed = 0;
         const am = this.world.globalAudioManager;
         if (this.soundtrackHandle)    { am.stopSound(this.soundtrackHandle);    this.soundtrackHandle    = null; }
         if (this.alarmHandle)         { am.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
@@ -1960,8 +1807,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private activateTrueEndCameraRedirect(): void {
     // Restore all cameras from blackout
     this.blackedOutStates.clear();
-    this.updateCameraNumbers();
-    this.updateGroupButtonHighlights();
+    this.updateCameraTable();
 
     // Lower Outdoor 6 (cam '4') position by 15 units
     this.camera4EndPos.y -= 15;
@@ -1979,6 +1825,21 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (current === '6.1' || current === '7') {
       this.startTypingSound();
     }
+  }
+
+  private handleTrueEndMiniMove(deltaTime: number): void {
+    if (this.trueEndMiniElapsed < 0) return;
+    this.trueEndMiniElapsed = Math.min(this.trueEndMiniElapsed + deltaTime, this.TRUEEND_MINI_DUR);
+    const t = this.trueEndMiniElapsed / this.TRUEEND_MINI_DUR;
+    if (this.enemyMiniActor) {
+      this.enemyMiniActor.setWorldPosition(
+        new THREE.Vector3().lerpVectors(this.TRUEEND_MINI_FROM_POS, this.TRUEEND_MINI_TO_POS, t),
+      );
+      this.enemyMiniActor.setWorldQuaternion(
+        new THREE.Quaternion().slerpQuaternions(this.TRUEEND_MINI_FROM_QUAT, this.TRUEEND_MINI_TO_QUAT, t),
+      );
+    }
+    if (this.trueEndMiniElapsed >= this.TRUEEND_MINI_DUR) this.trueEndMiniElapsed = -1;
   }
 
   private handleCameraShake(deltaTime: number): void {
@@ -2092,28 +1953,22 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
     if (this.barrierActors.length === 0) return;
 
-    if (!this.barrierActivated) {
-      this.barrierActivated    = true;
-      this.barrierRiseStartY   = this.barrierActors.map(a => a.getWorldPosition().y);
-      this.barrierRiseProgress = 0;
-      this.barrierIsRising     = true;
-      void this.world.globalAudioManager.playGlobalSound(
-        '@project/assets/sounds/barriers.mp3', { volume: 1.0, loop: false },
-      );
-      // Auto-reset after 30 seconds
-      if (this.barrierResetTimerId !== null) clearTimeout(this.barrierResetTimerId);
-      this.barrierResetTimerId = setTimeout(() => { this.resetBarriers(); }, this.BARRIER_AUTO_RESET_S * 1_000);
-    } else {
-      if (this.barrierResetTimerId !== null) { clearTimeout(this.barrierResetTimerId); this.barrierResetTimerId = null; }
-      this.resetBarriers();
-    }
+    // (Re)start the rise → hold → lower cycle from current position
+    this.barrierRiseStartY   = this.barrierActors.map(a => a.getWorldPosition().y);
+    this.barrierRiseProgress = 0;
+    this.barrierHoldTimer    = 0;
+    this.barrierLowerProgress = 0;
+    this.barrierPhase        = 'rising';
+    void this.world.globalAudioManager.playGlobalSound(
+      '@project/assets/sounds/barriers.mp3', { volume: 1.0, loop: false },
+    );
   }
 
   private resetBarriers(): void {
-    this.barrierActivated    = false;
-    this.barrierIsRising     = false;
+    this.barrierPhase        = 'idle';
     this.barrierRiseProgress = 0;
-    this.barrierResetTimerId = null;
+    this.barrierHoldTimer    = 0;
+    this.barrierLowerProgress = 0;
     for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
   }
 
@@ -2124,16 +1979,38 @@ class MyGame extends ENGINE.BaseGameLoop {
         for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
       }
     }
-    if (!this.barrierIsRising) return;
 
-    this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
-    const t = this.barrierRiseProgress;
-    for (let i = 0; i < this.barrierActors.length; i++) {
-      const pos = this.barrierActors[i].getWorldPosition();
-      pos.y = this.barrierRiseStartY[i] + (this.BARRIER_TARGET_Y - this.barrierRiseStartY[i]) * t;
-      this.barrierActors[i].setWorldPosition(pos);
+    if (this.barrierPhase === 'rising') {
+      this.barrierRiseProgress = Math.min(this.barrierRiseProgress + deltaTime / this.BARRIER_RISE_DURATION, 1);
+      const t = this.barrierRiseProgress;
+      for (let i = 0; i < this.barrierActors.length; i++) {
+        const pos = this.barrierActors[i].getWorldPosition();
+        pos.y = this.barrierRiseStartY[i] + (this.BARRIER_TARGET_Y - this.barrierRiseStartY[i]) * t;
+        this.barrierActors[i].setWorldPosition(pos);
+      }
+      if (this.barrierRiseProgress >= 1) {
+        this.barrierHoldTimer = 0;
+        this.barrierPhase     = 'holding';
+      }
+    } else if (this.barrierPhase === 'holding') {
+      this.barrierHoldTimer += deltaTime;
+      if (this.barrierHoldTimer >= this.BARRIER_HOLD_S) {
+        this.barrierLowerProgress = 0;
+        this.barrierPhase         = 'lowering';
+      }
+    } else if (this.barrierPhase === 'lowering') {
+      this.barrierLowerProgress = Math.min(this.barrierLowerProgress + deltaTime / this.BARRIER_LOWER_DURATION, 1);
+      const t = this.barrierLowerProgress;
+      for (const actor of this.barrierActors) {
+        const pos = actor.getWorldPosition();
+        pos.y = this.BARRIER_TARGET_Y + (this.BARRIER_START_Y - this.BARRIER_TARGET_Y) * t;
+        actor.setWorldPosition(pos);
+      }
+      if (this.barrierLowerProgress >= 1) {
+        for (const actor of this.barrierActors) { const pos = actor.getWorldPosition(); pos.y = this.BARRIER_START_Y; actor.setWorldPosition(pos); }
+        this.barrierPhase = 'idle';
+      }
     }
-    if (this.barrierRiseProgress >= 1) this.barrierIsRising = false;
   }
 
   // ─── Independent fuel rise (intro sequence phase 8 only) ────────────────────
@@ -2407,7 +2284,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.enemyPhaseTimer         = 0;
       this.scanningBlackoutStarted = false;
       this.blackedOutStates.clear();
-      this.updateCameraNumbers();
+      this.updateCameraTable();
 
       // Reset one-shot audio flags and stop any lingering enemy-sequence sounds
       this.approachAudioPlayed        = false;
@@ -2554,7 +2431,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.CAMERA_BLACKOUT_ORDER.forEach((state, i) => {
       setTimeout(() => {
         this.blackedOutStates.add(state);
-        this.updateCameraNumbers();
+        this.updateCameraTable();
         // If the player is currently on this camera, eject to functional cam 1
         if (this.computeCameraState() === state) {
           this.switchToState('2');
@@ -2709,39 +2586,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.fuelCam33Progress >= 1) this.fuelCam33IsMoving = false;
   }
 
-  // ─── Directional Light 02 ────────────────────────────────────────────────────
-
-  private handleDirLight02(deltaTime: number): void {
-    if (!this.dirLight02Actor) {
-      this.dirLight02Actor = this.findActorByDisplayName('Directional Light_02') ?? this.findActorByDisplayName('directional light_02') ?? this.findActorByName('Directional Light_02');
-      if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
-    }
-
-    const inputManager = this.world.inputManager;
-    const currentTime  = performance.now();
-    const oPressed = (inputManager.isKeyDown('o') || inputManager.isKeyDown('O'))
-      && currentTime - this.lastKeyPressTime['o'] > this.KEY_PRESS_COOLDOWN;
-
-    if (oPressed) {
-      this.lastKeyPressTime['o'] = currentTime;
-      if (!this.dirLight02Activated) {
-        this.dirLight02Activated = true;
-        this.dirLight02Progress  = 0;
-        this.dirLight02IsMoving  = true;
-        if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
-      } else {
-        this.dirLight02Activated = false;
-        this.dirLight02IsMoving  = false;
-        this.dirLight02Progress  = 0;
-        if (this.dirLight02Actor) this.dirLight02Actor.setWorldPosition(this.DIR_LIGHT02_START.clone());
-      }
-    }
-
-    if (!this.dirLight02IsMoving || !this.dirLight02Actor) return;
-    this.dirLight02Progress = Math.min(this.dirLight02Progress + deltaTime / this.DIR_LIGHT02_DURATION, 1);
-    this.dirLight02Actor.setWorldPosition(new THREE.Vector3().lerpVectors(this.DIR_LIGHT02_START, this.DIR_LIGHT02_END, this.dirLight02Progress));
-    if (this.dirLight02Progress >= 1) this.dirLight02IsMoving = false;
-  }
 
   // ─── tickHill ────────────────────────────────────────────────────────────────
 

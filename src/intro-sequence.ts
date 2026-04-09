@@ -134,7 +134,7 @@ export class IntroSequence {
     this.cbs.setInputEnabled(true);
     this.cbs.onVO6MapStart?.();
     void this.playVO(this.VO6);
-    this.showPersistentTask('MAP: Enter the Functional Camera 1 group');
+    this.showPersistentTask('Enter Functional Group - camera 1');
   }
 
   // ─── Private helpers ──────────────────────────────────────────────────────
