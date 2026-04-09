@@ -7180,7 +7180,7 @@
             "_": [
               -1.57078,
               0.000029,
-              -0.104691
+              -0.017425
             ],
             "$bc": "e"
           },
@@ -15078,9 +15078,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              16.04893,
-              0.55,
-              -8.67
+              16.23,
+              2,
+              -15.03
             ],
             "$bc": "v3"
           },
@@ -15096,7 +15096,7 @@
             "_": [
               3.309358,
               4.35,
-              1.313838
+              2.483333
             ],
             "$bc": "v3"
           },
@@ -25427,9 +25427,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              16.40087,
-              1.37,
-              -15.03
+              16.400866,
+              1.369998,
+              -8.689989
             ],
             "$bc": "v3"
           },
@@ -28556,8 +28556,8 @@
           "position": {
             "_": [
               15.93,
-              2.77,
-              -8.53
+              3.8,
+              -15.16
             ],
             "$bc": "v3"
           },
@@ -77434,8 +77434,8 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              14.226571,
-              2.770002,
+              14.227,
+              2.77,
               -15.86
             ],
             "$bc": "v3"
@@ -78629,7 +78629,646 @@
         "name": "Box_717",
         "$bc": "ENGINE.Actor"
       },
-      "$length": 1840
+      "1840": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "e86c4642-8a5c-43ee-b5f5-70c29c1eb72a",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.69665,
+              6.29323,
+              -13.235548
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -0.408764,
+              -0.080856,
+              -0.157153
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.150669,
+              0.143428,
+              0.377099
+            ],
+            "$bc": "v3"
+          },
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "943734b9a8fd63fc",
+        "name": "Actor_1816",
+        "$bc": "ENGINE.Actor"
+      },
+      "1841": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "a9ceb682f30a7506",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.762879,
+              5.968365,
+              -13.985532
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -0.408764,
+              -0.080856,
+              -0.157153
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.150669,
+              0.143428,
+              0.377099
+            ],
+            "$bc": "v3"
+          },
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "0c5c335e87d6db7a",
+        "name": "Actor_3638",
+        "$bc": "ENGINE.Actor"
+      },
+      "1842": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "1646f1ea778dd308",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.625574,
+              6.641867,
+              -12.430683
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -0.408764,
+              -0.080856,
+              -0.157153
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.150669,
+              0.143428,
+              0.377099
+            ],
+            "$bc": "v3"
+          },
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "1b2920b5f3815836",
+        "name": "Actor_1818",
+        "$bc": "ENGINE.Actor"
+      },
+      "1843": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "b0eeed66cfaae6a1",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.010927,
+              4.79,
+              9.497478
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.975711,
+              0.098581,
+              3.134806
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.151933,
+              0.408211,
+              0.159053
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "882be291d9358e30",
+        "name": "Box_416",
+        "$bc": "ENGINE.Actor"
+      },
+      "1844": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "b06312a66d13f945",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.006055,
+              5.073725,
+              8.834273
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.975711,
+              0.098581,
+              3.134806
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.151933,
+              0.408211,
+              0.159053
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "e42ffe4f20e089d0",
+        "name": "Box_448",
+        "$bc": "ENGINE.Actor"
+      },
+      "1845": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "3eccdf2dec2e03a6",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              2.016253,
+              4.479815,
+              10.222533
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.975711,
+              0.098581,
+              3.134806
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.151933,
+              0.408211,
+              0.159053
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "8c686e2c271fea77",
+        "name": "Box_449",
+        "$bc": "ENGINE.Actor"
+      },
+      "1846": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "11c406a926042f5e",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -11.355,
+              4.79,
+              -3.745
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.456233,
+              0.400903,
+              -1.516577
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.23334,
+              0.715634,
+              0.251303
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "0c8759ee808a7cda",
+        "name": "Box_298",
+        "$bc": "ENGINE.Actor"
+      },
+      "1847": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "4d26eb7c91d0164d",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -10.270069,
+              5.254153,
+              -3.734034
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.456233,
+              0.400903,
+              -1.516577
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.23334,
+              0.715634,
+              0.251303
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "fcd0610ea6fc2ff6",
+        "name": "Box_337",
+        "$bc": "ENGINE.Actor"
+      },
+      "1848": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "2e631725c0678f7e",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              -12.283458,
+              4.392789,
+              -3.754384
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.456233,
+              0.400903,
+              -1.516577
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.23334,
+              0.715634,
+              0.251303
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "c2e3d91e2263a076",
+        "name": "Box_459",
+        "$bc": "ENGINE.Actor"
+      },
+      "1849": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "d43b00b8cdb921a8",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              15.175,
+              4.79,
+              -3.55
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.685359,
+              -0.400904,
+              1.625016
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.204991,
+              0.805509,
+              0.244279
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "b215ada667fbf17e",
+        "name": "Box_461",
+        "$bc": "ENGINE.Actor"
+      },
+      "1850": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "aefd31df704f0e42",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              16.255943,
+              4.327552,
+              -3.539074
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.685359,
+              -0.400904,
+              1.625016
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.204991,
+              0.805509,
+              0.244279
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "b08606960c9232f8",
+        "name": "Box_480",
+        "$bc": "ENGINE.Actor"
+      },
+      "1851": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "9283e855f57cf90e",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              14.113845,
+              5.243983,
+              -3.560726
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.685359,
+              -0.400904,
+              1.625016
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              0.204991,
+              0.805509,
+              0.244279
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "e0e51170186d686c",
+        "name": "Box_528",
+        "$bc": "ENGINE.Actor"
+      },
+      "1852": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "d61ff182680ac438",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              26.180001,
+              -2.292006,
+              -37.229999
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.570796,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              -6.882,
+              7.87,
+              0.96
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "6ae7c78b15fecdda",
+        "name": "barrier_44",
+        "$bc": "ENGINE.Actor"
+      },
+      "1853": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "bd600d4f0d13cb8d",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              32.550001,
+              -2.292009,
+              -52.969999
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.570796,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              -6.882,
+              12.720276,
+              0.96
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "8fcc3c382282f53e",
+        "name": "barrier_45",
+        "$bc": "ENGINE.Actor"
+      },
+      "1854": {
+        "rootComponent": {
+          "children": {
+            "$length": 1
+          },
+          "uuid": "0ee8d769daac2fea",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              19.320001,
+              -2.292009,
+              -39.659999
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              1.570796,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              -6.882,
+              12.720276,
+              0.96
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "289d93f8b71cafc3",
+        "name": "barrier_47",
+        "$bc": "ENGINE.Actor"
+      },
+      "$length": 1855
     },
     "resources": null,
     "editorData": {
@@ -79558,7 +80197,27 @@
             "nodeType": "actor"
           },
           {
+            "id": "0c8759ee808a7cda",
+            "nodeType": "actor"
+          },
+          {
+            "id": "fcd0610ea6fc2ff6",
+            "nodeType": "actor"
+          },
+          {
+            "id": "c2e3d91e2263a076",
+            "nodeType": "actor"
+          },
+          {
             "id": "9b113235ef0c7539",
+            "nodeType": "actor"
+          },
+          {
+            "id": "b215ada667fbf17e",
+            "nodeType": "actor"
+          },
+          {
+            "id": "b08606960c9232f8",
             "nodeType": "actor"
           },
           {
@@ -79759,6 +80418,18 @@
           },
           {
             "id": "bfc3d53cab26c18b",
+            "nodeType": "actor"
+          },
+          {
+            "id": "882be291d9358e30",
+            "nodeType": "actor"
+          },
+          {
+            "id": "e42ffe4f20e089d0",
+            "nodeType": "actor"
+          },
+          {
+            "id": "8c686e2c271fea77",
             "nodeType": "actor"
           },
           {
@@ -85598,6 +86269,14 @@
             "nodeType": "actor"
           },
           {
+            "id": "6ae7c78b15fecdda",
+            "nodeType": "actor"
+          },
+          {
+            "id": "8fcc3c382282f53e",
+            "nodeType": "actor"
+          },
+          {
             "id": "36a3d98cd244d22f",
             "nodeType": "actor"
           },
@@ -85991,6 +86670,26 @@
           },
           {
             "id": "3d216ca14233c770",
+            "nodeType": "actor"
+          },
+          {
+            "id": "943734b9a8fd63fc",
+            "nodeType": "actor"
+          },
+          {
+            "id": "1b2920b5f3815836",
+            "nodeType": "actor"
+          },
+          {
+            "id": "0c5c335e87d6db7a",
+            "nodeType": "actor"
+          },
+          {
+            "id": "e0e51170186d686c",
+            "nodeType": "actor"
+          },
+          {
+            "id": "289d93f8b71cafc3",
             "nodeType": "actor"
           }
         ]

@@ -45,20 +45,14 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly CAM1D_POSITION = new THREE.Vector3(-4.21, 2.88, -2.71);
   private readonly CAM1D_TARGET   = new THREE.Vector3(-7.223333, 1.44, -13.417);
 
-  // ─── Camera 3 (4-position cycling) ──────────────────────────────────────────
+  // ─── Camera 3 (resources 5) ──────────────────────────────────────────────────
   private readonly CAMERA3_POSITIONS = [
-    new THREE.Vector3(2.3, 10.39, -4.1),
-    new THREE.Vector3(9.05, 3.04, -14.35),
-    new THREE.Vector3(9.07, 3.14, -8.48),
-    new THREE.Vector3(9.12, 3.13, -20.79),
+    new THREE.Vector3(2.69, 6.52, -13.01),
   ];
   private readonly CAMERA3_TARGETS = [
-    new THREE.Vector3(9.5, 3.57, -11.46),
-    new THREE.Vector3(11.08, 2.29, -14.91),
-    new THREE.Vector3(10.85, 2.3, -8.48),
-    new THREE.Vector3(11.14, 1.98, -20.79),
+    new THREE.Vector3(14, 3, -15),
   ];
-  private readonly CAMERA3_FOVS = [39, 70, 70, 70];
+  private readonly CAMERA3_FOVS = [70];
   private activeCamera3Position: number = 0;
 
   // ─── Camera 5 (external, 4 positions + focal) ────────────────────────────────
@@ -102,7 +96,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private ambientSoundHandle: ENGINE.SoundHandle | null = null;
   private audioInitialized = false;
   private readonly DESERT_STATES  = new Set(['1.2b', '1.3b', '3.1', '4', '5.1', '5.2', '5.3', '5.4', '6.4']);
-  private readonly HOWLING_STATES = new Set(['1.1', '1.1b', '1.2', '1.3', '2', '3.2', '3.3', '3.4', '6.1', '6.2', '6.3', '7']);
+  private readonly HOWLING_STATES = new Set(['1.1', '1.1b', '1.2', '1.3', '2', '6.1', '6.2', '6.3', '7']);
 
   // Enemy-sequence audio handles & one-shot flags
   private enemyLoopHandle:      ENGINE.SoundHandle | null = null;
@@ -148,7 +142,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private readonly CAMERA_GROUPS: Array<{ label: string; states: string[] }> = [
     { label: 'OUTDOOR CAM', states: ['5.1', '5.2', '5.3', '1.2b', '1.3b', '4'] },
     { label: 'BASE CAM',    states: ['6.1', '6.2', '6.3', '6.4'] },
-    { label: 'RECOURCES',   states: ['1.1', '1.1b', '1.2', '1.3', '3.1', '3.2', '3.3', '3.4'] },
+    { label: 'RECOURCES',   states: ['1.1', '1.1b', '1.2', '1.3', '3.1'] },
     { label: 'FUNCTIONAL',  states: ['2', '7'] },
   ];
   private groupButtonElements: HTMLElement[]        = [];
@@ -205,7 +199,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Barriers ────────────────────────────────────────────────────────────────
   private readonly BARRIER_START_Y        = -2.16;
   private readonly BARRIER_TARGET_Y       = 3;
-  private readonly BARRIER_RISE_DURATION  = 18;
+  private readonly BARRIER_RISE_DURATION  = 28;
   private readonly BARRIER_AUTO_RESET_S   = 30; // seconds until auto-return to start
   private barrierActors: ENGINE.Actor[]   = [];
   private barrierRiseStartY: number[]     = [];
@@ -216,11 +210,12 @@ class MyGame extends ENGINE.BaseGameLoop {
   private barrierResetTimerId: ReturnType<typeof setTimeout> | null = null;
 
   private fuelActor: ENGINE.Actor | null       = null;
-  private readonly FUEL_START_POS              = new THREE.Vector3(10.97, 1.65, -8.67);
-  private readonly FUEL_END_Y                  = 10.97;
+  private readonly FUEL_START_POS              = new THREE.Vector3(16, 2, -15);
+  private readonly FUEL_END_Y                  = 0.53;
   private readonly FUEL_RISE_DURATION          = 12;  // seconds, matches barrier rise
   private fuelRiseActive                       = false;
   private fuelRiseProgress                     = 0;
+  private fuelAnimationDone                    = false;
 
   // ─── Fuel cam 3.3 descent ─────────────────────────────────────────────────
   private readonly FUEL_CAM33_START_Y  = 1.12;
@@ -269,9 +264,6 @@ class MyGame extends ENGINE.BaseGameLoop {
     '6.3',  // base cam 3
     '1.1b', // resources 2
     '1.3',  // resources 4
-    '3.4',  // resources 8
-    '3.3',  // resources 7
-    '3.2',  // resources 6
     '1.2',  // resources 3
     '7',    // functional 2
     '1.2b', // outdoor 4
@@ -1292,15 +1284,6 @@ class MyGame extends ENGINE.BaseGameLoop {
       case '3.1':
         this.activeCamera = 3; this.activeCamera3Position = 0;
         this.configureCam(this.CAMERA3_POSITIONS[0], this.trueEndCameraTargetA ?? this.CAMERA3_TARGETS[0], this.CAMERA3_FOVS[0], 0, false, false); break;
-      case '3.2':
-        this.activeCamera = 3; this.activeCamera3Position = 1;
-        this.configureCam(this.CAMERA3_POSITIONS[1], this.CAMERA3_TARGETS[1], this.CAMERA3_FOVS[1], 0, false, false); break;
-      case '3.3':
-        this.activeCamera = 3; this.activeCamera3Position = 2;
-        this.configureCam(this.CAMERA3_POSITIONS[2], this.CAMERA3_TARGETS[2], this.CAMERA3_FOVS[2], 0, false, false); break;
-      case '3.4':
-        this.activeCamera = 3; this.activeCamera3Position = 3;
-        this.configureCam(this.CAMERA3_POSITIONS[3], this.CAMERA3_TARGETS[3], this.CAMERA3_FOVS[3], 0, false, false); break;
       case '4':
         this.activeCamera = 4;
         this.camera4SideOffset = 0;
@@ -2156,18 +2139,21 @@ class MyGame extends ENGINE.BaseGameLoop {
   // ─── Independent fuel rise (intro sequence phase 8 only) ────────────────────
 
   private startFuelRiseAnimation(): void {
-    if (!this.fuelActor) {
-      this.fuelActor = this.findActorByDisplayName('fuel');
-    }
+    // Ignore if already completed — model stays at end position permanently
+    if (this.fuelAnimationDone) return;
+    if (!this.fuelActor) this.fuelActor = this.findActorByDisplayName('fuel');
     if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
     this.fuelRiseProgress = 0;
     this.fuelRiseActive   = true;
   }
 
   private stopFuelRiseAnimation(): void {
-    this.fuelRiseActive   = false;
-    this.fuelRiseProgress = 0;
-    if (this.fuelActor) this.fuelActor.setWorldPosition(this.FUEL_START_POS.clone());
+    // Snap to end position, mark as done so animation never runs again
+    this.fuelRiseActive    = false;
+    this.fuelAnimationDone = true;
+    const endPos = this.FUEL_START_POS.clone();
+    endPos.y = this.FUEL_END_Y;
+    if (this.fuelActor) this.fuelActor.setWorldPosition(endPos);
   }
 
   private handleFuelRise(deltaTime: number): void {
@@ -2176,7 +2162,10 @@ class MyGame extends ENGINE.BaseGameLoop {
     const fuelPos = this.FUEL_START_POS.clone();
     fuelPos.y = this.FUEL_START_POS.y + (this.FUEL_END_Y - this.FUEL_START_POS.y) * this.fuelRiseProgress;
     this.fuelActor.setWorldPosition(fuelPos);
-    if (this.fuelRiseProgress >= 1) this.fuelRiseActive = false;
+    if (this.fuelRiseProgress >= 1) {
+      this.fuelRiseActive    = false;
+      this.fuelAnimationDone = true;
+    }
   }
 
   // ─── Print scale ─────────────────────────────────────────────────────────────

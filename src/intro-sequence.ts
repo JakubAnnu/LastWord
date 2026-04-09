@@ -118,17 +118,17 @@ export class IntroSequence {
     // ── Phase 7: Resource 5 (2 seconds) + VO_4_note ───────────────────────────
     this.cbs.switchToState(this.CAM_RESOURCE_5);
     const vo4 = await this.playVO(this.VO4);
+    this.cbs.startFuelAnimation?.();          // fuel animation begins with VO_4
     await this.delay(this.RESOURCE5_DISPLAY_S);
 
     // ── Phase 8: Resource 7 – switch camera immediately, but wait for VO_4 ──
     // VO_5_deficite starts only after VO_4_note finishes.
-    // Fuel rise animation runs exclusively during this phase.
+    // Fuel animation runs from VO_4 start through end of VO_5.
     this.cbs.switchToState(this.CAM_RESOURCE_7);
     await this.waitForSoundEnd(vo4);
-    this.cbs.startFuelAnimation?.();
     const vo5 = await this.playVO(this.VO5);
     await this.waitForSoundEnd(vo5);
-    this.cbs.stopFuelAnimation?.();
+    this.cbs.stopFuelAnimation?.();           // snap to end position, lock permanently
 
     // ── Phase 9: restore controls, VO_6_map, persistent map hint ─────────────
     this.cbs.setInputEnabled(true);
