@@ -15957,7 +15957,7 @@
             "_": [
               -2.83,
               1.18,
-              -14.7
+              -15.262565
             ],
             "$bc": "v3"
           },
@@ -22623,7 +22623,7 @@
             "_": [
               -2.829999,
               1.179999,
-              -17.840001
+              -18.402566
             ],
             "$bc": "v3"
           },
@@ -25798,9 +25798,9 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              39.197121,
-              -1.721739,
-              -85.874513
+              16.606496,
+              -1.7217,
+              -39.289281
             ],
             "$bc": "v3"
           },
@@ -73589,9 +73589,9 @@
           "name": "GLTFMeshComponent",
           "position": {
             "_": [
-              -71.45,
-              -4.79,
-              1271.98
+              -96.674793,
+              -20.173571,
+              1029.857417
             ],
             "$bc": "v3"
           },
@@ -77828,7 +77828,7 @@
           "name": "MeshComponent",
           "position": {
             "_": [
-              -2.57,
+              -3.232875,
               0.690005,
               -15.07
             ],
@@ -77845,8 +77845,8 @@
           "scale": {
             "_": [
               1.59,
-              1.34,
-              0.58
+              2.738477,
+              1.484755
             ],
             "$bc": "v3"
           },
@@ -78544,41 +78544,84 @@
       },
       "1838": {
         "rootComponent": {
-          "uuid": "7c6b7e97-25b9-46d0-947e-514b0ac365e4",
+          "children": {
+            "$length": 1
+          },
+          "uuid": "1681cc976d483d75",
+          "name": "MeshComponent",
+          "position": {
+            "_": [
+              31.248816,
+              -1.849527,
+              -74.882533
+            ],
+            "$bc": "v3"
+          },
+          "rotation": {
+            "_": [
+              -1.570797,
+              -1.570796,
+              0
+            ],
+            "$bc": "e"
+          },
+          "scale": {
+            "_": [
+              7.66,
+              11.8,
+              0.72
+            ],
+            "$bc": "v3"
+          },
+          "castShadow": true,
+          "receiveShadow": true,
+          "geometry": {
+            "$bc": "THREE.BoxGeometry"
+          },
+          "meshMaterial": "@project/assets/materials/M_Earthy_Dark_Grey.material.json",
+          "$bc": "ENGINE.MeshComponent"
+        },
+        "uuid": "8c0155b4dac65f13",
+        "name": "barrier_75",
+        "$bc": "ENGINE.Actor"
+      },
+      "1839": {
+        "rootComponent": {
+          "uuid": "5dc2a55ef4aa58b2",
           "name": "GLTFMeshComponent",
           "position": {
             "_": [
-              0.531369,
-              3.953446,
-              -8.811184
+              795.414436,
+              -39.059463,
+              829.887109
             ],
             "$bc": "v3"
           },
           "rotation": {
             "_": [
               3.141593,
-              -0.523599,
+              -1.361357,
               3.141593
             ],
             "$bc": "e"
           },
           "scale": {
             "_": [
-              0.15,
-              0.15,
-              0.15
+              2336.864206,
+              127.215225,
+              1112.559306
             ],
             "$bc": "v3"
           },
-          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-04-09_15-20-09.glb",
-          "modelMaterial": "@project/assets/materials/M_Emissive_Yellow.material.json",
+          "modelUrl": "@project/assets/generated/mesh/savedasset_3d-model_2026-02-10_14-15-00.glb",
+          "modelMaterial": "@project/assets/materials/M_Matte_Olive_Yellow.material.json",
           "$bc": "ENGINE.GLTFMeshComponent"
         },
-        "uuid": "16743ef1431fa7a7",
-        "name": "GLTFMeshActor_130",
+        "uuid": "151ae56032d6db91",
+        "name": "dune9",
         "$bc": "ENGINE.GLTFMeshActor"
       },
-      "$length": 1839
+      "$length": 1840
     },
     "resources": null,
     "editorData": {
@@ -85439,6 +85482,10 @@
             "nodeType": "actor"
           },
           {
+            "id": "8c0155b4dac65f13",
+            "nodeType": "actor"
+          },
+          {
             "id": "b1f212b991dd7a5e",
             "nodeType": "actor"
           },
@@ -85935,7 +85982,7 @@
             "nodeType": "actor"
           },
           {
-            "id": "16743ef1431fa7a7",
+            "id": "151ae56032d6db91",
             "nodeType": "actor"
           }
         ]

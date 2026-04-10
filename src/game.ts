@@ -101,6 +101,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   // Enemy-sequence audio handles & one-shot flags
   private enemyLoopHandle:      ENGINE.SoundHandle | null = null;
   private scanningThemeHandle:  ENGINE.SoundHandle | null = null;
+  private vo12Handle:           ENGINE.SoundHandle | null = null;
+  private vo12EndElapsed:       number = -1; // -1 = VO12 not finished yet; ≥0 = seconds since it ended
   private scanSound1Handle:     ENGINE.SoundHandle | null = null;
   private alarmHandle:          ENGINE.SoundHandle | null = null;
   private approachAudioPlayed   = false;
@@ -322,8 +324,8 @@ class MyGame extends ENGINE.BaseGameLoop {
   private scanPhaseProg      = 0;
 
   // ─── Ending system ───────────────────────────────────────────────────────────
-  private readonly TRUEEND_START_S    = 140; // 2 min 20 s into scanning
-  private readonly TRUEEND_END_S      = 150; // 2 min 30 s into scanning
+  private readonly TRUEEND_AFTER_VO12_START = 32; // s after VO_12_scaning ends → TrueEnd window opens
+  private readonly TRUEEND_AFTER_VO12_END   = 48; // s after VO_12_scaning ends → TrueEnd window closes
   private endingTriggered             = false;
   private endingOverlayEl: HTMLElement | null = null;
 
@@ -1225,7 +1227,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.switchToState('5.1');
     this.pointLight16Locked = true;
     this.applyPointLight16Color(0xff0000);
-    this.startMobileMove();
+
+    this.mobileIsMoving   = false;
+    this.figureMoveActive = false;
 
     if (!this.enemyActor)     this.enemyActor     = this.findActorByDisplayName('enemy');
     if (!this.scanActor)      this.scanActor       = this.findActorByDisplayName('scan');
@@ -1239,6 +1243,8 @@ class MyGame extends ENGINE.BaseGameLoop {
     this.approachBridgeSoundPlayed = false;
     this.bridgeScanSoundPlayed     = false;
     this.scanningAudioPlayed       = false;
+    this.vo12Handle                = null;
+    this.vo12EndElapsed            = -1;
     this.scanningBlackoutStarted   = false;
     this.blackedOutStates.clear();
     this.updateCameraTable();
@@ -1746,8 +1752,8 @@ class MyGame extends ENGINE.BaseGameLoop {
         '@project/assets/sounds/generator_expl.mp3', { volume: 1.0, loop: false },
       );
 
-      const elapsedScan = this.scanPhaseProg * this.SCAN_PHASE_DUR;
-      const isTrueEnd   = elapsedScan >= this.TRUEEND_START_S && elapsedScan <= this.TRUEEND_END_S;
+      const isTrueEnd = this.vo12EndElapsed >= this.TRUEEND_AFTER_VO12_START
+                     && this.vo12EndElapsed <= this.TRUEEND_AFTER_VO12_END;
       if (isTrueEnd) {
         // Stop scanning tick so it no longer overwrites actor positions
         this.enemyPhase = 'idle';
@@ -1777,6 +1783,11 @@ class MyGame extends ENGINE.BaseGameLoop {
           .forEach(s => this.blackedOutStates.add(s));
         this.updateCameraTable();
         if (this.computeCameraState() !== '2') this.switchToState('2');
+
+        // Move figure to TrueEnd position
+        this.figureMoveActive = false;
+        if (!this.figureActor) this.figureActor = this.findActorByDisplayName('figure');
+        if (this.figureActor) this.figureActor.setWorldPosition(new THREE.Vector3(0.549, 3.98, 3.98));
         const am = this.world.globalAudioManager;
         if (this.soundtrackHandle)    { am.stopSound(this.soundtrackHandle);    this.soundtrackHandle    = null; }
         if (this.alarmHandle)         { am.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
@@ -2426,6 +2437,8 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.approachBridgeSoundPlayed  = false;
       this.bridgeScanSoundPlayed      = false;
       this.scanningAudioPlayed   = false;
+      this.vo12Handle            = null;
+      this.vo12EndElapsed        = -1;
       if (this.enemyLoopHandle)     { this.world.globalAudioManager.stopSound(this.enemyLoopHandle);     this.enemyLoopHandle     = null; }
       if (this.scanningThemeHandle) { this.world.globalAudioManager.stopSound(this.scanningThemeHandle); this.scanningThemeHandle = null; }
       if (this.scanSound1Handle)    { this.world.globalAudioManager.stopSound(this.scanSound1Handle);    this.scanSound1Handle    = null; }
@@ -2581,11 +2594,20 @@ class MyGame extends ENGINE.BaseGameLoop {
       this.scanningAudioPlayed = true;
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/VO_12_scaning.mp3', { volume: 1.0, loop: false, bus: 'Voice' },
-      );
+      ).then(h => { this.vo12Handle = h; });
       void this.world.globalAudioManager.playGlobalSound(
         '@project/assets/sounds/scaning_theme.mp3', { volume: 1.0, loop: true },
       ).then(h => { this.scanningThemeHandle = h; });
       void this.scheduleTaskPanelAtHalfVO12();
+    }
+
+    // Track elapsed time after VO_12_scaning finishes
+    if (this.vo12Handle && this.vo12EndElapsed < 0) {
+      if (!this.world.globalAudioManager.isSoundPlaying(this.vo12Handle)) {
+        this.vo12EndElapsed = 0;
+      }
+    } else if (this.vo12EndElapsed >= 0) {
+      this.vo12EndElapsed += deltaTime;
     }
 
     // Move both actors
@@ -2746,7 +2768,29 @@ class MyGame extends ENGINE.BaseGameLoop {
   }
 }
 
+@ENGINE.GameClass()
+class StaticPawn extends ENGINE.Pawn {
+  constructor() {
+    super();
+    this.enableDirectionalLightFollowing = false;
+  }
+}
+
+@ENGINE.GameClass()
+class LastWordGameMode extends ENGINE.GameMode {
+  public override getDefaultPawnClass() {
+    return StaticPawn;
+  }
+}
+
 export function main(container: HTMLElement, options?: Partial<ENGINE.BaseGameLoopOptions>): ENGINE.IGameLoop {
-  const game = new MyGame(container, options);
+  const mergedOptions: Partial<ENGINE.BaseGameLoopOptions> = {
+    ...options,
+    gameContextConfig: {
+      ...options?.gameContextConfig,
+      defaultGameModeClass: LastWordGameMode,
+    },
+  };
+  const game = new MyGame(container, mergedOptions);
   return game;
 }
