@@ -133,6 +133,7 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // ─── UI ──────────────────────────────────────────────────────────────────────
   private skipTutorialBtn: HTMLElement | null = null;
+  private skipToScanBtn:   HTMLElement | null = null;
   private currentCameraState: string = '';
 
   // ─── Camera groups ───────────────────────────────────────────────────────────
@@ -235,22 +236,22 @@ class MyGame extends ENGINE.BaseGameLoop {
 
   // Phase: approach  (enemy moves to bridge position)
   private readonly ENEMY_APPROACH_FROM   = new THREE.Vector3(1392.79, 56.81, -32.09);
-  private readonly ENEMY_APPROACH_TO     = new THREE.Vector3(58.06,   56.81, -32.09);
+  private readonly ENEMY_APPROACH_TO     = new THREE.Vector3(58,     56,    -13);
   private readonly ENEMY_APPROACH_DUR    = 120; // seconds
 
   // Phase: bridge  (enemy holds position; scan rises at t=8 s)
   private readonly BRIDGE_DURATION       = 10;  // seconds
   private readonly BRIDGE_SCAN_TRIGGER   = 8;   // second within bridge when scan starts
-  private readonly SCAN_RISE_FROM        = new THREE.Vector3(58.06, -36.21, -32.09);
-  private readonly SCAN_RISE_TO          = new THREE.Vector3(58.06,  28.59, -32.09);
+  private readonly SCAN_RISE_FROM        = new THREE.Vector3(58,    -36.21, -13);
+  private readonly SCAN_RISE_TO          = new THREE.Vector3(58,     28,    -13);
   private readonly SCAN_RISE_DUR         = 0.5; // seconds
 
   // Phase: scanning  (both actors move together; scan also gets random XZ scale)
   private readonly SCAN_PHASE_DUR        = 180; // seconds (3 minutes)
-  private readonly ENEMY_SCAN_FROM       = new THREE.Vector3(58.06,  56.81, -32.09);
-  private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-0.41,  38.76, -24.68);
-  private readonly SCAN_SCAN_FROM        = new THREE.Vector3(58.06,  28.59, -32.09);
-  private readonly SCAN_SCAN_TO          = new THREE.Vector3(-8.55,  8.34,  -20.48);
+  private readonly ENEMY_SCAN_FROM       = new THREE.Vector3(58,    56,    -13);
+  private readonly ENEMY_SCAN_TO         = new THREE.Vector3(-3,    56,    -13);
+  private readonly SCAN_SCAN_FROM        = new THREE.Vector3(58,    28,    -13);
+  private readonly SCAN_SCAN_TO          = new THREE.Vector3(-3,    28,    -13);
 
   // Camera blackout sequence during scanning phase
   private readonly BLACKOUT_START_DELAY  = 60;  // seconds into scanning before blackouts begin
@@ -893,6 +894,7 @@ class MyGame extends ENGINE.BaseGameLoop {
   private createCameraPositionLabel(): void {
     this.createCameraTable();
     this.createSkipTutorialButton();
+    this.createSkipToScanButton();
   }
 
   private createCameraTable(): void {
@@ -962,6 +964,22 @@ class MyGame extends ENGINE.BaseGameLoop {
       });
 
       this.cameraTableCells.push(cells);
+
+      // Append hint text after camera cells in the last row (FUNCTIONAL)
+      if (groupIndex === this.CAMERA_GROUPS.length - 1) {
+        const hint = document.createElement('div');
+        hint.innerHTML = '&#8592;&nbsp;&#8594;&nbsp;&nbsp;ROTATE CAMERA';
+        hint.style.cssText = [
+          'flex: 1',
+          'display: flex', 'align-items: center', 'justify-content: center',
+          "font-family: 'Space Mono', sans-serif",
+          'font-size: 10px', 'font-weight: bold', 'letter-spacing: 3px',
+          'color: rgba(255,255,255,0.22)',
+          'pointer-events: none', 'white-space: nowrap',
+        ].join(';');
+        row.appendChild(hint);
+      }
+
       tableEl.appendChild(row);
     });
 
@@ -1066,6 +1084,40 @@ class MyGame extends ENGINE.BaseGameLoop {
     }
   }
 
+  private createSkipToScanButton(): void {
+    const btn = document.createElement('div');
+    btn.textContent = 'SKIP TO SCAN PHASE';
+    btn.style.cssText = [
+      'position: absolute', 'top: 60px', 'left: 24px',
+      'color: rgba(255,255,255,0.6)',
+      "font-family: 'Space Mono', sans-serif",
+      'font-size: 13px', 'font-weight: bold', 'letter-spacing: 3px',
+      'text-shadow: 0 1px 6px rgba(0,0,0,0.9)',
+      'padding: 6px 12px',
+      'border: 1px solid rgba(255,255,255,0.25)',
+      'cursor: pointer', 'user-select: none',
+      'transition: color 0.15s, border-color 0.15s',
+    ].join(';');
+    btn.addEventListener('mouseenter', () => {
+      btn.style.color = 'rgba(255,255,255,1)';
+      btn.style.borderColor = 'rgba(255,255,255,0.6)';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.color = 'rgba(255,255,255,0.6)';
+      btn.style.borderColor = 'rgba(255,255,255,0.25)';
+    });
+    btn.addEventListener('click', () => this.skipToScanPhase());
+    this.world.gameContainer?.appendChild(btn);
+    this.skipToScanBtn = btn;
+  }
+
+  private dismissSkipToScanButton(): void {
+    if (this.skipToScanBtn) {
+      this.skipToScanBtn.remove();
+      this.skipToScanBtn = null;
+    }
+  }
+
   private skipToVO10Base(): void {
     this.dismissSkipTutorialButton();
 
@@ -1139,6 +1191,78 @@ class MyGame extends ENGINE.BaseGameLoop {
       poll();
     });
   }
+
+  private skipToScanPhase(): void {
+    this.dismissSkipToScanButton();
+    this.dismissSkipTutorialButton();
+
+    if (this.introSequence) {
+      this.introSequence.destroy();
+      this.introSequence = null;
+    }
+    if (this.functionalCam1Sequence) {
+      this.functionalCam1Sequence.destroy();
+      this.functionalCam1Sequence = null;
+    }
+    this.functionalCam1SequencePlayed = true;
+
+    this.world.globalAudioManager.stopAllSounds();
+    this.soundtrackHandle   = null;
+    this.ambientSoundHandle = null;
+
+    this.stopFuelRiseAnimation();
+    this.unlockFunctionalGroup();
+
+    this.setInputEnabled(true);
+    this.cameraInputBlocked = false;
+    this.updateCameraStatusLabel('free');
+
+    if (this.hideMapHintCallback) {
+      this.hideMapHintCallback();
+      this.hideMapHintCallback = null;
+    }
+
+    this.switchToState('5.1');
+    this.pointLight16Locked = true;
+    this.applyPointLight16Color(0xff0000);
+    this.startMobileMove();
+
+    if (!this.enemyActor)     this.enemyActor     = this.findActorByDisplayName('enemy');
+    if (!this.scanActor)      this.scanActor       = this.findActorByDisplayName('scan');
+    if (!this.enemyMiniActor) this.enemyMiniActor  = this.findActorByDisplayName('enemy_mini');
+
+    if (this.enemyActor)     this.enemyActor.setWorldPosition(this.ENEMY_SCAN_FROM.clone());
+    if (this.scanActor)      this.scanActor.setWorldPosition(this.SCAN_SCAN_FROM.clone());
+
+    this.approachAudioPlayed       = false;
+    this.approachVO11Played        = false;
+    this.approachBridgeSoundPlayed = false;
+    this.bridgeScanSoundPlayed     = false;
+    this.scanningAudioPlayed       = false;
+    this.scanningBlackoutStarted   = false;
+    this.blackedOutStates.clear();
+    this.updateCameraTable();
+
+    this.enemyPhaseTimer = 0;
+    this.scanPhaseProg   = 0;
+    this.scanRiseProg    = 0;
+    this.scanRiseActive  = false;
+    this.scanScaleFromX  = 1;
+    this.scanScaleFromZ  = 1;
+    this.pickNextScanScaleTarget(0);
+    this.enemyPhase = 'scanning';
+
+    const ctx = (this.world.audioListener as THREE.AudioListener | null)?.context;
+    const resume = ctx && ctx.state === 'suspended' ? ctx.resume() : Promise.resolve();
+    void resume.then(async () => {
+      this.soundtrackHandle = await this.world.globalAudioManager.playGlobalSound(
+        '@project/assets/sounds/soundtrack.mp3',
+        { volume: 1.0, loop: true },
+      );
+      await this.startAmbientForState(this.currentCameraState);
+    });
+  }
+
 
   private switchToState(state: string): void {
     this.isCamera1b = false; this.isCamera1c = false; this.isCamera1d = false;
@@ -1644,7 +1768,15 @@ class MyGame extends ENGINE.BaseGameLoop {
           this.enemyMiniActor.setWorldPosition(this.TRUEEND_MINI_FROM_POS.clone());
           this.enemyMiniActor.setWorldQuaternion(this.TRUEEND_MINI_FROM_QUAT.clone());
         }
-        this.trueEndMiniElapsed = 0;
+        this.trueEndMiniElapsed = -1; // stays at start for 1 s, then lerp starts
+        setTimeout(() => { this.trueEndMiniElapsed = 0; }, 1_000);
+
+        // Blackout every camera except Functional 1 ('2')
+        this.CAMERA_GROUPS.flatMap(g => g.states)
+          .filter(s => s !== '2')
+          .forEach(s => this.blackedOutStates.add(s));
+        this.updateCameraTable();
+        if (this.computeCameraState() !== '2') this.switchToState('2');
         const am = this.world.globalAudioManager;
         if (this.soundtrackHandle)    { am.stopSound(this.soundtrackHandle);    this.soundtrackHandle    = null; }
         if (this.alarmHandle)         { am.stopSound(this.alarmHandle);         this.alarmHandle         = null; }
@@ -1670,7 +1802,7 @@ class MyGame extends ENGINE.BaseGameLoop {
       );
     }, 1_000);
 
-    setTimeout(() => { this.startCameraShake(); }, 4_000);
+    setTimeout(() => { this.startCameraShake(); }, 5_000); // 4 s into impact_sound (which plays at 1 s)
 
     setTimeout(() => {
       void this.world.globalAudioManager.playGlobalSound(
@@ -1794,7 +1926,9 @@ class MyGame extends ENGINE.BaseGameLoop {
     setTimeout(() => {
       if (this.endingTriggered) return;
       this.scanningTaskHideCallback = createTaskPanel(container, [
-        { text: 'PRESS ENTER TO DISCHARGE' },
+        { text: 'Press Enter to trigger' },
+        { text: 'the generator node' },
+        { text: 'discharge.' },
       ]);
     }, halfMs);
   }
@@ -2405,6 +2539,7 @@ class MyGame extends ENGINE.BaseGameLoop {
     if (this.enemyPhaseTimer >= this.BRIDGE_DURATION) {
       this.enemyPhaseTimer = 0;
       this.scanPhaseProg   = 0;
+      this.dismissSkipToScanButton();
       // Initialise scan scale state from actual actor scale
       const startScale = this.scanActor?.getWorldScale() ?? new THREE.Vector3(1, 1, 1);
       this.scanScaleFromX = startScale.x;
